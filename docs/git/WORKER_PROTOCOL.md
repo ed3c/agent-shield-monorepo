@@ -2,132 +2,171 @@
 
 ## Required environment
 
-- Git repository with `.git-town.toml` from the admitted parent commit;
-- Git Town 24.0 line or a stricter admitted exact version;
-- GitHub CLI for proposal operations only;
-- one isolated Git worktree per worker;
-- one task packet per branch;
-- network and credentials supplied by the host, never by repository files.
+- repository contains the reviewed `.git-town.toml`;
+- exact Git Town `24.0.0` executable;
+- vendored MIT notice passes byte-identity check;
+- one isolated linked Git worktree per Worker;
+- one immutable task packet per branch;
+- network and credentials supplied by the host, never repository files;
+- GitHub CLI only for proposal metadata operations.
+
+Executable checksum, SBOM/transitive-license scan, and host authentication are environment-owned evidence. Their absence cannot be replaced by documentation.
 
 ## Worker lifecycle
 
 ```text
-admit task
+admit issue and evals
 → create isolated worktree
-→ acquire branch lease
-→ validate parent, path lease, version, auth, and clean state
+→ bind branch to explicit parent
+→ record task packet outside tracked content
+→ validate exact version, license, config, clean state, parent and path lease
 → dry-run stack sync
-→ mutate only allowed paths
-→ run issue evals and controls
+→ mutate only owned paths
+→ run evals and negative controls
 → commit exact subject
-→ sync stack non-interactively
-→ propose/update PR
-→ record receipt
-→ release process lease
+→ local stack rebase
+→ trusted host explicitly publishes safe push
+→ create/update parent-targeted PR
+→ record receipts
 → preserve or clean worktree according to handoff state
 ```
 
-## Worktree identity
+## Task packet
 
-Each worker receives:
+The controller supplies:
 
 ```text
 WORKER_ID
 ISSUE_NUMBER
-BRANCH_NAME
-PARENT_BRANCH
-WORKTREE_PATH
-ALLOWED_PATHS
-EXCLUDED_PATHS
-EVAL_IDS
+TASK_BRANCH
+TASK_PARENT
+TASK_EVALS
+TASK_ALLOWED_PATHS
 ```
 
-A controller may place this metadata under `.git/agent-shield/tasks/`; it is host state and is not committed.
+Optional host metadata may include excluded paths, worktree location, scheduler identity, and retention policy. Host paths are not committed. Task packets and receipts live under the Git common directory with restricted permissions.
 
 ## Lease model
 
-The Bash wrappers create an atomic directory lock under the common Git directory. The lock prevents two unattended processes from synchronizing or proposing the same branch at once.
-
-The process lease is not proof of exclusive human ownership. A remote branch is treated as single-writer by policy; workers must stop if the tracking branch contains commits they did not integrate.
+- one remote branch has one semantic writer by policy;
+- branch creation/proposal uses a branch lease;
+- stack synchronization holds a repository-wide process lease because a rebase can rewrite several refs;
+- editing on path-disjoint sibling worktrees may continue concurrently;
+- a process lease does not prove remote ownership, so safe-push disagreement still fails.
 
 ## Preconditions
 
 Before mutation, require:
 
-1. current branch is not `main`;
-2. current worktree is clean;
-3. no unmerged paths or Git operation is in progress;
-4. current branch equals the task branch;
-5. Git Town can return its parent;
-6. parent equals the task packet;
-7. team config contains rebase/ff-only/push-hook policy;
-8. required commands and admitted version are present;
-9. current diff against parent is inside the path lease.
+1. current checkout is an isolated linked worktree for background mode;
+2. current branch is not `main`;
+3. worktree and index are clean;
+4. no merge, rebase, cherry-pick, revert, bisect, or unmerged path exists;
+5. current branch and Git Town parent match the task packet;
+6. changed paths against the parent are inside the declared path lease;
+7. exact Git Town version and vendored license match;
+8. team config enforces rebase, ff-only, no auto-resolve, no implicit publish, hooks on, tags/upstream off;
+9. no previous failure marker blocks the worktree.
 
-## Background synchronization
+Dirty state is exit `64`; unattended scripts never auto-stash even though Git Town can.
+
+## Synchronization modes
+
+### Plan only
 
 ```bash
-git town sync --stack --non-interactive --push --no-auto-resolve --verbose
+scripts/git-town/sync-stack.sh --dry-run
 ```
 
-The wrapper sets explicit environment overrides so local/global configuration cannot silently weaken rebase, push, hook, tag, upstream, or interactive behavior.
+State: `NOT_EXERCISED`; no ref mutation or push.
 
-A successful process exit is necessary but not sufficient. The receipt also records:
+### Local rebase
 
-- repository and branch;
-- parent;
-- worker and issue;
-- command and configured version;
+```bash
+scripts/git-town/sync-stack.sh
+```
+
+Runs stack rebase with `--no-push`. A local green does not claim remote publication.
+
+### Trusted publication
+
+```bash
+ALLOW_GIT_TOWN_PUSH=1 \
+  scripts/git-town/sync-stack.sh --publish
+```
+
+The canonical Git Town mutation subject is:
+
+```bash
+git town sync --stack --non-interactive --push --no-auto-resolve
+```
+
+Git Town's rebase strategy performs safe force-push protection. Push hooks remain enabled. A safe-push refusal is `FAIL`, not permission to bypass the lease.
+
+### Background publication
+
+```bash
+ALLOW_GIT_TOWN_PUSH=1 \
+  scripts/git-town/background-sync.sh start --interval 300 --publish
+
+scripts/git-town/background-sync.sh status
+scripts/git-town/background-sync.sh stop
+```
+
+The daemon is a bounded loop around `sync-stack.sh`; it has no separate merge logic. Any failure stops the loop, preserves the exact worktree, and leaves a receipt. The scheduler may restart only after reviewed recovery clears the blocked state.
+
+## Receipt contract
+
+Every sync attempt records:
+
+- issue, Worker, branch and parent;
+- exact Git Town version;
+- fixed command and mode;
 - before/after commit IDs;
-- dry-run flag;
-- exit code and result state;
+- local result and independent push state;
+- exit and timeout state;
 - unmerged paths;
-- log digest;
-- cleanup state.
+- eval/path-lease metadata;
+- bounded log digest;
+- cleanup/blocked state and timestamps.
+
+Logs and receipts exclude tokens, credential-bearing URLs, browser profiles, device sessions, `.env`, private keys, and secret values.
 
 ## Failure protocol
 
-### Dirty or unknown state
+### Conflict or suspended command
 
-Fail before mutation with exit 64. Do not stash automatically in unattended mode even though Git Town can stash; task isolation should make dirty state exceptional and visible.
+```text
+Git Town exits nonzero
+→ FAIL receipt
+→ worktree marked BLOCKED
+→ process lease released
+→ branch/worktree and suspended state preserved
+→ recovery assignment names semantic owners and regression evals
+```
 
-### Rebase or safe-push conflict
-
-Fail with exit 2. Preserve the worktree and Git Town suspended state. Do not run `continue`, `skip`, or semantic conflict edits.
+The background Worker does not run `git town continue`, `skip`, `undo`, `ship`, or conflict edits. A human or dedicated recovery Agent acts only under a new bounded assignment, then reruns all affected evals.
 
 ### Remote single-writer disagreement
 
-Fail with exit 2. Record remote/local heads and assign recovery. Do not force-push around safe-push protection.
+Safe force-push refusal or unexpected remote commits are `FAIL`. Integrate and review the remote commits; never bypass `--force-with-lease` safeguards.
 
-### Missing provider/auth/network
+### Missing executable, auth, network, or proposal provider
 
-Use `ABSENT` or `NOT_EXERCISED` according to the task contract. Do not report stack synchronization `PASS` when a push or proposal was skipped.
+Use `ABSENT` or `NOT_EXERCISED` according to the named subject. A local rebase cannot proxy for a pushed branch or created PR.
 
-## Recovery assignment
+### Timeout or residue
 
-A recovery task names:
-
-- failed receipt;
-- conflicted branches and files;
-- expected parent graph;
-- semantic owner for each conflict;
-- permitted resolution paths;
-- required regression evals;
-- whether to continue or undo after review.
-
-Only the recovery owner may run `git town continue` or `git town undo`.
+Timeout is a distinct failure. Leaked process, lock, worktree, log, or suspended Git operation is reported independently from task outcome.
 
 ## Cleanup
 
-- Remove transient process lease on every exit.
-- Preserve failed worktrees until recovery or explicit Human Admit.
-- Remove successful temporary worktrees only after the PR branch and receipts are pushed.
-- Never delete a branch with unshipped changes.
-- Report leaked locks, worktrees, processes, and suspended operations independently from task success.
+- transient process lease is removed on every normal/failure exit;
+- failed worktrees remain preserved and blocked;
+- successful worktrees remain until branch, PR, receipts, and handoff are confirmed;
+- no branch with unshipped changes is deleted automatically;
+- background PID/log state stays under the Git common directory.
 
-## Security
+## Human-owned operations
 
-- Host credentials enter through GitHub CLI, credential helpers, or brokered environment variables.
-- Logs are bounded and must not print tokens or credential-bearing remote URLs.
-- Use `git town config --redact` for diagnostics.
-- No browser profile, `.env`, private key, or device session participates in Git synchronization.
+Merge, `git town ship`, branch-protection changes, permission widening, production promotion/rollback, key/session authority, and legal acceptance are not unattended Worker actions.
