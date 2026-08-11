@@ -1,0 +1,25 @@
+{
+  "schema": "agent-shield/integration-status/v1",
+  "modules": {
+    "document-ingest-text": "PASS",
+    "document-ingest-pdf": "NOT_IMPLEMENTED",
+    "research-external-verify": "PASS",
+    "research-dr-signed-in-stage1": "NOT_EXERCISED",
+    "research-gcr-local": "NOT_EXERCISED",
+    "research-gcr-cloud": "NOT_IMPLEMENTED",
+    "runtime-local-disposable": "PASS",
+    "runtime-apple-container": "NOT_EXERCISED",
+    "runtime-openshell-tmux": "NOT_EXERCISED",
+    "runtime-e2b": "NOT_IMPLEMENTED",
+    "product-expo": "NOT_EXERCISED",
+    "product-maestro-wda-scrcpy": "NOT_EXERCISED",
+    "security-native-providers": "NOT_IMPLEMENTED",
+    "bettor-consumer": "NOT_EXERCISED"
+  },
+  "live": {
+    "claude-code": "NOT_EXERCISED",
+    "codex-cli": "NOT_EXERCISED",
+    "forgejo-origin": "NOT_EXERCISED",
+    "signed-in-browser": "NOT_EXERCISED"
+  }
+}

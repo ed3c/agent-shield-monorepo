@@ -1,0 +1,11 @@
+{
+  "schema": "agent-shield/module/v1",
+  "id": "security-boundaries",
+  "interface_version": "1.0.0",
+  "roots": ["services/security-boundaries", "services/intent-ledger"],
+  "provides": ["security.intent/v1", "security.provider-boundaries/v1"],
+  "requires": [],
+  "runtime": {"local": "PARTIAL", "cloud": "NOT_IMPLEMENTED"},
+  "proof": ["bun scripts/selftest.ts"],
+  "external_policy": {"exposed": false, "secrets": "none"}
+}

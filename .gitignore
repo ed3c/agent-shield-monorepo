@@ -1,0 +1,12 @@
+node_modules/
+.bun/
+.arena/bootstrap/*.plan.json
+.arena/consumer.lock.json
+.arena/managed.json
+.arena/receipts/
+.arena/vendor/
+.agents/shared-skills.requirements.json
+.mcp.json
+.codex/config.toml
+*.log
+.DS_Store
