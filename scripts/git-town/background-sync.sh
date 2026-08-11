@@ -74,9 +74,9 @@ case "$action" in
     require_not_blocked
     require_task_identity
 
-    args=()
-    [[ "$publish" == false ]] || args+=(--publish)
-    nohup "$0" __run --interval "$interval" ${publish:+--publish} >> "$log_file" 2>&1 </dev/null &
+    daemon_command=("$SCRIPT_DIR/background-sync.sh" __run --interval "$interval")
+    [[ "$publish" == false ]] || daemon_command+=(--publish)
+    nohup "${daemon_command[@]}" >> "$log_file" 2>&1 </dev/null &
     pid=$!
     printf '%s\n' "$pid" > "$pid_file"
     chmod 600 "$pid_file" "$log_file" 2>/dev/null || true
