@@ -2,10 +2,12 @@
 
 The ledger records what each source supports and what it does **not** prove. Source locators refer to the supplied conversation export or immutable repository subjects. Access-controlled source bytes are not redistributed here.
 
-## S-001 — `科技巨頭開源授權與AI框架`
+## S-001 — `科技巨頭開源授權與AI框架v2.pdf`
 
 - **Kind:** supplied 41-page conversation/PDF export.
 - **Original locator:** access-controlled Gemini conversation URL embedded in the export.
+- **Repository file name:** `科技巨頭開源授權與AI框架v2.pdf`.
+- **Content identity:** SHA-256 `11951b0409e58dac50d1c6cc0130aa838260aafddfb1247e586206dd34548aea`.
 - **Coverage:** parsed pages 1–41, lines 1–2638.
 - **Repository classification:** `SOURCE_PROPOSAL`.
 - **Directly supports:**
