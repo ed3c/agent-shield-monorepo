@@ -46,8 +46,8 @@ grep -Eq '^upstream = false$' "$ROOT/.git-town.toml" || fail "upstream sync is e
 license="$ROOT/third_party/git-town/LICENSE"
 [[ -f "$license" ]] || fail "Git Town license notice absent"
 [[ "$(sha256_file "$license")" == "7bc26795871e4f7f5b89aaa68cd0318283530abaf0e0b4f72a0ce88fa7d0ff7d" ]] || fail "Git Town license digest mismatch"
-grep -Fq '24.0.0' "$SCRIPT_DIR/common.sh" || fail "exact Git Town version pin absent"
-grep -Eq 'required="\$\{GIT_TOWN_REQUIRED_VERSION:-24\.0\.0\}"' "$SCRIPT_DIR/common.sh" || fail "exact default version gate absent"
+grep -Eq '^  required="24\.0\.0"$' "$SCRIPT_DIR/common.sh" || fail "exact Git Town version gate absent"
+grep -Fq 'cannot override the admitted version' "$SCRIPT_DIR/common.sh" || fail "version override refusal absent"
 
 grep -Fq 'git town sync --stack --non-interactive --push --no-auto-resolve' "$ROOT/docs/git/STACKED_PRS.md" || fail "canonical publish subject absent"
 grep -Fq -- '--no-auto-resolve' "$SCRIPT_DIR/sync-stack.sh" || fail "sync wrapper allows auto resolution"
@@ -65,9 +65,12 @@ done
 grep -Fq 'load_task_packet' "$SCRIPT_DIR/common.sh" || fail "host-owned task-packet loader absent"
 grep -Fq 'load_task_packet' "$SCRIPT_DIR/background-sync.sh" || fail "background worker does not restore its task packet"
 grep -Fq 'git town set-parent' "$SCRIPT_DIR/worktree.sh" || fail "worktree creation does not bind the explicit parent"
-if grep -R -F 'git town feature' "$SCRIPT_DIR" >/dev/null; then
-  fail "invalid hidden git town feature command remains"
-fi
+while IFS= read -r script; do
+  [[ "$script" == "$SCRIPT_DIR/selftest.sh" ]] && continue
+  if grep -Fq 'git town feature' "$script"; then
+    fail "invalid hidden git town feature command remains in $script"
+  fi
+done < <(find "$SCRIPT_DIR" -maxdepth 1 -type f -name '*.sh' -print)
 
 for forbidden in 'git town continue' 'git town skip' 'git town undo' 'git town ship'; do
   while IFS= read -r script; do
