@@ -10,17 +10,47 @@ fail() {
   exit 2
 }
 
+sha256_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
 for script in "$SCRIPT_DIR"/*.sh; do
   bash -n "$script" || fail "Bash syntax failed: $script"
 done
 
+grep -Eq '^interactive = false$' "$ROOT/.git-town.toml" || fail "non-interactive policy absent"
+grep -Eq '^share-new-branches = "no"$' "$ROOT/.git-town.toml" || fail "implicit branch sharing is enabled"
+grep -Eq '^auto-sync = false$' "$ROOT/.git-town.toml" || fail "Bash wrapper ownership absent"
+grep -Eq '^auto-resolve = false$' "$ROOT/.git-town.toml" || fail "auto-resolve policy is enabled"
 grep -Eq '^feature-strategy = "rebase"$' "$ROOT/.git-town.toml" || fail "feature rebase policy absent"
 grep -Eq '^perennial-strategy = "ff-only"$' "$ROOT/.git-town.toml" || fail "perennial ff-only policy absent"
+grep -Eq '^push-branches = false$' "$ROOT/.git-town.toml" || fail "implicit push policy is enabled"
 grep -Eq '^push-hook = true$' "$ROOT/.git-town.toml" || fail "push-hook policy absent"
-grep -Fq 'git town sync --stack --non-interactive --push --no-auto-resolve' "$SCRIPT_DIR/../../docs/git/STACKED_PRS.md" || fail "canonical sync subject absent"
-grep -Fq -- '--no-auto-resolve' "$SCRIPT_DIR/sync-stack.sh" || fail "sync wrapper allows auto resolution"
+grep -Eq '^tags = false$' "$ROOT/.git-town.toml" || fail "tag sync is enabled"
+grep -Eq '^upstream = false$' "$ROOT/.git-town.toml" || fail "upstream sync is enabled"
 
-for forbidden in 'git town continue' 'git town skip' 'git town ship'; do
+license="$ROOT/third_party/git-town/LICENSE"
+[[ -f "$license" ]] || fail "Git Town license notice absent"
+[[ "$(sha256_file "$license")" == "7bc26795871e4f7f5b89aaa68cd0318283530abaf0e0b4f72a0ce88fa7d0ff7d" ]] || fail "Git Town license digest mismatch"
+grep -Fq '24.0.0' "$SCRIPT_DIR/common.sh" || fail "exact Git Town version pin absent"
+if grep -Fq '24.0}' "$SCRIPT_DIR/common.sh"; then
+  fail "loose Git Town version line remains"
+fi
+
+grep -Fq 'git town sync --stack --non-interactive --push --no-auto-resolve' "$ROOT/docs/git/STACKED_PRS.md" || fail "canonical publish subject absent"
+grep -Fq -- '--no-auto-resolve' "$SCRIPT_DIR/sync-stack.sh" || fail "sync wrapper allows auto resolution"
+grep -Fq -- '--no-push' "$SCRIPT_DIR/sync-stack.sh" || fail "local no-push mode absent"
+grep -Fq 'ALLOW_GIT_TOWN_PUSH' "$SCRIPT_DIR/sync-stack.sh" || fail "publish guard absent"
+grep -Fq 'sync-stack.sh' "$SCRIPT_DIR/background-sync.sh" || fail "background worker does not delegate to canonical wrapper"
+if grep -Fq 'git town sync' "$SCRIPT_DIR/background-sync.sh"; then
+  fail "background worker contains a second sync implementation"
+fi
+
+for forbidden in 'git town continue' 'git town skip' 'git town undo' 'git town ship'; do
   if grep -R --include='*.sh' -F "$forbidden" "$SCRIPT_DIR" | grep -v 'selftest.sh' >/dev/null; then
     fail "unattended script contains forbidden recovery/ship command: $forbidden"
   fi
@@ -32,14 +62,12 @@ sed 's/--no-auto-resolve/--auto-resolve/' "$SCRIPT_DIR/sync-stack.sh" > "$mutati
 if grep -Fq -- '--no-auto-resolve' "$mutation"; then
   fail "mutation control did not remove fail-closed flag"
 fi
-if ! grep -Fq -- '--auto-resolve' "$mutation"; then
-  fail "mutation fixture was not planted"
-fi
+grep -Fq -- '--auto-resolve' "$mutation" || fail "mutation fixture was not planted"
 
 lease_root="$(mktemp -d "${TMPDIR:-/tmp}/git-town-lease.XXXXXX")"
-mkdir "$lease_root/branch.lock" || fail "initial lease failed"
-if mkdir "$lease_root/branch.lock" 2>/dev/null; then
-  fail "duplicate branch lease was accepted"
+mkdir "$lease_root/repository-sync.lock" || fail "initial lease failed"
+if mkdir "$lease_root/repository-sync.lock" 2>/dev/null; then
+  fail "duplicate repository sync lease was accepted"
 fi
 rm -rf "$lease_root"
 
@@ -48,7 +76,10 @@ if [[ "$mode" == "static" ]]; then
   exit 0
 fi
 
-command -v git-town >/dev/null 2>&1 || fail "integration mode requires git-town"
+command -v git-town >/dev/null 2>&1 || fail "integration mode requires git-town 24.0.0"
+actual="$(git-town --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)"
+[[ "$actual" == "24.0.0" ]] || fail "integration mode requires Git Town 24.0.0, observed ${actual:-unknown}"
+
 base="$(mktemp -d "${TMPDIR:-/tmp}/git-town-integration.XXXXXX")"
 trap 'rm -rf "$base" "$mutation"' EXIT
 remote="$base/remote.git"
@@ -66,6 +97,8 @@ git -C "$repo" push -q -u origin main
 
 (
   cd "$repo"
+  export GIT_TOWN_INTERACTIVE=false
+  export GIT_TOWN_AUTO_RESOLVE=false
   git town hack docs/fixture-parent --non-interactive --no-auto-resolve --no-stash
   printf 'parent-v1\n' > subject.txt
   git add subject.txt
