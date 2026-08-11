@@ -10,6 +10,7 @@
   "scripts": {
     "check": "bun scripts/verify.ts",
     "selftest": "bun scripts/selftest.ts",
+    "release": "bun scripts/release-manifest.ts",
     "test": "bun test",
     "check:integration": "bun scripts/verify-bettor-integration.ts",
     "check:all": "bun run check && bun run selftest && bun run check:integration && bunx tsc --noEmit"
