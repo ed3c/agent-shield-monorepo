@@ -15,8 +15,8 @@ while (($#)); do
 usage: sync-stack.sh [--dry-run] [--publish]
 
 Default execution rebases the stack locally with --no-push. Publishing requires
-both --publish and ALLOW_GIT_TOWN_PUSH=1. Requires WORKER_ID, ISSUE_NUMBER,
-TASK_BRANCH, TASK_PARENT, TASK_EVALS, and TASK_ALLOWED_PATHS.
+both --publish and ALLOW_GIT_TOWN_PUSH=1. Task metadata is loaded from the
+host-owned packet under the Git common directory when not already exported.
 
 Conflicts stop the worker, preserve the suspended Git Town state, mark the
 worktree BLOCKED, and emit a failure receipt. The script never runs continue,
@@ -40,6 +40,8 @@ require_command git
 require_command git-town
 root="$(repo_root)"
 cd "$root"
+require_linked_worktree
+require_safe_remote_url
 require_team_config
 require_git_town_license
 version="$(require_git_town_version)"
