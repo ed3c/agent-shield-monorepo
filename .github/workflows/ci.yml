@@ -28,9 +28,22 @@ jobs:
             scripts/selftest.ts \
             scripts/verify-bettor-integration.ts \
             scripts/bootstrap-bettor.ts \
+            scripts/release-manifest.ts \
             --target=bun \
             --outdir=/tmp/build
       - run: bun scripts/verify.ts
       - run: bun scripts/selftest.ts
       - run: bun scripts/verify-bettor-integration.ts
+      - name: Rebuild immutable module release
+        run: bun scripts/release-manifest.ts --output /tmp/agent-shield-module-set.json
+      - name: Upload expected module release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expected-agent-shield-release
+          path: /tmp/agent-shield-module-set.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Compare immutable module release
+        run: python3 -c 'import json; assert json.load(open("data/releases/agent-shield-module-set.json")) == json.load(open("/tmp/agent-shield-module-set.json"))'
       - run: bunx tsc --noEmit
