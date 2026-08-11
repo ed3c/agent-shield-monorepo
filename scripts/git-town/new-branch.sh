@@ -11,6 +11,7 @@ evals=""
 allowed_paths=""
 worker="${WORKER_ID:-unassigned}"
 dry_run=false
+publish=false
 
 while (($#)); do
   case "$1" in
@@ -21,13 +22,16 @@ while (($#)); do
     --allowed-paths) allowed_paths="${2:-}"; shift ;;
     --worker) worker="${2:-}"; shift ;;
     --dry-run) dry_run=true ;;
+    --publish) publish=true ;;
     -h|--help)
       cat <<'EOF'
 usage: new-branch.sh --branch NAME --parent NAME --issue N \
-  --evals ID[,ID...] --allowed-paths GLOB[,GLOB...] [--worker ID] [--dry-run]
+  --evals ID[,ID...] --allowed-paths GLOB[,GLOB...] [--worker ID] \
+  [--dry-run | --publish]
 
 Run inside an isolated, clean worktree currently checked out on the intended
-parent. The command creates a stack root from main or appends a child branch.
+parent. Branch creation is local by default. Publishing requires --publish and
+ALLOW_GIT_TOWN_PUSH=1.
 EOF
       exit 0
       ;;
@@ -42,15 +46,21 @@ done
 [[ -n "$evals" ]] || die 64 "--evals is required"
 [[ -n "$allowed_paths" ]] || die 64 "--allowed-paths is required"
 [[ "$branch" != "$parent" && "$branch" != "main" ]] || die 64 "unsafe branch relationship"
+[[ ! ("$dry_run" == true && "$publish" == true) ]] || die 64 "--dry-run and --publish are mutually exclusive"
+if [[ "$publish" == true && "${ALLOW_GIT_TOWN_PUSH:-0}" != "1" ]]; then
+  die 64 "--publish requires ALLOW_GIT_TOWN_PUSH=1"
+fi
 
 require_command git
 require_command git-town
 root="$(repo_root)"
 cd "$root"
 require_team_config
+require_git_town_license
 version="$(require_git_town_version)"
 require_clean_worktree
 require_no_git_operation
+require_not_blocked
 current="$(current_branch)"
 [[ "$current" == "$parent" ]] || die 64 "current branch $current differs from intended parent $parent"
 if git show-ref --verify --quiet "refs/heads/$branch" || git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
@@ -58,18 +68,13 @@ if git show-ref --verify --quiet "refs/heads/$branch" || git show-ref --verify -
 fi
 
 common="$(git_common_dir)"
-lock_root="$common/agent-shield/leases"
-mkdir -p "$lock_root"
-LEASE_DIR="$lock_root/$(sanitize_branch "$branch").lock"
-mkdir "$LEASE_DIR" 2>/dev/null || die 64 "branch lease already exists: $LEASE_DIR"
-printf '%s\n' "$worker" > "$LEASE_DIR/worker"
-printf '%s\n' "$$" > "$LEASE_DIR/pid"
-trap release_branch_lease EXIT INT TERM
+acquire_named_lease "branch-$branch"
 
 if [[ "$parent" == "main" ]]; then
   command=(git town hack "$branch" --non-interactive --no-auto-resolve --no-stash)
 else
-  command=(git town append "$branch" --non-interactive --no-auto-resolve --no-stash --push)
+  command=(git town append "$branch" --non-interactive --no-auto-resolve --no-stash)
+  [[ "$publish" == false ]] && command+=(--no-push) || command+=(--push)
 fi
 if [[ "$dry_run" == true ]]; then
   command+=(--dry-run)
@@ -79,9 +84,12 @@ log "running: ${command[*]}"
 set +e
 (
   export GIT_TOWN_INTERACTIVE=false
-  export GIT_TOWN_SHARE_NEW_BRANCHES=push
+  export GIT_TOWN_AUTO_RESOLVE=false
+  export GIT_TOWN_SHARE_NEW_BRANCHES=$([[ "$publish" == true ]] && printf push || printf no)
   export GIT_TOWN_SYNC_FEATURE_STRATEGY=rebase
   export GIT_TOWN_SYNC_PERENNIAL_STRATEGY=ff-only
+  export GIT_TOWN_PUSH_BRANCHES="$publish"
+  export GIT_TOWN_PUSH_HOOK=true
   "${command[@]}"
 )
 rc=$?
@@ -101,6 +109,7 @@ if ((rc == 0)); then
     head="$(current_commit)"
     task_dir="$common/agent-shield/tasks"
     mkdir -p "$task_dir"
+    chmod 700 "$task_dir" 2>/dev/null || true
     task_file="$task_dir/$(sanitize_branch "$branch").env"
     {
       printf 'WORKER_ID=%q\n' "$worker"
@@ -110,6 +119,7 @@ if ((rc == 0)); then
       printf 'TASK_EVALS=%q\n' "$evals"
       printf 'TASK_ALLOWED_PATHS=%q\n' "$allowed_paths"
     } > "$task_file"
+    chmod 600 "$task_file"
     state="PASS"
     note="branch created with explicit parent and task packet"
   fi
@@ -130,6 +140,7 @@ release_branch_lease
   printf '  "command": "%s",\n' "$(json_escape "${command[*]}")"
   printf '  "head": "%s",\n' "$head"
   printf '  "dry_run": %s,\n' "$dry_run"
+  printf '  "publish": %s,\n' "$publish"
   printf '  "exit": %s,\n' "$rc"
   printf '  "evals": "%s",\n' "$(json_escape "$evals")"
   printf '  "allowed_paths": "%s",\n' "$(json_escape "$allowed_paths")"
@@ -138,6 +149,7 @@ release_branch_lease
   printf '  "note": "%s"\n' "$(json_escape "$note")"
   printf '}\n'
 } > "$receipt_file"
+chmod 600 "$receipt_file"
 log "receipt=$receipt_file state=$state exit=$rc"
 
 if ((rc != 0)); then
