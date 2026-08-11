@@ -25,6 +25,21 @@ The repository converts a broad source architecture into explicit module contrac
 
 Detailed Harness and eval documentation is tracked in [issue #22](https://github.com/ed3c/agent-shield-monorepo/issues/22).
 
+## Stacked PR issue map
+
+```text
+main
+└── #13 source/intent foundation                 → PR #25
+    ├── #15 Git Town + unattended Bash Workers   → PR #27
+    ├── #17 architecture/data-flow/license docs  → PR #26
+    ├── #19 apps/services nearest READMEs         → PR #28
+    ├── #21 control-plane/package/data READMEs    → PR #29
+    └── #22 Harness/eval contracts                → PR #30
+        └── #23 merged-tree convergence audit     → created after human merge order
+```
+
+Only #13 is serial. Issues #15, #17, #19, #21, and #22 own disjoint paths and can be completed by independent Worker Agents. Shared indexes, final ancestry, README coverage, and cross-document closure belong to #23; siblings do not race on those files. Every issue contains its evals before implementation, and every PR targets its direct stack parent.
+
 ## Documentation map
 
 Start with [`AGENTS.md`](AGENTS.md), then follow [`docs/INDEX.md`](docs/INDEX.md).
