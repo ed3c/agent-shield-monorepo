@@ -8,6 +8,8 @@ require_command git
 require_command git-town
 root="$(repo_root)"
 cd "$root"
+require_linked_worktree
+require_safe_remote_url
 require_team_config
 require_git_town_license
 version="$(require_git_town_version)"
