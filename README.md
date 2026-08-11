@@ -1,63 +1,45 @@
-# agent-shield-monorepo
+# Agent Shield Monorepo
 
-Agent Shield is the **domain product repository** for a policy-gated Agent transaction pipeline. It is intentionally separate from `bettor-arena`, which owns cross-repository composition, proof aggregation, stateless MCP publication, and eventual project bootstrap.
+A Bun + TypeScript modular product skeleton and the first external acceptance consumer for `bettor-arena`.
 
-This first implementation slice is a Bun + TypeScript monorepo that turns the PDF architecture into executable, falsifiable contracts instead of pretending every proposed provider is already production-ready.
+The repository turns the broad source architecture into explicit modules and honest evidence states. It does not promote a PDF claim, package presence, browser login, cloud account, hardware capability, or contract idea into a production guarantee.
 
-## What is executable now
+## Implemented structural phases
 
-- typed intent, risk, approval, ledger, settlement, sandbox, CLI, and JSON-RPC tool contracts;
-- deterministic risk routing: autonomous, human approval, or deny;
-- approval state machine that refuses high-risk settlement without the required evidence shape;
-- append-only SHA-256 hash-chain ledger with tamper detection;
-- settlement planning that never claims real MPC, Secure Enclave, NFC, or on-chain execution;
-- allowlisted stateless tool gateway with no generic shell, arbitrary `cwd`, host path, or secret argument;
-- bettor-compatible `.arena` module manifests, composition requirements, ownership checks, and a deterministic lock;
-- per-module verify, selftest, independent control, and hollow/mutation checks;
-- relocation verification outside the source checkout;
-- explicit `skills-shared` and `runtime-env` consumer requirements.
+1. **Module and context foundation** — `AGENTS.md`, `CLAUDE.md`, architecture SSOT, typed contracts, module manifests, and CI.
+2. **Deterministic domain kernel** — content-addressed text ingest, research routing, bounded intent decisions, and typed receipts.
+3. **Stable product and SDK ports** — immutable bettor MCP subject, web/mobile state contracts, and public TypeScript functions.
+4. **Runtime provider contracts** — local disposable execution is exercised; Apple Container and OpenShell/tmux are `NOT_EXERCISED`; E2B and Cloudflare Computer providers are `NOT_IMPLEMENTED`.
+5. **Product adapter contracts** — Expo, Maestro, WDA, scrcpy, browser, and dashboard adapters remain separate from device/session evidence.
+6. **Security boundaries** — MPC/TSS, Secure Enclave/NFC, smart account, ledger anchor, and settlement are typed but `NOT_IMPLEMENTED` until audited native providers and adversarial receipts exist.
+7. **Bettor integration** — a Bun driver can ask an exact bettor release to transactionally generate Claude Code, Codex CLI, selected Skills, consumer lock, and the Bun stateless MCP launcher.
 
-## Quick start
+## Verify
 
 ```bash
-sh bootstrap.sh
-bun run verify
-bun run selftest
-bun run test
-bun run contract
+bun run check:all
 ```
 
-Evaluate a typed intent:
+Without a generated `.arena/consumer.lock.json`, bettor integration reports `NOT_EXERCISED` and exits successfully. It never reports PASS from absence.
+
+## Initialize through bettor-arena
+
+The bettor checkout must contain the merged Phase 5/6 Bun implementation and must be clean.
 
 ```bash
-bun shieldctl/shieldctl.ts intent evaluate --input tests/fixtures/allow.json --json
+bun scripts/bootstrap-bettor.ts \
+  --bettor-root /path/to/bettor-arena \
+  --commit <exact-40-hex-commit>
+
+# Review the content-addressed plan, then apply it.
+bun scripts/bootstrap-bettor.ts \
+  --bettor-root /path/to/bettor-arena \
+  --commit <exact-40-hex-commit> \
+  --apply
 ```
 
-Run the end-to-end deterministic simulation:
+Use `--embedded` for a self-contained no-hardlink bettor clone. Remote mode uses the host-owned `BETTOR_ARENA_ROOT`; the host path is never committed.
 
-```bash
-bun shieldctl/shieldctl.ts workflow simulate \
-  --input tests/fixtures/require-human.json \
-  --approval tests/fixtures/approval.json \
-  --now 2026-08-11T00:01:00.000Z \
-  --ledger data/receipts/demo-ledger.jsonl \
-  --json
-```
+## Source architecture boundary
 
-Start the Bun HTTP control plane:
-
-```bash
-bun run dev
-```
-
-Start the stdio tool gateway:
-
-```bash
-bun run mcp:serve
-```
-
-## Trust boundary
-
-Real provider integrations remain fail-closed and named `NOT_IMPLEMENTED` or `NOT_EXERCISED`: E2B, Apple Container, OpenShell, tmux PTY, Cloudflare ingress, React Native/Expo, iOS Secure Enclave + NFC, MPC-TSS, OPA, Temporal, immudb, ZeroDev, OpenBao, and live Claude/Codex canaries.
-
-Read [`AGENTS.md`](AGENTS.md), then [`ARCHITECTURE.md`](ARCHITECTURE.md), before changing the repository.
+The source document proposes E2B/Firecracker sandboxes, OpenShell/tmux, cloud/local hot sync, PDF parsing, mobile simulators, MPC/TSS, wallets, and settlement. Those proposals are represented as provider contracts and staged modules. Live provider, hardware, chain, Claude/Codex, Forgejo, and signed-in browser evidence remains environment-owned and is never inferred by CI.

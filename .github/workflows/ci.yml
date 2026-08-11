@@ -1,0 +1,36 @@
+name: Bun modular contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Compile TypeScript entrypoints
+        run: |
+          mkdir -p /tmp/build
+          bun build \
+            scripts/verify.ts \
+            scripts/selftest.ts \
+            scripts/verify-bettor-integration.ts \
+            scripts/bootstrap-bettor.ts \
+            --target=bun \
+            --outdir=/tmp/build
+      - run: bun scripts/verify.ts
+      - run: bun scripts/selftest.ts
+      - run: bun scripts/verify-bettor-integration.ts
+      - run: bunx tsc --noEmit

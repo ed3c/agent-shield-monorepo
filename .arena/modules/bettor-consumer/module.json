@@ -1,0 +1,11 @@
+{
+  "schema": "agent-shield/module/v1",
+  "id": "bettor-consumer",
+  "interface_version": "1.0.0",
+  "roots": ["scripts/bootstrap-bettor.ts", "scripts/verify-bettor-integration.ts"],
+  "provides": ["bettor.consumer/v1", "bettor.browser-contract/v2"],
+  "requires": [],
+  "runtime": {"local": "NOT_EXERCISED", "cloud": "NOT_EXERCISED"},
+  "proof": ["bun scripts/verify-bettor-integration.ts"],
+  "external_policy": {"exposed": false, "secrets": "none"}
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "agent-shield/module/v1",
+  "id": "research-orchestrator",
+  "interface_version": "1.1.0",
+  "roots": ["services/research-orchestrator"],
+  "provides": ["research.route/v1"],
+  "requires": ["document.ingest/v1", "bettor.browser-contract/v2"],
+  "runtime": {"local": "SUPPORTED", "cloud": "PARTIAL"},
+  "proof": ["bun scripts/selftest.ts"],
+  "external_policy": {"exposed": false, "secrets": "none"}
+}

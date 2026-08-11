@@ -1,0 +1,11 @@
+{
+  "schema": "agent-shield/module/v1",
+  "id": "product-adapters",
+  "interface_version": "1.0.0",
+  "roots": ["apps/mobile-app", "apps/web-dashboard", "services/mobile-automation"],
+  "provides": ["product.mobile/v1", "product.dashboard/v1", "product.automation/v1"],
+  "requires": ["runtime.provider/v1"],
+  "runtime": {"local": "NOT_EXERCISED", "cloud": "NOT_IMPLEMENTED"},
+  "proof": ["bun scripts/selftest.ts"],
+  "external_policy": {"exposed": false, "secrets": "host-only"}
+}
