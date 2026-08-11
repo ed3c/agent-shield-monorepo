@@ -1,0 +1,77 @@
+{
+  "schema": "agent-shield/module-release/v1",
+  "release": "agent-shield-module-set@0.1.0",
+  "runtime": "bun-typescript",
+  "modules": [
+    {
+      "id": "bettor-consumer",
+      "interface_version": "1.0.0",
+      "manifest_sha256": "f823aac9c063b35fad7b90e13c9b7e4b741190a4fb741f618dce54a6c8469e81",
+      "roots": ["scripts/bootstrap-bettor.ts", "scripts/verify-bettor-integration.ts"],
+      "provides": ["bettor.browser-contract/v2", "bettor.consumer/v1"],
+      "requires": [],
+      "runtime": {"local": "NOT_EXERCISED", "cloud": "NOT_EXERCISED"},
+      "external_exposed": false
+    },
+    {
+      "id": "document-ingest",
+      "interface_version": "1.1.0",
+      "manifest_sha256": "7842c44f97a40ecff065c5b9150820094cb211b2bd514974cac02298441bb9df",
+      "roots": ["services/document-ingest"],
+      "provides": ["document.ingest/v1"],
+      "requires": [],
+      "runtime": {"local": "SUPPORTED", "cloud": "NOT_IMPLEMENTED"},
+      "external_exposed": false
+    },
+    {
+      "id": "product-adapters",
+      "interface_version": "1.0.0",
+      "manifest_sha256": "e0c906da0b0d7fb1f1ae858c647fa60514abd1a536d820b2170a384658191e6b",
+      "roots": ["apps/mobile-app", "apps/web-dashboard", "services/mobile-automation"],
+      "provides": ["product.automation/v1", "product.dashboard/v1", "product.mobile/v1"],
+      "requires": ["runtime.provider/v1"],
+      "runtime": {"local": "NOT_EXERCISED", "cloud": "NOT_IMPLEMENTED"},
+      "external_exposed": false
+    },
+    {
+      "id": "research-orchestrator",
+      "interface_version": "1.1.0",
+      "manifest_sha256": "13e9c1ef93f7fa73c10e36972c17f6c418186d54fe02b5a4252eff3fc489458d",
+      "roots": ["services/research-orchestrator"],
+      "provides": ["research.route/v1"],
+      "requires": ["bettor.browser-contract/v2", "document.ingest/v1"],
+      "runtime": {"local": "SUPPORTED", "cloud": "PARTIAL"},
+      "external_exposed": false
+    },
+    {
+      "id": "runtime-fabric",
+      "interface_version": "1.1.0",
+      "manifest_sha256": "f6d4bb9bab6198396b3492fe240f4577e58c9d54d16e29b3dfa46fd6f681d16a",
+      "roots": ["services/runtime-fabric"],
+      "provides": ["runtime.provider/v1"],
+      "requires": [],
+      "runtime": {"local": "SUPPORTED", "cloud": "NOT_IMPLEMENTED"},
+      "external_exposed": false
+    },
+    {
+      "id": "security-boundaries",
+      "interface_version": "1.0.0",
+      "manifest_sha256": "6b1d39f30306e6a92fb6298d4ed75506589ec54f2eac4628d905b6876893c6b5",
+      "roots": ["services/intent-ledger", "services/security-boundaries"],
+      "provides": ["security.intent/v1", "security.provider-boundaries/v1"],
+      "requires": [],
+      "runtime": {"local": "PARTIAL", "cloud": "NOT_IMPLEMENTED"},
+      "external_exposed": false
+    }
+  ],
+  "contracts": [
+    {"path": "packages/contracts/src/index.ts", "sha256": "e1358a9db144ce3c9b44161ddc0c0df9b0aa454c7ff53f1d001bec71642a6f0b"},
+    {"path": "data/status/integration.json", "sha256": "fec8da0a138ebd997a11655974f6737813c2c69c9affe36faa0711b55b4345b5"},
+    {"path": "AGENTS.md", "sha256": "5646740571ed40e7593b2322f32d05349d4d05ebe95dc2f8cf4b80cf1e5d379d"},
+    {"path": "CLAUDE.md", "sha256": "a823971c5216dbacab92823ef66b06333313800f20fa63bcecd98cf911d841c7"},
+    {"path": "ARCHITECTURE.md", "sha256": "3b9f391ac50dcffe888b54180a1de7f816ff90c5b13f5276b88a6aae7d96aa0a"}
+  ],
+  "live_state": "NOT_EXERCISED",
+  "note": "The manifest binds portable module and contract bytes. Git commit/tree, origin reachability, bettor consumption, providers, devices, browsers, hardware, and settlement require separate receipts.",
+  "content_sha256": "fc57cedbb69e137683bb86ef97433ab2de3030ebf6cbc7d8e9d09c658a65c1a5"
+}
