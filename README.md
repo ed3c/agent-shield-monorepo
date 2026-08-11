@@ -1,18 +1,48 @@
 # Agent Shield Monorepo
 
-A Bun + TypeScript modular product skeleton and the first external acceptance consumer for `bettor-arena`.
+Agent Shield is a Bun + TypeScript modular product skeleton and the first external acceptance consumer for `bettor-arena`.
 
-The repository turns the broad source architecture into explicit modules and honest evidence states. It does not promote a PDF claim, package presence, browser login, cloud account, hardware capability, or contract idea into a production guarantee.
+The repository converts a broad source architecture into explicit module contracts, staged provider boundaries, and falsifiable evidence states. The current delivery phase is **documentation and Git governance first**: no new runtime, product, wallet, browser, mobile, hardware, or settlement implementation is admitted until the documentation stack is reviewed.
 
-## Implemented structural phases
+## Rules without examples
 
-1. **Module and context foundation** — `AGENTS.md`, `CLAUDE.md`, architecture SSOT, typed contracts, module manifests, and CI.
-2. **Deterministic domain kernel** — content-addressed text ingest, research routing, bounded intent decisions, and typed receipts.
-3. **Stable product and SDK ports** — immutable bettor MCP subject, web/mobile state contracts, and public TypeScript functions.
-4. **Runtime provider contracts** — local disposable execution is exercised; Apple Container and OpenShell/tmux are `NOT_EXERCISED`; E2B and Cloudflare Computer providers are `NOT_IMPLEMENTED`.
-5. **Product adapter contracts** — Expo, Maestro, WDA, scrcpy, browser, and dashboard adapters remain separate from device/session evidence.
-6. **Security boundaries** — MPC/TSS, Secure Enclave/NFC, smart account, ledger anchor, and settlement are typed but `NOT_IMPLEMENTED` until audited native providers and adversarial receipts exist.
-7. **Bettor integration** — a Bun driver can ask an exact bettor release to transactionally generate Claude Code, Codex CLI, selected Skills, consumer lock, and the Bun stateless MCP launcher.
+1. Bun + TypeScript are the primary future control-plane and service stack.
+2. Modules communicate through typed contracts, packets, artifacts, or receipts—not private implementation paths.
+3. `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, and `NOT_EXERCISED` are different states.
+4. Source text and architecture diagrams never prove a live capability.
+5. Secrets, browser profiles, device sessions, host paths, and mutable owner checkouts never enter Git or receipts.
+6. Every issue and PR defines its evals and negative controls before implementation.
+7. Stacked PRs use one writer per branch, isolated worktrees, and explicit parentage.
+8. Source repair uses Git ancestry and content identity; timestamp-based newest-wins is forbidden.
+9. Human Admit owns merge, production promotion, key authority, and high-risk settlement.
+
+## Harness narratives
+
+- **Source-claim Harness:** a document may describe E2B, OpenShell, mobile automation, or MPC/TSS. The Harness preserves that proposal, checks the repository contract, and refuses to report `PASS` without a matching receipt.
+- **Git-stack Harness:** a Worker Agent receives one issue, one branch lease, allowed paths, and eval IDs. It rebases its Git Town stack non-interactively; a conflict creates a failure receipt and a new recovery assignment rather than an automatic semantic merge.
+- **Runtime Harness:** local disposable execution can be tested independently while cloud providers, signed-in browsers, simulators, and devices retain their own unavailable or unexercised states.
+- **Bettor-consumer Harness:** an exact bettor release may generate Claude Code, Codex CLI, Skill, lock, and MCP projections. Missing private checkout or live subscription evidence remains `NOT_EXERCISED`.
+
+Detailed Harness and eval documentation is tracked in [issue #22](https://github.com/ed3c/agent-shield-monorepo/issues/22).
+
+## Documentation map
+
+Start with [`AGENTS.md`](AGENTS.md), then follow [`docs/INDEX.md`](docs/INDEX.md).
+
+| Need | Canonical document |
+|---|---|
+| Project intent and current phase | [`docs/intent/PROJECT_INTENT.md`](docs/intent/PROJECT_INTENT.md) |
+| Source-derived claims and locators | [`docs/sources/SOURCE_LEDGER.md`](docs/sources/SOURCE_LEDGER.md) |
+| Architecture planes | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| Implementation phases and evidence boundary | [`docs/architecture/IMPLEMENTATION_PHASES.md`](docs/architecture/IMPLEMENTATION_PHASES.md) |
+| Intent-to-issue/eval/status index | [`docs/traceability/TRACEABILITY_INDEX.md`](docs/traceability/TRACEABILITY_INDEX.md) |
+| Documentation-first stacked-PR epic | [issue #11](https://github.com/ed3c/agent-shield-monorepo/issues/11) |
+
+The nearest directory `README.md` is the local ownership contract. Planned modules remain in architecture documents until an implementation issue admits their paths.
+
+## Existing structural baseline
+
+The merged baseline contains six modules: bettor consumer, document ingest, research orchestration, runtime fabric, product adapters, and security boundaries. It also contains a deterministic module release manifest. These artifacts prove portable contract bytes; they do not prove cloud, browser, device, hardware, or chain execution.
 
 ## Verify
 
@@ -20,26 +50,26 @@ The repository turns the broad source architecture into explicit modules and hon
 bun run check:all
 ```
 
-Without a generated `.arena/consumer.lock.json`, bettor integration reports `NOT_EXERCISED` and exits successfully. It never reports PASS from absence.
+Without a generated `.arena/consumer.lock.json`, bettor integration reports `NOT_EXERCISED` and exits successfully. Absence is never converted into PASS.
 
 ## Initialize through bettor-arena
 
-The bettor checkout must contain the merged Phase 5/6 Bun implementation and must be clean.
+The bettor checkout must contain the merged Bun implementation, be clean, and be named by an exact 40-hex commit.
 
 ```bash
 bun scripts/bootstrap-bettor.ts \
   --bettor-root /path/to/bettor-arena \
   --commit <exact-40-hex-commit>
 
-# Review the content-addressed plan, then apply it.
+# Review the content-addressed plan before applying it.
 bun scripts/bootstrap-bettor.ts \
   --bettor-root /path/to/bettor-arena \
   --commit <exact-40-hex-commit> \
   --apply
 ```
 
-Use `--embedded` for a self-contained no-hardlink bettor clone. Remote mode uses the host-owned `BETTOR_ARENA_ROOT`; the host path is never committed.
+Use `--embedded` only for a self-contained no-hardlink bettor clone. Remote mode uses host-owned configuration; host paths are not committed.
 
-## Source architecture boundary
+## Evidence boundary
 
-The source document proposes E2B/Firecracker sandboxes, OpenShell/tmux, cloud/local hot sync, PDF parsing, mobile simulators, MPC/TSS, wallets, and settlement. Those proposals are represented as provider contracts and staged modules. Live provider, hardware, chain, Claude/Codex, Forgejo, and signed-in browser evidence remains environment-owned and is never inferred by CI.
+The supplied architecture source proposes cloud/local sandboxes, terminal persistence, hot sync, PDF parsing, mobile projection, automated testing, MPC/TSS, hardware brakes, wallets, ledgers, and settlement. The repository records those ideas as source proposals, typed boundaries, or future issues. Live provider, hardware, chain, Claude/Codex, Forgejo, and signed-in browser evidence remains environment-owned.
