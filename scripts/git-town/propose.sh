@@ -19,7 +19,7 @@ usage: propose.sh --title TEXT --body-file PATH [--draft]
 
 Derives the direct PR base from Git Town, validates the eval-first body,
 creates or updates the GitHub PR, and writes a receipt under the common Git
-directory. Requires the same task metadata as doctor.sh.
+directory. The branch must already be safely published.
 EOF
       exit 0
       ;;
@@ -30,11 +30,12 @@ done
 
 [[ -n "$title" ]] || die 64 "--title is required"
 [[ -f "$body_file" ]] || die 64 "--body-file must name an existing file"
-for marker in '## Issue and stack' '## Evals' '## Evidence boundary' '## Stacked-PR checks'; do
+for marker in '## Issue and stack' '## Evals' '## Evidence boundary' '## Stacked-PR checks' '## Merge/handoff'; do
   grep -Fq "$marker" "$body_file" || die 64 "PR body is missing required section: $marker"
 done
-
 grep -Eqi 'negative control|negative/mutation' "$body_file" || die 64 "PR body is missing negative-control text"
+grep -Eqi 'allowed paths|path lease' "$body_file" || die 64 "PR body is missing path-lease text"
+grep -Eqi 'rollback|revert|handoff' "$body_file" || die 64 "PR body is missing rollback/handoff text"
 
 require_command git
 require_command git-town
@@ -42,9 +43,11 @@ require_command gh
 root="$(repo_root)"
 cd "$root"
 require_team_config
+require_git_town_license
 version="$(require_git_town_version)"
 require_clean_worktree
 require_no_git_operation
+require_not_blocked
 require_task_identity
 acquire_branch_lease
 
@@ -53,9 +56,8 @@ branch="$(current_branch)"
 parent="$(parent_for_branch "$branch")"
 head="$(current_commit)"
 
-# Proposals are created only after the exact branch is present at origin.
 remote_head="$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')"
-[[ "$remote_head" == "$head" ]] || die 64 "origin/$branch does not equal local HEAD; synchronize the stack first"
+[[ "$remote_head" == "$head" ]] || die 64 "origin/$branch does not equal local HEAD; publish the stack safely first"
 
 existing_url="$(gh pr view "$branch" --json url --jq .url 2>/dev/null || true)"
 if [[ -n "$existing_url" ]]; then
@@ -99,4 +101,5 @@ release_branch_lease
   printf '  "finished_at": "%s"\n' "$(utc_now)"
   printf '}\n'
 } > "$receipt_file"
+chmod 600 "$receipt_file"
 log "receipt=$receipt_file pr=$pr_url"
