@@ -1,0 +1,48 @@
+name: Git Town governance
+
+on:
+  pull_request:
+    paths:
+      - ".git-town.toml"
+      - "CONTRIBUTING.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - ".github/workflows/git-town-governance.yml"
+      - "docs/git/**"
+      - "scripts/git-town/**"
+      - "third_party/git-town/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".git-town.toml"
+      - "CONTRIBUTING.md"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - ".github/workflows/git-town-governance.yml"
+      - "docs/git/**"
+      - "scripts/git-town/**"
+      - "third_party/git-town/**"
+
+permissions:
+  contents: read
+
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Bash and fail-closed Git Town policy
+        shell: bash
+        run: bash scripts/git-town/selftest.sh
+
+  live-integration-status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve runtime evidence boundary
+        shell: bash
+        run: |
+          printf '%s\n' 'Git Town 24.0.0 executable integration: NOT_EXERCISED'
+          printf '%s\n' 'Reason: binary checksum, provenance, SBOM/transitive-license, and trusted acquisition are host-owned admission evidence.'
+          printf '%s\n' 'Run scripts/git-town/selftest.sh --integration only in an admitted Worker image.'
