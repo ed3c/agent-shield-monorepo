@@ -26,6 +26,12 @@ git_common_dir() {
   git -C "$root" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || die 64 "cannot resolve common Git directory"
 }
 
+git_worktree_dir() {
+  local root
+  root="$(repo_root)"
+  git -C "$root" rev-parse --path-format=absolute --git-dir 2>/dev/null || die 64 "cannot resolve worktree Git directory"
+}
+
 git_path() {
   local root
   root="$(repo_root)"
@@ -61,11 +67,19 @@ sha256_file() {
   fi
 }
 
+sanitize_branch() {
+  printf '%s' "$1" | tr '/:@ ' '____' | tr -cd '[:alnum:]_.-'
+}
+
 require_clean_worktree() {
   local root status
   root="$(repo_root)"
   status="$(git -C "$root" status --porcelain=v1 --untracked-files=normal)"
   [[ -z "$status" ]] || die 64 "worktree is dirty; unattended workers do not auto-stash"
+}
+
+require_linked_worktree() {
+  [[ "$(git_worktree_dir)" != "$(git_common_dir)" ]] || die 64 "operation requires an isolated linked worktree"
 }
 
 require_no_git_operation() {
@@ -76,6 +90,20 @@ require_no_git_operation() {
   [[ ! -d "$(git_path rebase-merge)" ]] || die 64 "interactive/merge rebase is already in progress"
   [[ ! -d "$(git_path rebase-apply)" ]] || die 64 "apply rebase is already in progress"
   [[ -z "$(git diff --name-only --diff-filter=U)" ]] || die 64 "unmerged paths exist"
+}
+
+require_safe_remote_url() {
+  local url
+  url="$(git remote get-url origin 2>/dev/null || true)"
+  [[ -n "$url" ]] || die 64 "origin remote is absent"
+  case "$url" in
+    http://*|https://*)
+      [[ ! "$url" =~ ^https?://[^/@]+:[^/@]+@ ]] || die 64 "origin URL embeds credentials"
+      [[ "$url" != *"?"* ]] || die 64 "origin URL contains a query string and is not portable receipt-safe"
+      ;;
+    ssh://*|git@*:*|file://*|/*) ;;
+    *) die 64 "unsupported origin URL form: $url" ;;
+  esac
 }
 
 version_number() {
@@ -114,6 +142,7 @@ require_team_config() {
   config="$root/.git-town.toml"
   [[ -f "$config" ]] || die 64 "missing team config: .git-town.toml"
   grep -Eq '^interactive = false$' "$config" || die 64 "Git Town interactivity must be disabled"
+  grep -Eq '^main = "main"$' "$config" || die 64 "main branch policy must be explicit"
   grep -Eq '^share-new-branches = "no"$' "$config" || die 64 "new branches must require explicit publication"
   grep -Eq '^auto-sync = false$' "$config" || die 64 "Bash wrappers must own synchronization"
   grep -Eq '^auto-resolve = false$' "$config" || die 64 "automatic conflict resolution must be disabled"
@@ -148,17 +177,25 @@ require_task_packet() {
   [[ "$TASK_BRANCH" != "main" ]] || die 64 "Worker Agents may not own main"
 }
 
+load_task_packet() {
+  if [[ -z "${TASK_BRANCH:-}" ]]; then
+    local branch task_file
+    branch="$(current_branch)"
+    task_file="$(git_common_dir)/agent-shield/tasks/$(sanitize_branch "$branch").env"
+    [[ -f "$task_file" ]] || die 64 "host-owned task packet is absent: $task_file"
+    # shellcheck disable=SC1090
+    source "$task_file"
+  fi
+  require_task_packet
+}
+
 require_task_identity() {
   local branch parent
-  require_task_packet
+  load_task_packet
   branch="$(current_branch)"
   [[ "$branch" == "$TASK_BRANCH" ]] || die 64 "current branch $branch differs from task branch $TASK_BRANCH"
   parent="$(parent_for_branch "$branch")"
   [[ "$parent" == "$TASK_PARENT" ]] || die 64 "Git Town parent $parent differs from task parent $TASK_PARENT"
-}
-
-sanitize_branch() {
-  printf '%s' "$1" | tr '/:@ ' '____' | tr -cd '[:alnum:]_.-'
 }
 
 LEASE_DIR=""
@@ -206,10 +243,6 @@ log_directory() {
   mkdir -p "$dir"
   chmod 700 "$dir" 2>/dev/null || true
   printf '%s' "$dir"
-}
-
-blocked_marker() {
-  printf '%s/agent-shield/BLOCKED\n' "$(git_path .)"
 }
 
 mark_blocked() {
