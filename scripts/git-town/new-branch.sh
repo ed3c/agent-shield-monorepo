@@ -29,9 +29,9 @@ usage: new-branch.sh --branch NAME --parent NAME --issue N \
   --evals ID[,ID...] --allowed-paths GLOB[,GLOB...] [--worker ID] \
   [--dry-run | --publish]
 
-Run inside an isolated, clean worktree currently checked out on the intended
-parent. Branch creation is local by default. Publishing requires --publish and
-ALLOW_GIT_TOWN_PUSH=1.
+Run inside an isolated, clean linked worktree currently checked out on the
+intended parent. Branch creation is local by default. Publishing requires
+--publish and ALLOW_GIT_TOWN_PUSH=1.
 EOF
       exit 0
       ;;
@@ -55,6 +55,8 @@ require_command git
 require_command git-town
 root="$(repo_root)"
 cd "$root"
+require_linked_worktree
+require_safe_remote_url
 require_team_config
 require_git_town_license
 version="$(require_git_town_version)"
