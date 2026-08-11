@@ -19,7 +19,8 @@ usage: propose.sh --title TEXT --body-file PATH [--draft]
 
 Derives the direct PR base from Git Town, validates the eval-first body,
 creates or updates the GitHub PR, and writes a receipt under the common Git
-directory. The branch must already be safely published.
+directory. The branch must already be safely published from an isolated linked
+worktree with a host-owned task packet.
 EOF
       exit 0
       ;;
@@ -42,6 +43,8 @@ require_command git-town
 require_command gh
 root="$(repo_root)"
 cd "$root"
+require_linked_worktree
+require_safe_remote_url
 require_team_config
 require_git_town_license
 version="$(require_git_town_version)"
