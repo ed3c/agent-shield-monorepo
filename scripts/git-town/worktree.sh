@@ -12,6 +12,7 @@ evals=""
 allowed_paths=""
 worker="${WORKER_ID:-unassigned}"
 dry_run=false
+publish=false
 
 while (($#)); do
   case "$1" in
@@ -23,14 +24,16 @@ while (($#)); do
     --allowed-paths) allowed_paths="${2:-}"; shift ;;
     --worker) worker="${2:-}"; shift ;;
     --dry-run) dry_run=true ;;
+    --publish) publish=true ;;
     -h|--help)
       cat <<'EOF'
 usage: worktree.sh --branch NAME --parent NAME --worktree PATH --issue N \
-  --evals ID[,ID...] --allowed-paths GLOB[,GLOB...] [--worker ID] [--dry-run]
+  --evals ID[,ID...] --allowed-paths GLOB[,GLOB...] [--worker ID] \
+  [--dry-run | --publish]
 
-Creates a new isolated worktree and feature branch at the exact local parent,
-sets explicit Git Town parentage, pushes the branch, and records the task packet
-under the common Git directory.
+Creates a new isolated linked worktree and local feature branch at the exact
+parent, sets explicit Git Town parentage, and records the task packet under the
+common Git directory. Publishing requires --publish and ALLOW_GIT_TOWN_PUSH=1.
 EOF
       exit 0
       ;;
@@ -45,13 +48,19 @@ done
 [[ "$issue" =~ ^[0-9]+$ ]] || die 64 "--issue must be numeric"
 [[ -n "$evals" && -n "$allowed_paths" ]] || die 64 "evals and allowed paths are required"
 [[ "$branch" != "main" && "$branch" != "$parent" ]] || die 64 "unsafe branch relationship"
+[[ ! ("$dry_run" == true && "$publish" == true) ]] || die 64 "--dry-run and --publish are mutually exclusive"
+if [[ "$publish" == true && "${ALLOW_GIT_TOWN_PUSH:-0}" != "1" ]]; then
+  die 64 "--publish requires ALLOW_GIT_TOWN_PUSH=1"
+fi
 
 require_command git
 require_command git-town
 root="$(repo_root)"
 cd "$root"
 require_team_config
+require_git_town_license
 version="$(require_git_town_version)"
+require_clean_worktree
 require_no_git_operation
 [[ ! -e "$worktree" ]] || die 64 "worktree path already exists: $worktree"
 if git show-ref --verify --quiet "refs/heads/$branch" || git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
@@ -64,17 +73,14 @@ fi
 [[ -n "$parent_commit" ]] || die 64 "parent commit is absent: $parent"
 
 common="$(git_common_dir)"
-lock_root="$common/agent-shield/leases"
-mkdir -p "$lock_root"
-LEASE_DIR="$lock_root/$(sanitize_branch "$branch").lock"
-mkdir "$LEASE_DIR" 2>/dev/null || die 64 "branch lease already exists: $LEASE_DIR"
-printf '%s\n' "$worker" > "$LEASE_DIR/worker"
-printf '%s\n' "$$" > "$LEASE_DIR/pid"
-trap release_branch_lease EXIT INT TERM
+acquire_named_lease "branch-$branch"
 
 if [[ "$dry_run" == true ]]; then
   printf 'git worktree add -b %q %q %q\n' "$branch" "$worktree" "$parent_commit"
-  printf '(cd %q && git town feature %q && git town set-parent %q --non-interactive --no-auto-resolve && git push -u origin %q)\n' "$worktree" "$branch" "$parent" "$branch"
+  printf '(cd %q && git town feature %q && git town set-parent %q --non-interactive --no-auto-resolve)\n' "$worktree" "$branch" "$parent"
+  if [[ "$publish" == true ]]; then
+    printf 'git -C %q push -u origin %q\n' "$worktree" "$branch"
+  fi
   state="NOT_EXERCISED"
   rc=0
   head="$parent_commit"
@@ -91,14 +97,20 @@ else
   created=true
   (
     cd "$worktree"
+    export GIT_TOWN_INTERACTIVE=false
+    export GIT_TOWN_AUTO_RESOLVE=false
+    export GIT_TOWN_PUSH_HOOK=true
     git town feature "$branch"
     git town set-parent "$parent" --non-interactive --no-auto-resolve
     actual_parent="$(git town config get-parent "$branch")"
     [[ "$actual_parent" == "$parent" ]] || die 64 "Git Town parent $actual_parent differs from $parent"
-    git push -u origin "$branch"
+    if [[ "$publish" == true ]]; then
+      git push -u origin "$branch"
+    fi
   )
   task_dir="$common/agent-shield/tasks"
   mkdir -p "$task_dir"
+  chmod 700 "$task_dir" 2>/dev/null || true
   task_file="$task_dir/$(sanitize_branch "$branch").env"
   {
     printf 'WORKER_ID=%q\n' "$worker"
@@ -109,6 +121,7 @@ else
     printf 'TASK_ALLOWED_PATHS=%q\n' "$allowed_paths"
     printf 'WORKTREE_PATH=%q\n' "$worktree"
   } > "$task_file"
+  chmod 600 "$task_file"
   head="$(git -C "$worktree" rev-parse HEAD)"
   state="PASS"
   rc=0
@@ -128,9 +141,9 @@ release_branch_lease
   printf '  "parent": "%s",\n' "$(json_escape "$parent")"
   printf '  "parent_commit": "%s",\n' "$parent_commit"
   printf '  "head": "%s",\n' "$head"
-  printf '  "worktree": "%s",\n' "$(json_escape "$worktree")"
   printf '  "git_town_version": "%s",\n' "$(json_escape "$version")"
   printf '  "dry_run": %s,\n' "$dry_run"
+  printf '  "publish": %s,\n' "$publish"
   printf '  "exit": %s,\n' "$rc"
   printf '  "evals": "%s",\n' "$(json_escape "$evals")"
   printf '  "allowed_paths": "%s",\n' "$(json_escape "$allowed_paths")"
@@ -138,4 +151,5 @@ release_branch_lease
   printf '  "finished_at": "%s"\n' "$(utc_now)"
   printf '}\n'
 } > "$receipt_file"
-log "receipt=$receipt_file state=$state worktree=$worktree"
+chmod 600 "$receipt_file"
+log "receipt=$receipt_file state=$state branch=$branch"
