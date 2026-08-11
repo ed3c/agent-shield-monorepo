@@ -1,6 +1,10 @@
 name: Materialize Agent Shield bootstrap branch
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/materialize-agent-shield-bootstrap.yml'
   pull_request_target:
     types: [opened, synchronize, reopened]
     paths:
@@ -18,7 +22,7 @@ concurrency:
 
 jobs:
   materialize:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
