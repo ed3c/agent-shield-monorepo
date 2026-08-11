@@ -57,6 +57,7 @@ require_command git
 require_command git-town
 root="$(repo_root)"
 cd "$root"
+require_safe_remote_url
 require_team_config
 require_git_town_license
 version="$(require_git_town_version)"
@@ -77,10 +78,7 @@ acquire_named_lease "branch-$branch"
 
 if [[ "$dry_run" == true ]]; then
   printf 'git worktree add -b %q %q %q\n' "$branch" "$worktree" "$parent_commit"
-  printf '(cd %q && git town feature %q && git town set-parent %q --non-interactive --no-auto-resolve)\n' "$worktree" "$branch" "$parent"
-  if [[ "$publish" == true ]]; then
-    printf 'git -C %q push -u origin %q\n' "$worktree" "$branch"
-  fi
+  printf '(cd %q && git town set-parent %q --non-interactive --no-auto-resolve)\n' "$worktree" "$parent"
   state="NOT_EXERCISED"
   rc=0
   head="$parent_commit"
@@ -100,7 +98,8 @@ else
     export GIT_TOWN_INTERACTIVE=false
     export GIT_TOWN_AUTO_RESOLVE=false
     export GIT_TOWN_PUSH_HOOK=true
-    git town feature "$branch"
+    # branches.default-type=feature classifies this newly created branch;
+    # set-parent makes the stack relation explicit without an invalid hidden command.
     git town set-parent "$parent" --non-interactive --no-auto-resolve
     actual_parent="$(git town config get-parent "$branch")"
     [[ "$actual_parent" == "$parent" ]] || die 64 "Git Town parent $actual_parent differs from $parent"
