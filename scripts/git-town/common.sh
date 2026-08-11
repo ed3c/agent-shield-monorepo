@@ -84,21 +84,28 @@ version_number() {
   if [[ -z "$output" ]] && command -v git-town >/dev/null 2>&1; then
     output="$(git-town --version 2>/dev/null || true)"
   fi
-  version="$(printf '%s\n' "$output" | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n 1 || true)"
-  [[ -n "$version" ]] || die 64 "cannot determine Git Town version"
+  version="$(printf '%s\n' "$output" | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)"
+  [[ -n "$version" ]] || die 64 "cannot determine exact Git Town version"
   printf '%s' "$version"
 }
 
 require_git_town_version() {
   local required actual
-  required="${GIT_TOWN_REQUIRED_VERSION:-24.0}"
+  required="${GIT_TOWN_REQUIRED_VERSION:-24.0.0}"
+  [[ "$required" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die 64 "required Git Town version must be exact semver"
   actual="$(version_number)"
-  if [[ "$required" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    [[ "$actual" == "$required" ]] || die 64 "Git Town $actual does not equal required exact version $required"
-  else
-    [[ "$actual" == "$required" || "$actual" == "$required".* ]] || die 64 "Git Town $actual is outside admitted line $required"
-  fi
+  [[ "$actual" == "$required" ]] || die 64 "Git Town $actual does not equal required version $required"
   printf '%s' "$actual"
+}
+
+require_git_town_license() {
+  local root license expected actual
+  root="$(repo_root)"
+  license="$root/third_party/git-town/LICENSE"
+  expected="7bc26795871e4f7f5b89aaa68cd0318283530abaf0e0b4f72a0ce88fa7d0ff7d"
+  [[ -f "$license" ]] || die 64 "vendored Git Town license is absent"
+  actual="$(sha256_file "$license")"
+  [[ "$actual" == "$expected" ]] || die 64 "vendored Git Town license digest mismatch"
 }
 
 require_team_config() {
@@ -107,10 +114,15 @@ require_team_config() {
   config="$root/.git-town.toml"
   [[ -f "$config" ]] || die 64 "missing team config: .git-town.toml"
   grep -Eq '^interactive = false$' "$config" || die 64 "Git Town interactivity must be disabled"
+  grep -Eq '^share-new-branches = "no"$' "$config" || die 64 "new branches must require explicit publication"
+  grep -Eq '^auto-sync = false$' "$config" || die 64 "Bash wrappers must own synchronization"
+  grep -Eq '^auto-resolve = false$' "$config" || die 64 "automatic conflict resolution must be disabled"
   grep -Eq '^feature-strategy = "rebase"$' "$config" || die 64 "feature sync strategy must be rebase"
   grep -Eq '^perennial-strategy = "ff-only"$' "$config" || die 64 "perennial sync strategy must be ff-only"
-  grep -Eq '^push-branches = true$' "$config" || die 64 "branch pushing must be enabled"
+  grep -Eq '^push-branches = false$' "$config" || die 64 "publication must be explicit"
   grep -Eq '^push-hook = true$' "$config" || die 64 "pre-push hooks must remain enabled"
+  grep -Eq '^tags = false$' "$config" || die 64 "unattended tag synchronization must be disabled"
+  grep -Eq '^upstream = false$' "$config" || die 64 "unattended upstream synchronization must be disabled"
   if grep -Eqi '(token|password|secret|private[_-]?key)[[:space:]]*=' "$config"; then
     die 64 "team config contains credential-like material"
   fi
@@ -129,7 +141,10 @@ require_task_packet() {
   for name in WORKER_ID ISSUE_NUMBER TASK_BRANCH TASK_PARENT TASK_EVALS TASK_ALLOWED_PATHS; do
     [[ -n "${!name:-}" ]] || die 64 "task metadata is absent: $name"
   done
+  [[ "$WORKER_ID" =~ ^[A-Za-z0-9._-]+$ ]] || die 64 "WORKER_ID contains unsafe characters"
   [[ "$ISSUE_NUMBER" =~ ^[0-9]+$ ]] || die 64 "ISSUE_NUMBER must be numeric"
+  [[ "$TASK_BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]] || die 64 "TASK_BRANCH contains unsafe characters"
+  [[ "$TASK_PARENT" =~ ^[A-Za-z0-9._/-]+$ ]] || die 64 "TASK_PARENT contains unsafe characters"
   [[ "$TASK_BRANCH" != "main" ]] || die 64 "Worker Agents may not own main"
 }
 
@@ -151,27 +166,37 @@ release_branch_lease() {
   if [[ -n "${LEASE_DIR:-}" && -d "$LEASE_DIR" ]]; then
     rm -rf "$LEASE_DIR"
   fi
+  LEASE_DIR=""
 }
 
-acquire_branch_lease() {
-  local common branch lock_root
+acquire_named_lease() {
+  local name="$1" common lock_root
   common="$(git_common_dir)"
-  branch="$(sanitize_branch "$(current_branch)")"
   lock_root="$common/agent-shield/leases"
   mkdir -p "$lock_root"
-  LEASE_DIR="$lock_root/$branch.lock"
+  LEASE_DIR="$lock_root/$(sanitize_branch "$name").lock"
   if ! mkdir "$LEASE_DIR" 2>/dev/null; then
-    die 64 "branch lease already exists: $LEASE_DIR"
+    die 64 "lease already exists: $LEASE_DIR"
   fi
   printf '%s\n' "${WORKER_ID:-unassigned}" > "$LEASE_DIR/worker"
   printf '%s\n' "$$" > "$LEASE_DIR/pid"
   trap release_branch_lease EXIT INT TERM
 }
 
+acquire_branch_lease() {
+  acquire_named_lease "branch-$(current_branch)"
+}
+
+acquire_sync_lease() {
+  # Stack synchronization can rewrite several refs, so it is serialized repo-wide.
+  acquire_named_lease "repository-sync"
+}
+
 receipt_directory() {
   local dir
   dir="$(git_common_dir)/agent-shield/receipts"
   mkdir -p "$dir"
+  chmod 700 "$dir" 2>/dev/null || true
   printf '%s' "$dir"
 }
 
@@ -179,7 +204,24 @@ log_directory() {
   local dir
   dir="$(git_common_dir)/agent-shield/logs"
   mkdir -p "$dir"
+  chmod 700 "$dir" 2>/dev/null || true
   printf '%s' "$dir"
+}
+
+blocked_marker() {
+  printf '%s/agent-shield/BLOCKED\n' "$(git_path .)"
+}
+
+mark_blocked() {
+  local marker
+  marker="$(git_path agent-shield-BLOCKED)"
+  printf '%s\n' "$1" > "$marker"
+}
+
+require_not_blocked() {
+  local marker
+  marker="$(git_path agent-shield-BLOCKED)"
+  [[ ! -e "$marker" ]] || die 64 "worktree is blocked pending explicit recovery: $marker"
 }
 
 utc_now() {
