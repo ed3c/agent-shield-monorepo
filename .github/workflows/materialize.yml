@@ -1,5 +1,6 @@
 name: Materialize repository bootstrap
 
+# One-shot staging materializer. The extracted repository does not retain this workflow.
 on:
   push:
     branches:
