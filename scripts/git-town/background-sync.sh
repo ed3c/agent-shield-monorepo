@@ -12,7 +12,8 @@ usage:
   background-sync.sh stop
 
 Runs repeated one-shot sync-stack.sh calls from the current isolated linked
-worktree. Publishing requires ALLOW_GIT_TOWN_PUSH=1. Any conflict, timeout,
+worktree. Task metadata is loaded from the host-owned packet under the common
+Git directory. Publishing requires ALLOW_GIT_TOWN_PUSH=1. Any conflict, timeout,
 dirty state, missing parent, or failed push stops the loop and leaves a receipt.
 EOF
 }
@@ -36,14 +37,13 @@ done
 require_command git
 root="$(repo_root)"
 cd "$root"
-require_task_packet
+require_linked_worktree
+require_safe_remote_url
+load_task_packet
 branch="$(current_branch)"
 [[ "$branch" == "$TASK_BRANCH" ]] || die 64 "current branch differs from TASK_BRANCH"
 
-worktree_git_dir="$(git rev-parse --path-format=absolute --git-dir)"
 common_git_dir="$(git_common_dir)"
-[[ "$worktree_git_dir" != "$common_git_dir" ]] || die 64 "background sync requires an isolated linked worktree"
-
 safe_branch="$(sanitize_branch "$branch")"
 state_dir="$common_git_dir/agent-shield/background"
 mkdir -p "$state_dir"
