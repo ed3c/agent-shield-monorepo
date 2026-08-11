@@ -1,4 +1,4 @@
-# Team-owned Git Town 24.0 configuration.
+# Team-owned Git Town 24.0.0 policy.
 # Local metadata and environment variables may only tighten this policy.
 interactive = false
 
@@ -10,7 +10,8 @@ perennial-regex = "^(main|release/.*)$"
 [create]
 branch-prefix = ""
 new-branch-type = "feature"
-share-new-branches = "push"
+# A Worker must explicitly publish after its issue packet and evals are valid.
+share-new-branches = "no"
 
 [hosting]
 dev-remote = "origin"
@@ -21,15 +22,19 @@ breadcrumb = "stacks"
 breadcrumb-direction = "down"
 
 [ship]
+# `git town ship` remains human-owned; these settings do not authorize Workers.
 delete-tracking-branch = true
 strategy = "api"
 
 [sync]
-auto-sync = true
+# Bash wrappers own synchronization and make every mutation visible.
+auto-sync = false
+auto-resolve = false
 feature-strategy = "rebase"
 perennial-strategy = "ff-only"
 prototype-strategy = "rebase"
-push-branches = true
+# Default is local-only. The admitted wrapper adds --push only with two explicit guards.
+push-branches = false
 push-hook = true
 tags = false
 upstream = false
