@@ -119,8 +119,10 @@ version_number() {
 
 require_git_town_version() {
   local required actual
-  required="${GIT_TOWN_REQUIRED_VERSION:-24.0.0}"
-  [[ "$required" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die 64 "required Git Town version must be exact semver"
+  required="24.0.0"
+  if [[ -n "${GIT_TOWN_REQUIRED_VERSION:-}" && "$GIT_TOWN_REQUIRED_VERSION" != "$required" ]]; then
+    die 64 "GIT_TOWN_REQUIRED_VERSION cannot override the admitted version $required"
+  fi
   actual="$(version_number)"
   [[ "$actual" == "$required" ]] || die 64 "Git Town $actual does not equal required version $required"
   printf '%s' "$actual"
