@@ -1,7 +1,9 @@
-# Agent Shield SDK source boundary
+# Agent Shield SDK private source boundary
 
-This leaf inherits [`../README.md`](../README.md), root `AGENTS.md`, and the `bettor-consumer` module contract. It contains the TypeScript implementation behind the package's public exports.
+This directory inherits [`../README.md`](../README.md). Current source validates an immutable bettor MCP subject only.
 
-Consumers import only through the package entrypoint. Direct imports from private source files, mutable refs, local absolute paths, private loop names, credentials, browser/device sessions, or generic shell surfaces are forbidden.
+```text
+repo/40-hex/tool input → closed validation → portable BettorMcpSubject
+```
 
-Current deterministic validation proves the shape of an immutable bettor MCP subject only. Repository/origin reachability, selected module closure, MCP exposure, Claude/Codex execution, cleanup, and production availability remain separate evidence lanes. Issue #21 / evals `E40.1`–`E40.5` govern this README.
+Consumers use the package public entrypoint. Acquisition, module closure, MCP call, carrier/origin canaries and cleanup belong to issues #65–#75, not this private source.

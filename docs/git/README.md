@@ -1,29 +1,62 @@
-# Git and stacked-PR governance
+# Git Town and Worker governance
 
-This directory defines how humans and Worker Agents create, synchronize, propose, review, and hand off stacked changes. Git commits, trees, refs, PRs, and CI remain canonical; Git Town orchestrates ancestry.
+This directory owns the repository's Git Town policy, stacked-branch method, Worker protocol, and dependency admission narrative. Executable Bash operators live in [`../../scripts/git-town/`](../../scripts/git-town/README.md).
 
-## Canonical documents
+## Git/Worker state machine
 
-- [`GIT_TOWN_ADMISSION.md`](GIT_TOWN_ADMISSION.md) — exact `24.0.0` decision and bounded host-local artifact admission.
-- [`STACKED_PRS.md`](STACKED_PRS.md) — topology, molecular issue design, synchronization, breadcrumbs, and merge order.
-- [`WORKER_PROTOCOL.md`](WORKER_PROTOCOL.md) — isolated worktree, task packet, leases, unattended/background sync, conflict, receipt, and recovery rules.
-- [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md) — contributor-facing summary.
-- [`../../.git-town.toml`](../../.git-town.toml) — team-owned executable configuration.
-- [`../../scripts/git-town/README.md`](../../scripts/git-town/README.md) — Bash operator entrypoints.
-- [`../../third_party/git-town/README.md`](../../third_party/git-town/README.md) — pinned upstream/version/license entrypoint and exact dependency-admission record.
-- [`../traceability/DOCUMENTATION_CONVERGENCE.md`](../traceability/DOCUMENTATION_CONVERGENCE.md) — final merged PR identities, exact-main audit, and post-documentation handoff.
-- [`../licensing/README.md`](../licensing/README.md) — repository-wide dependency admission policy, delivered by issue #17.
+```text
+TASK_PACKET_ABSENT
+  → PACKET_VALIDATED
+  → LINKED_WORKTREE_CREATED
+  → BRANCH/PATH/REPOSITORY_LEASED
+  → DOCTOR_PASS
+  → DRY_RUN_PASS
+  → LOCAL_SYNCED
+  → EVALS_PASS
+  → OPTIONAL_GUARDED_PUBLICATION
+  → PR_PROPOSED
+  → HUMAN_REVIEW
+  → MERGED | REJECTED | RECOVERY_ASSIGNED
+```
 
-## Invariants
+Blocked outcomes include dirty/shared checkout, unsafe origin, missing task/eval/path metadata, wrong parent, lease collision, prompt, timeout, semantic conflict, push disagreement, stale subject, or cleanup failure.
 
-1. Git commit/tree identity is canonical; Git Town does not become source truth.
-2. One branch has one writer and one isolated linked worktree.
-3. One PR has one eval subject, path lease, direct parent, and rollback subject.
-4. Feature branches rebase; main/perennial branches are fast-forward only.
-5. Automatic conflict resolution and implicit publication are disabled.
-6. Trusted publication requires explicit Bash flags and host authorization.
-7. Semantic conflicts, safe-push disagreements, timeouts, and dirty state fail closed.
-8. Background sync delegates to the same bounded wrapper and stops on failure.
-9. Human Admit owns merge, ship, permissions, and release.
-10. No timestamp-based newest-wins source repair.
-11. Every sync and proposal emits inspectable metadata; live dependency evidence is not faked.
+## Data flow
+
+```text
+issue + evals + path lease + exact parent
+  → isolated worktree/branch/task packet
+  → exact Git Town artifact/config
+  → dry-run/no-push sync
+  → eval and mutation receipts
+  → optional two-guard safe publication
+  → PR parentage
+  → Human merge
+```
+
+## Current exact evidence
+
+- admitted executable: Git Town `24.0.0`, host-local macOS arm64 only;
+- GT-LIVE-002 parent-first rebase/publication: `PASS`;
+- GT-LIVE-003 competing public sync/lease serialization: `PASS`;
+- GT-LIVE-004 semantic conflict preservation: `PASS`;
+- GT-LIVE-005 background lifecycle/stop-on-failure: `PASS`;
+- GT-LIVE-006 macOS cleanup/secret-residue package: `PASS`;
+- Linux exact artifact/environment: `ABSENT`;
+- upstream release attestation: `NOT_EXERCISED`;
+- promoted Worker image: `NOT_IMPLEMENTED`.
+
+Git Town execution success proves branch movement only. It cannot proxy implementation evals, PR review, release, provider, security, or production state.
+
+## Molecular implementation use
+
+The Phase 3–6 branch DAG is [`../implementation/STACKED_IMPLEMENTATION_PLAN.md`](../implementation/STACKED_IMPLEMENTATION_PLAN.md). Foundations serialize shared contracts; path-disjoint provider leaves are sibling PRs; convergence branches start from exact merged `main` and own shared registries/status/release.
+
+## Documents
+
+- [`GIT_TOWN_ADMISSION.md`](GIT_TOWN_ADMISSION.md)
+- [`STACKED_PRS.md`](STACKED_PRS.md)
+- [`WORKER_PROTOCOL.md`](WORKER_PROTOCOL.md)
+- [`../../third_party/git-town/README.md`](../../third_party/git-town/README.md)
+
+No Worker may auto-run semantic conflict edits, `continue`, `skip`, `undo`, `ship`, merge, permission widening, Human Admit, release promotion, or production rollback.

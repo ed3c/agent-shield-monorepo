@@ -1,39 +1,72 @@
-# Implementation phases
+# Implementation phases and evidence boundaries
 
-## Phase 0 — Module and context foundation
+The high-level phases below are now decomposed into eval-first terminal issues. Issue numbers and branch names identify planned ownership; they are not implementation evidence.
 
-Bun workspace, TypeScript contracts, Agent entrypoints, module catalog, proof states, and CI.
+## Phase 0 — Module, context, documentation, and Git foundation
+
+Bun workspace, TypeScript contracts, Agent entrypoints, module catalog, proof/evidence states, CI, documentation authority, Git Town policy, isolated Worker worktrees, task packets, branch/path leases, bounded sync, conflict preservation, background lifecycle, and macOS host canaries.
+
+Current Git Town boundary: relevant macOS GT-LIVE-002..005 and macOS part of GT-LIVE-006 PASS for the exact admitted artifact; Linux is `ABSENT`; release attestation `NOT_EXERCISED`; promoted Worker image `NOT_IMPLEMENTED`.
 
 ## Phase 1 — Deterministic domain kernel
 
-Text ingestion, content addressing, research-route selection, intent risk decisions, and append-only ledger facts.
+Local UTF-8 ingestion, content addressing, research-route selection, canonical intent digest/reference threshold, provider/product/security state catalogs, and deterministic receipts. These are exact contract subjects, not external provider executions.
 
 ## Phase 2 — Stable product and SDK ports
 
-SDK subject pinning, web/mobile state contracts, and bounded public functions.
+Immutable bettor subject validation, web/mobile state contracts, bounded public functions, module manifests, integration status, and portable release projection. Product builds, devices, browsers, native security, chain, and live bettor carriers remain separate.
 
 ## Phase 3 — Runtime providers
 
-Local disposable execution is implemented. Apple Container, E2B, OpenShell, tmux, Cloudflare, VFS, and hot-sync are explicit provider contracts. A provider needs an immutable runtime profile and live receipt before `PASS`.
+Foundation [#38](https://github.com/ed3c/agent-shield-monorepo/issues/38); Apple Container #39; E2B #40; OpenShell #41; tmux/PTY #42; local/cloud exchange #43; convergence #44.
 
-## Phase 4 — Product adapters
+```text
+resolve → admit → materialize → ready → run → collect → clean → complete
+```
 
-Expo, Next.js, Maestro, WDA, scrcpy, Playwright, and signed-in browser adapters are separately classified. No simulator, device, or browser session is inferred from package presence.
+Local/cloud/hybrid routes, policy, PTY, artifact, cleanup, performance, cost and licensing are independent evidence lanes.
 
-## Phase 5 — Security and settlement boundaries
+## Phase 4 — Product and mobile automation
 
-MPC/TSS, Secure Enclave/NFC, smart-account, ledger anchoring, and settlement are typed capability boundaries with deterministic request validation. Native cryptography, hardware, and chain settlement remain `NOT_IMPLEMENTED` until dedicated providers and adversarial evidence exist.
+Foundation [#45](https://github.com/ed3c/agent-shield-monorepo/issues/45); dashboard #46; terminal #47; Expo #48 → In-App bridge #49; Maestro #50; WDA #51; scrcpy #52; convergence #53.
 
-## Phase 6 — Bettor integration
+```text
+action validate → authenticate → risk route → execute → observe → render/receipt
+```
 
-The repo can ask bettor-arena to transactionally generate Claude Code, Codex CLI, Skill requirements, consumer lock, and a Bun/TypeScript stateless MCP launcher for an exact commit. Cross-repository live initialization remains `NOT_EXERCISED` until the private bettor checkout is available to the trusted host.
+Platform, simulator/device, automation assertion, projection, store, cloud and cleanup states remain distinct.
 
-## Post-documentation admission order
+## Phase 5 — Security, hardware, and testnet settlement
 
-Completion of issue #23 freezes documentation authority; it does not implement the planned providers above. The next bounded work is:
+Foundation [#54](https://github.com/ed3c/agent-shield-monorepo/issues/54); OPA #55; durable workflow #56; OpenBao #57; verified ledger/restore #58; Secure Enclave #59; CoreNFC #60; MPC/TSS #61; smart-account contracts #62 → testnet submission #63; adversarial/recovery convergence #64.
 
-1. issue #32 for Bun + TypeScript mechanical enforcement of the frozen documentation/eval/README/stack contracts;
-2. issue #31 Phase B for Git Town GT-LIVE-002 through GT-LIVE-006 under the already admitted host-local v24 artifact boundary;
-3. molecular eval-first children decomposed from blocked epics #3–#6 before any product/provider path is admitted.
+```text
+intent → risk route → optional hardware challenge/evidence → signing
+  → ledger → contract validation → testnet inclusion/confirmation → Human dossier
+```
 
-#31 Phase B and #32 require their own non-overlapping task packets. No phase number, epic title, source proposal, or convergence result is implementation authorization.
+Reference/testnet evidence is not production custody/mainnet/security/compliance PASS. No absolute security claim.
+
+## Phase 6 — bettor-arena reference integration
+
+Foundation [#65](https://github.com/ed3c/agent-shield-monorepo/issues/65); module closure #66; Skills #67; runtime #68; CLI/MCP #69; Claude #70; Codex #71; GitHub #72; Forgejo #73; equivalence #74; promotion/rollback #75.
+
+```text
+immutable release → selected closure → Skill/runtime bindings → CLI/MCP
+  → independent carrier/origin receipts → equivalence → Human promotion/rollback
+```
+
+Offline binding, carrier invocation, origin reachability, equivalence, release, production and Human states cannot proxy one another.
+
+## Molecular Stack PR and convergence rule
+
+The exact DAG, branches, path leases and eval prefixes live in [`../implementation/STACKED_IMPLEMENTATION_PLAN.md`](../implementation/STACKED_IMPLEMENTATION_PLAN.md).
+
+- foundation first;
+- independent path-disjoint leaves as sibling PRs;
+- child PR only for real data/interface dependency;
+- convergence from exact merged `main` after mandatory leaves;
+- convergence alone owns shared registry/module/status/release and Human dossier;
+- every merge retains exact eval/control/cleanup/rollback evidence.
+
+No phase, issue, source proposal, package, PR existence, or Git Town sync authorizes or proves implementation by itself.

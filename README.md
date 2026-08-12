@@ -1,91 +1,148 @@
 # Agent Shield Monorepo
 
-Agent Shield is a Bun + TypeScript modular product skeleton and the first external acceptance consumer for `bettor-arena`.
+Agent Shield is a Bun + TypeScript modular product skeleton and the reference external consumer for `bettor-arena`. The repository turns a broad source architecture into explicit contracts, state machines, provider boundaries, molecular implementation issues, and falsifiable receipts.
 
-The repository converts a broad source architecture into explicit module contracts, staged provider boundaries, and falsifiable evidence states. The current delivery phase is **documentation and Git governance first**: no new runtime, product, wallet, browser, mobile, hardware, or settlement implementation is admitted until the documentation stack is reviewed.
+The documentation and Git-governance foundation is merged. Git Town v24.0.0 has an admitted macOS arm64 artifact and the repository wrappers have exercised parent-first rebase/publication, lease serialization, semantic-conflict preservation, background lifecycle, and process-group cleanup. Linux execution is still `ABSENT`; upstream release attestation is `NOT_EXERCISED`; a promoted Worker image is `NOT_IMPLEMENTED`.
 
-## Rules without examples
+The next product/provider work is split into eval-first Phase 3–6 terminal issues. This README indexes that work; it does not claim those providers are implemented.
 
-1. Bun + TypeScript are the primary future control-plane and service stack.
-2. Modules communicate through typed contracts, packets, artifacts, or receipts—not private implementation paths.
-3. `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, and `NOT_EXERCISED` are different states.
-4. Source text and architecture diagrams never prove a live capability.
-5. Secrets, browser profiles, device sessions, host paths, and mutable owner checkouts never enter Git or receipts.
-6. Every issue and PR defines its evals and negative controls before implementation.
-7. Stacked PRs use one writer per branch, isolated worktrees, and explicit parentage.
-8. Source repair uses Git ancestry and content identity; timestamp-based newest-wins is forbidden.
-9. Human Admit owns merge, production promotion, key authority, and high-risk settlement.
+## Laws without examples
+
+1. Bun + TypeScript are the primary product and control-plane stack; Bash is limited to bounded Git/process orchestration.
+2. Modules communicate through typed contracts, packets, immutable artifacts, capabilities, or receipts—not private source paths.
+3. `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, `NOT_EXERCISED`, blocked states, cleanup, and Human Admit are separate facts.
+4. Source prose, diagrams, package names, licenses, hashes, and one platform's success never prove another live capability.
+5. Secrets, browser/device sessions, host paths, and mutable owner checkouts never enter Git, portable bundles, MCP payloads, or receipts.
+6. Every implementation issue defines state transitions, data flow, evals, disagreement controls, path ownership, rollback, and Human-owned operations before code.
+7. Git Town manages feature-branch ancestry; Git commit/tree identity, one writer lease, isolated worktrees, and explicit PR parentage remain canonical.
+8. Source repair uses Git ancestry and content identity. Timestamp-based `newest`, `prefer-cloud`, or `prefer-beta` overwrite is forbidden.
+9. Human Admit owns semantic conflict resolution, merge, policy/key/permission expansion, release promotion, destructive recovery, and production settlement.
+
+## Exact current-state snapshot
+
+Snapshot basis for issue [#37](https://github.com/ed3c/agent-shield-monorepo/issues/37): `main` commit `30e020616d8a20847b197f259ff8692a1af46bde`, tree `a2c9fa53a271aaf1c9c7b2fea0cff187e16640a6`.
+
+| Plane | Current executable/evidence state | Next admitted work |
+|---|---|---|
+| Document ingest | local UTF-8 deterministic `PASS`; PDF/cloud `NOT_IMPLEMENTED` | parser/provider issue must be created separately |
+| Research routing | raw-primary `external-verify` route `PASS`; signed-in routes `NOT_EXERCISED`/`NOT_IMPLEMENTED` | environment-specific browser/provider issues |
+| Runtime fabric | disposable local Git worktree `PASS`; Apple Container/OpenShell-tmux `NOT_EXERCISED`; E2B `NOT_IMPLEMENTED` | [#38–#44](https://github.com/ed3c/agent-shield-monorepo/issues/38) |
+| Product adapters | contracts present; Expo/Maestro/WDA/scrcpy `NOT_EXERCISED`; In-App bridge/cloud iOS `NOT_IMPLEMENTED` | [#45–#53](https://github.com/ed3c/agent-shield-monorepo/issues/45) |
+| Security boundaries | intent validation/reference threshold present; OPA/workflow/broker/ledger/hardware/MPC/account/settlement `NOT_IMPLEMENTED` | [#54–#64](https://github.com/ed3c/agent-shield-monorepo/issues/54) |
+| Bettor consumer | deterministic subject/bootstrap contracts present; live Claude/Codex/Forgejo/origin equivalence `NOT_EXERCISED` | [#65–#75](https://github.com/ed3c/agent-shield-monorepo/issues/65) |
+| Git Town Worker | macOS GT-LIVE-002..005 and macOS portion of GT-LIVE-006 `PASS`; Linux `ABSENT`; attestation `NOT_EXERCISED`; image promotion `NOT_IMPLEMENTED` | keep states separate; no product-state promotion |
+
+Machine-readable current product/provider states remain in [`data/status/integration.json`](data/status/integration.json). Git Town receipts are host-owned and summarized in [`scripts/git-town/README.md`](scripts/git-town/README.md).
+
+## Directory → state machine → data flow
+
+| Directory/plane | State-machine owner | Core flow | Current terminal issues |
+|---|---|---|---|
+| `docs/`, `third_party/` | provenance/admission | source → claim class → decision → requirement/eval | [#37](https://github.com/ed3c/agent-shield-monorepo/issues/37) |
+| `packages/contracts/` | canonical typed boundary | closed request → validation → typed state/receipt | [#38](https://github.com/ed3c/agent-shield-monorepo/issues/38), [#45](https://github.com/ed3c/agent-shield-monorepo/issues/45), [#54](https://github.com/ed3c/agent-shield-monorepo/issues/54), [#65](https://github.com/ed3c/agent-shield-monorepo/issues/65) |
+| `services/document-ingest/` | document-ingest | bytes → media/provider route → digest/artifact receipt | future parser/provider issue |
+| `services/research-orchestrator/` | research-orchestrator | workflow request → route selection → evidence/artifact reference | future browser/provider issue |
+| `services/runtime-fabric/` | runtime-fabric | runtime request → provider lifecycle → artifacts → cleanup | [#38–#44](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md#phase-3--runtime-fabric) |
+| `apps/`, `services/mobile-automation/` | product-adapters | typed action → product/QA/provider state → observable receipt | [#45–#53](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md#phase-4--product-and-mobile-automation) |
+| `services/intent-ledger/`, `services/security-boundaries/` | security-boundaries | intent → risk route → evidence/signing/ledger/submission states | [#54–#64](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md#phase-5--security-hardware-and-testnet-settlement) |
+| `packages/agent-shield-sdk/`, bettor scripts | bettor-consumer | immutable release → closure/bindings/surfaces → canaries/origins → Human Admit | [#65–#75](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md#phase-6--bettor-arena-reference-consumer) |
+| `scripts/git-town/` | Git-management harness | task packet → worktree/lease → dry-run/sync → eval → optional guarded publish → PR/Human merge | current mechanism merged; product stacks use it |
+| `.arena/`, `data/` | module/release control plane | manifests/status/receipts → deterministic release projection | convergence issue in each phase |
+
+The canonical transition details are in [`docs/state-machines/README.md`](docs/state-machines/README.md). The bidirectional directory/issue/eval index is [`docs/traceability/STATE_MACHINE_INDEX.md`](docs/traceability/STATE_MACHINE_INDEX.md).
 
 ## Harness narratives
 
-- **Source-claim Harness:** a document may describe E2B, OpenShell, mobile automation, or MPC/TSS. The Harness preserves that proposal, checks the repository contract, and refuses to report `PASS` without a matching receipt.
-- **Git-stack Harness:** a Worker Agent receives one issue, one branch lease, allowed paths, and eval IDs. It rebases its Git Town stack non-interactively; a conflict creates a failure receipt and a new recovery assignment rather than an automatic semantic merge.
-- **Runtime Harness:** local disposable execution can be tested independently while cloud providers, signed-in browsers, simulators, and devices retain their own unavailable or unexercised states.
-- **Bettor-consumer Harness:** an exact bettor release may generate Claude Code, Codex CLI, Skill, lock, and MCP projections. Missing private checkout or live subscription evidence remains `NOT_EXERCISED`.
+- **Source-claim Harness:** source `S-001` proposes E2B, OpenShell/tmux, hot sync, mobile automation, hardware brakes, MPC/TSS, smart accounts, and settlement. The repository preserves those claims but keeps each provider in `NOT_IMPLEMENTED` or `NOT_EXERCISED` until its terminal issue produces an exact receipt.
+- **Runtime Harness:** local, cloud, and hybrid routes are independent. A local PASS cannot proxy cloud; provider execution cannot proxy policy, PTY, cleanup, or recovery.
+- **Product Harness:** UI and automation surfaces render the exact receipt state. Waiting, denied, absent, stale, failed, and completed are distinct.
+- **Security Harness:** policy, durable workflow, broker, ledger, hardware, cryptography, contract, and chain evidence arrive independently; no single component creates an end-to-end safety claim.
+- **Git-stack Harness:** one Worker owns one issue, branch, path lease, and worktree. Conflict preserves the blocked state and creates a recovery handoff rather than an automatic semantic edit.
+- **Bettor-consumer Harness:** an immutable release resolves selected modules, Skills, runtime, CLI/MCP, Claude/Codex, and origin receipts. Promotion remains Human-owned.
 
-Detailed Harness and eval documentation is tracked in [issue #22](https://github.com/ed3c/agent-shield-monorepo/issues/22).
-
-## Stacked PR issue map
+## Molecular Stacked PR implementation map
 
 ```text
 main
-└── #13 source/intent foundation                 → PR #25
-    ├── #15 Git Town + unattended Bash Workers   → PR #27
-    ├── #17 architecture/data-flow/license docs  → PR #26
-    ├── #19 apps/services nearest READMEs         → PR #28
-    ├── #21 control-plane/package/data READMEs    → PR #29
-    └── #22 Harness/eval contracts                → PR #30
-        └── #23 merged-tree convergence audit     → active from post-PR-#33 main
+├── Phase 3 runtime foundation #38
+│   ├── #39 Apple Container
+│   ├── #40 E2B
+│   ├── #41 OpenShell policy
+│   ├── #42 tmux/PTY
+│   ├── #43 local/cloud exchange
+│   └── #44 runtime convergence (after all leaves)
+├── Phase 4 product foundation #45
+│   ├── #46 dashboard/GenUI
+│   ├── #47 terminal projection
+│   ├── #48 Expo mobile
+│   │   └── #49 In-App action bridge
+│   ├── #50 External MCP/Maestro
+│   ├── #51 iOS WDA
+│   ├── #52 Android scrcpy
+│   └── #53 product convergence (after all leaves)
+├── Phase 5 security foundation #54
+│   ├── #55 OPA policy
+│   ├── #56 durable workflow
+│   ├── #57 OpenBao broker
+│   ├── #58 verified ledger/restore
+│   ├── #59 Secure Enclave
+│   ├── #60 CoreNFC
+│   ├── #61 MPC/TSS
+│   ├── #62 smart-account contracts
+│   │   └── #63 testnet bundler/paymaster
+│   └── #64 security convergence/Human dossier
+└── Phase 6 consumer foundation #65
+    └── #66 module closure
+        ├── #67 Skills binding
+        └── #68 runtime binding
+            └── #69 CLI/MCP parity
+                ├── #70 Claude canary
+                ├── #71 Codex canary
+                ├── #72 GitHub origin
+                └── #73 Forgejo origin
+                    └── #74 origin equivalence
+                        └── #75 release promotion/rollback
 ```
 
-Issues #13, #15, #17, #19, #21, and #22 are merged through PRs #25–#30. PR #33 repaired the exact Git Town v24 artifact admission before #23 started from clean commit `533583eff9b647006a001b69f57db3895dc5e8b1`. Shared indexes, delivery identities, README coverage, negative controls, and the implementation handoff belong to #23; exact results are in [`docs/traceability/DOCUMENTATION_CONVERGENCE.md`](docs/traceability/DOCUMENTATION_CONVERGENCE.md).
+Independent leaves are sibling PRs with disjoint writable paths. Shared registries, module versions, status, release manifests, and aggregate indexes belong to the phase convergence issue. Full branches, bases, path leases, eval prefixes, and merge order are in [`docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md).
+
+## Git Town operating boundary
+
+```bash
+bash scripts/git-town/doctor.sh
+bash scripts/git-town/sync-stack.sh --dry-run
+bash scripts/git-town/sync-stack.sh
+# Remote publication remains separately guarded:
+ALLOW_GIT_TOWN_PUSH=1 bash scripts/git-town/sync-stack.sh --publish
+```
+
+Git Town moves branch ancestry; it does not manufacture correctness. `git town sync` success cannot proxy an eval, review, release, or production PASS. Workers never auto-run semantic conflict edits, `continue`, `skip`, `undo`, `ship`, merge, permission widening, or promotion.
 
 ## Documentation map
 
-Start with [`AGENTS.md`](AGENTS.md), then follow [`docs/INDEX.md`](docs/INDEX.md).
+Start with [`AGENTS.md`](AGENTS.md), then [`docs/INDEX.md`](docs/INDEX.md).
 
 | Need | Canonical document |
 |---|---|
-| Project intent and current phase | [`docs/intent/PROJECT_INTENT.md`](docs/intent/PROJECT_INTENT.md) |
-| Source-derived claims and locators | [`docs/sources/SOURCE_LEDGER.md`](docs/sources/SOURCE_LEDGER.md) |
-| Architecture planes | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
-| Implementation phases and evidence boundary | [`docs/architecture/IMPLEMENTATION_PHASES.md`](docs/architecture/IMPLEMENTATION_PHASES.md) |
-| Intent-to-issue/eval/status index | [`docs/traceability/TRACEABILITY_INDEX.md`](docs/traceability/TRACEABILITY_INDEX.md) |
-| Exact documentation convergence and handoff | [`docs/traceability/DOCUMENTATION_CONVERGENCE.md`](docs/traceability/DOCUMENTATION_CONVERGENCE.md) |
-| Documentation-first stacked-PR epic | [issue #11](https://github.com/ed3c/agent-shield-monorepo/issues/11) |
+| Project intent | [`docs/intent/PROJECT_INTENT.md`](docs/intent/PROJECT_INTENT.md) |
+| Source claims and locators | [`docs/sources/SOURCE_LEDGER.md`](docs/sources/SOURCE_LEDGER.md) |
+| Architecture and ownership | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| State machines/data flow | [`docs/state-machines/README.md`](docs/state-machines/README.md) |
+| Molecular issue/Stack PR plan | [`docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md) |
+| Directory/state/issue/eval trace | [`docs/traceability/STATE_MACHINE_INDEX.md`](docs/traceability/STATE_MACHINE_INDEX.md) |
+| Evidence and negative controls | [`docs/harness/README.md`](docs/harness/README.md), [`docs/evals/README.md`](docs/evals/README.md) |
+| Git Town mechanism | [`docs/git/README.md`](docs/git/README.md), [`scripts/git-town/README.md`](scripts/git-town/README.md) |
 
-The nearest directory `README.md` is the local ownership contract. Planned modules remain in architecture documents until an implementation issue admits their paths.
+The nearest directory `README.md` is the local ownership and state-routing contract.
 
-## Existing structural baseline
-
-The merged baseline contains six modules: bettor consumer, document ingest, research orchestration, runtime fabric, product adapters, and security boundaries. It also contains a deterministic module release manifest. These artifacts prove portable contract bytes; they do not prove cloud, browser, device, hardware, or chain execution.
-
-## Verify
+## Verify the existing baseline
 
 ```bash
 bun run check:all
 ```
 
-Without a generated `.arena/consumer.lock.json`, bettor integration reports `NOT_EXERCISED` and exits successfully. Absence is never converted into PASS.
-
-## Initialize through bettor-arena
-
-The bettor checkout must contain the merged Bun implementation, be clean, and be named by an exact 40-hex commit.
-
-```bash
-bun scripts/bootstrap-bettor.ts \
-  --bettor-root /path/to/bettor-arena \
-  --commit <exact-40-hex-commit>
-
-# Review the content-addressed plan before applying it.
-bun scripts/bootstrap-bettor.ts \
-  --bettor-root /path/to/bettor-arena \
-  --commit <exact-40-hex-commit> \
-  --apply
-```
-
-Use `--embedded` only for a self-contained no-hardlink bettor clone. Remote mode uses host-owned configuration; host paths are not committed.
+Without a generated `.arena/consumer.lock.json`, bettor live integration remains `NOT_EXERCISED`; absence is never converted into PASS.
 
 ## Evidence boundary
 
-The supplied architecture source proposes cloud/local sandboxes, terminal persistence, hot sync, PDF parsing, mobile projection, automated testing, MPC/TSS, hardware brakes, wallets, ledgers, and settlement. The repository records those ideas as source proposals, typed boundaries, or future issues. Live provider, hardware, chain, Claude/Codex, Forgejo, and signed-in browser evidence remains environment-owned.
+The uploaded architecture source describes a broad target topology and example implementations. It is the basis for source IDs and planned modules, not live proof. Provider versions, licenses, performance, cost, security, store compliance, custody, settlement, and recovery must be independently admitted for the exact artifact and environment. This documentation branch changes no product/provider implementation or machine status ledger.

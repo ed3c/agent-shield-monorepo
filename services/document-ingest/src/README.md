@@ -1,7 +1,11 @@
-# Document-ingest source boundary
+# Document ingest private source boundary
 
-This leaf inherits [`../README.md`](../README.md), root `AGENTS.md`, and module `document-ingest`. It owns the deterministic TypeScript ingest adapter behind `document.ingest/v1`.
+This directory inherits [`../README.md`](../README.md). The current public state machine is implemented through the package entrypoint only.
 
-Inputs are explicit local paths plus declared media type/provider. Outputs are `ModuleReceipt` objects with content digests and named evidence state. Other modules consume the public capability or receipt, not this private path.
+```text
+validated request
+  → local text branch: read exact bytes → SHA-256 → PASS receipt
+  → PDF/cloud branch: NOT_IMPLEMENTED receipt
+```
 
-Current local UTF-8 text ingestion can return `PASS`; cloud and PDF parser routes return `NOT_IMPLEMENTED`. Do not add a parser/provider, network route, or new media type without an eval-first implementation issue, exact dependency-license review, malformed-input controls, provenance, and cleanup evidence. Issue #19 / evals `E30.1`–`E30.4` govern this README.
+Source changes require exact-byte determinism, path/media/error controls, and compatibility with `document.ingest/v1`. Do not import this private path cross-module, add a provider without its eval-first issue, or edit shared status/release from a provider leaf.

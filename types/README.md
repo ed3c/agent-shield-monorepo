@@ -1,19 +1,23 @@
 # TypeScript ambient declarations
 
-## Purpose
+`types/` contains minimal repository-local compile-time declarations used when an intentionally omitted dependency lacks types in the current Bun + TypeScript baseline.
 
-`types/` contains repository-local ambient declarations needed by the Bun + TypeScript baseline when upstream runtime/library types are intentionally absent from the minimal dependency graph.
+## State machine
 
-## Boundary
+```text
+EXACT COMPILER GAP IDENTIFIED → MINIMAL DECLARATION PROPOSED
+  → POSITIVE TYPECHECK → NEGATIVE/INCOMPATIBILITY FIXTURE
+  → REVIEWED → RETAINED | REPLACED BY ADMITTED OFFICIAL TYPES
+```
 
-These declarations may describe compile-time shapes only. They must not redefine business contracts from `packages/contracts`, hide a missing runtime dependency, claim Node compatibility for Bun-only behavior, or introduce provider/product execution semantics.
+Blocked: blanket `any`, business/provider contract duplication, hiding a missing runtime dependency, claiming Node compatibility for Bun-only behavior, or adding execution semantics.
 
-## Rules
+## Data flow
 
-- Keep declarations minimal and tied to an exact compiler error/use site.
-- Prefer official package/runtime types when that dependency is admitted.
-- Do not add `any` as a blanket escape from validation.
-- A typecheck green is static evidence only; it does not prove runtime behavior.
-- Changes require TypeScript compile checks and a negative fixture or documented incompatibility that the declaration resolves.
+```text
+exact compiler error/use site
+  → minimal ambient shape
+  → TypeScript typecheck and disagreement fixture
+```
 
-Issue #21 / evals `E40.1`–`E40.5` govern this directory. No runtime implementation belongs here.
+A typecheck PASS is static evidence only. The public business/state contracts live in `packages/contracts`. The implementation issue owning the exact use site also owns the declaration and nearest README update; provider leaves cannot use ambient types to fake package/runtime availability.

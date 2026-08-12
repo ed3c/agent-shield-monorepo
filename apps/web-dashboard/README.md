@@ -1,56 +1,65 @@
-# Web dashboard contract
+# Web dashboard contract and state machine
 
-## Owner
+## Owner and current state
 
-- Module: `product-adapters`
-- Interface: `1.0.0`
+- Module: `product-adapters@1.0.0`
 - Capability: `product.dashboard/v1`
-- Future primary stack: Bun + TypeScript with a Next.js-compatible product adapter
+- Future stack: Bun + TypeScript with a Next.js-compatible adapter
+- dashboard contract: present
+- GenUI rendering: `NOT_EXERCISED`
+- terminal/PTY projection: `NOT_EXERCISED`
+- bettor MCP initialization: `NOT_EXERCISED`
+- signed-in browser transport: `NOT_EXERCISED`
+- cloud deployment: `NOT_IMPLEMENTED`
 
-## Purpose
+## State-machine ownership
 
-This directory defines the future operator-facing dashboard boundary: structured status views, bounded Generative UI, terminal/session observation, Human Admit, and links to immutable artifacts. The current file is a state contract, not a running web application.
+[#45](https://github.com/ed3c/agent-shield-monorepo/issues/45) owns shared action/projection contracts; [#46](https://github.com/ed3c/agent-shield-monorepo/issues/46) owns dashboard/GenUI; [#47](https://github.com/ed3c/agent-shield-monorepo/issues/47) owns authenticated terminal projection; [#53](https://github.com/ed3c/agent-shield-monorepo/issues/53) owns aggregate product state/release.
 
-## Inputs
+### Dashboard lifecycle
 
-- typed module, provider, risk, and product receipts;
-- immutable artifact references and bounded metadata;
-- explicit operator identity and authorization from a future IAM boundary;
-- bettor-generated MCP/driver status after exact initialization.
+```text
+UNINITIALIZED → LOADING_SUBJECT → VERIFYING_RECEIPTS → READY
+  → ACTION_REQUESTED → AUTHORIZING → DISPATCHED → OBSERVING → RENDERED
+```
 
-## Outputs
+Alternative states: `STALE`, `ABSENT`, `NOT_IMPLEMENTED`, `NOT_EXERCISED`, `WAITING_FOR_HUMAN`, `WAITING_FOR_HARDWARE`, `DENIED`, `FAILED`, `DISCONNECTED`.
 
-- read-only status and evidence views by default;
-- bounded precompiled actions where an implementation issue explicitly admits them;
-- Human Admit or refusal receipts;
-- terminal/session references without embedding credentials or raw host paths.
+### Terminal projection lifecycle
 
-## Current evidence
+```text
+UNBOUND → SUBJECT_RESOLVED → AUTHENTICATED → CONNECTING → ATTACHED
+  ↔ DISCONNECTED → DRAINING → CLOSED
+```
 
-| Subject | State |
-|---|---|
-| dashboard contract | present |
-| GenUI rendering | `NOT_EXERCISED` |
-| terminal/PTY surface | `NOT_EXERCISED` |
-| bettor MCP initialization | `NOT_INITIALIZED` / integration `NOT_EXERCISED` |
-| signed-in browser transport | `NOT_EXERCISED` |
-| cloud dashboard deployment | `NOT_IMPLEMENTED` |
+Blocked/terminal: `ABSENT_SESSION`, `STALE_SUBJECT`, `AUTH_REFUSED`, `CONNECT_FAILED`, `RATE_LIMITED`, `STREAM_LIMIT`, `TASK_FAILED`, `SESSION_TERMINATED`, `CLEANUP_FAILED`.
 
-## Non-goals and prohibitions
+## Data flow
 
-- No generic terminal or shell command is exposed through MCP.
-- No UI component may convert missing evidence into success.
-- Do not stream secret-bearing process environments, browser profiles, tokens, or device sessions.
-- Do not treat Xterm.js, Next.js, shadcn/ui, or Vercel AI SDK package presence as a product receipt.
-- Product actions may not bypass risk policy, hardware gates, or Human Admit.
+```text
+module/provider/product receipts + immutable artifacts + operator identity
+  → subject/freshness validation
+  → state-faithful accessible view model
+  → optional closed typed action
+  → owning public capability
+  → refreshed receipt projection
+```
 
-## Required eval families before implementation
+Terminal path:
 
-- receipt-to-UI state fidelity;
-- missing/failed artifact rendering;
-- authorization refusal and CSRF/session controls;
-- bounded terminal output and disconnect/reconnect behavior;
-- planted stale-status and misleading-success defects;
-- browser, build, deploy, cleanup, and accessibility receipts.
+```text
+task/session artifact ref + scoped operator capability
+  → public PTY attach port
+  → bounded output frames / allowlisted controls
+  → disconnect/final task receipt
+```
 
-Issue #19 owns this README only. The implementation remains a later, eval-first product issue.
+## Prohibitions
+
+- no generic shell, caller-selected host session/command/cwd/env/private flag;
+- no UI conversion of stale/missing/waiting/failure into success;
+- no secret-bearing raw streams, browser/device profiles, tokens, host paths, or unbounded model/process output;
+- no package-presence proxy for build/deploy/browser/terminal PASS;
+- no bypass of risk, hardware gate, or Human Admit.
+
+Leaf source inherits this contract. Shared product registry/status/release belongs to #53.

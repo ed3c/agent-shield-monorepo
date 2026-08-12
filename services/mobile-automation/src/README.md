@@ -1,7 +1,9 @@
-# Mobile-automation source boundary
+# Mobile automation private source boundary
 
-This leaf inherits [`../README.md`](../README.md), root `AGENTS.md`, and module `product-adapters`. It owns the TypeScript registry that reports mobile adapter capability states.
+This directory inherits [`../README.md`](../README.md). Current code is an adapter-state catalog only; it does not run a simulator/device/tool.
 
-Inputs are adapter identifiers. Outputs are typed `ProductAdapterReceipt` values. Expo, Maestro, WDA, scrcpy, and cloud-iOS remain provider boundaries; no private device/session implementation is imported here.
+```text
+adapter/platform request → catalog lookup → exact NOT_EXERCISED/NOT_IMPLEMENTED/ABSENT receipt
+```
 
-Do not turn a registered adapter name into `PASS`, run arbitrary paths/commands, store profiles/certificates/device IDs, or conflate local and cloud providers. Real adapters require exact tool/license review, trusted-host authorization, build/device artifacts, failure controls, and cleanup receipts. Issue #19 / evals `E30.1`–`E30.4` govern this README.
+Provider roots introduced by #50–#52 remain isolated behind #45 contracts. Shared registry/status/release promotion belongs to #53. Do not add raw CLI/ADB/WDA/shell passthrough or host session values.

@@ -1,19 +1,24 @@
-# Workflow contracts
+# GitHub workflow boundary
 
-Workflows in this directory are repository proof operators. They must be deterministic, least-privilege, and explicit about unavailable live environments.
+Workflows execute deterministic or explicitly environment-scoped eval lanes against an exact commit. They do not turn an unavailable host/provider into PASS.
 
-## Current workflow
+## Job state machine
 
-`ci.yml` compiles Bun/TypeScript entrypoints, runs deterministic verification and selftests, checks bettor integration state, regenerates the immutable module release, compares checked-in bytes, and runs TypeScript type checking.
+```text
+TRIGGERED → EXACT_HEAD_CHECKED_OUT → TOOLCHAIN/INPUTS_VERIFIED
+  → SUBJECT_EVALS_RUN → NEGATIVE_CONTROLS_RUN → ARTIFACTS_CAPTURED
+  → CLEANUP_CHECKED → RESULT_REPORTED
+```
 
-## Rules
+Terminal states: `PASS`, `FAIL`, `ABSENT`, `NOT_EXERCISED`, timeout, cancellation, artifact failure, or cleanup failure for the named subject.
 
-- Checkout the exact PR head, not an inferred merge ref.
-- Pin runtime/tool versions where supported.
-- Compile entrypoints before claiming their tests ran.
-- Keep positive checks and planted negative controls distinguishable.
-- Upload expected generated artifacts before comparison so drift is inspectable.
-- Do not grant write permissions merely to repair generated files; use a reviewed follow-up commit/PR.
-- Do not use repository secrets to turn private-provider absence into PASS.
-- A live canary names exact environment, subject, cleanup, and receipt; otherwise report `NOT_EXERCISED`.
-- Workflow changes require their own path lease and exact-head rerun.
+## Data flow
+
+```text
+workflow YAML + exact repository bytes + host-owned secrets
+  → named command/eval
+  → bounded logs/artifacts/digests
+  → GitHub check result and PR evidence
+```
+
+Least privilege, pinned Actions/tools, redaction, artifact retention, and cleanup are mandatory. A macOS result cannot proxy Linux/device/provider; a static check cannot proxy live Git Town/provider execution. The molecular issue/Stack graph is [`../../docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](../../docs/implementation/STACKED_IMPLEMENTATION_PLAN.md).

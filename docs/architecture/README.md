@@ -1,26 +1,44 @@
 # Architecture documentation
 
-## Owner and authority
+This directory preserves source-derived target architecture and repository decisions while keeping them separate from current executable/evidence truth.
 
-This directory owns low-compression architecture, phase, data-flow, and environment-mode documents. Root `ARCHITECTURE.md` remains the current engineering contract; files here expand it or preserve source-derived proposals without changing evidence state.
+## State machine
 
-## Contents
+```text
+SOURCE_TOPOLOGY_CAPTURED → CLAIMS_CLASSIFIED → CURRENT/TARGET_SEPARATED
+  → DATA_FLOWS_TYPED → ENVIRONMENTS_SEPARATED → SECURITY/LICENSE_REVIEWED
+  → STATE_MACHINE/ISSUE_ROUTED
+```
 
-- `IMPLEMENTATION_PHASES.md` — current staged implementation/evidence boundary.
-- `SOURCE_DERIVED_ARCHITECTURE.md` — `S-001` proposal mapped to repository contracts and required evidence.
-- `PLANNED_REPOSITORY_TREE.md` — current paths versus planned capability slots.
-- `DATA_FLOWS.md` — typed packet/artifact/receipt and human-owned edges.
-- `ENVIRONMENT_MODES.md` — local, cloud-independent, and hybrid repair contracts.
+Blocked states include an unreferenced provider/benchmark/license claim, a target diagram presented as current PASS, a secret/session/local-host dependency hidden in cloud mode, timestamp-based source overwrite, or a planned directory created without an implementation issue.
 
-## Rules
+## Documents and flow
 
-1. State whether a claim is source-derived, repository-decided, inferred, or executed evidence.
-2. Keep planned providers and directories separate from current implementation.
-3. Every cross-module edge names a typed contract, artifact, receipt, or human decision.
-4. Package presence and diagrams never produce `PASS`.
-5. Source-code repair uses Git ancestry and content identity, never `newest` or unconditional `prefer-cloud`.
-6. Provider-specific versions, licenses, performance, price, security, platform, and service terms require current exact evidence.
+| Document | Role |
+|---|---|
+| `SOURCE_DERIVED_ARCHITECTURE.md` | bounded source `S-001` topology and terminology |
+| `PLANNED_REPOSITORY_TREE.md` | planned paths, clearly separated from current tree |
+| `DATA_FLOWS.md` | target data-flow diagrams and trust boundaries |
+| `ENVIRONMENT_MODES.md` | pure local, cloud-independent, and hybrid/repair boundaries |
+| `IMPLEMENTATION_PHASES.md` | high-level phase/evidence sequence |
+| [`../state-machines/README.md`](../state-machines/README.md) | current and target transition ownership |
+| [`../implementation/STACKED_IMPLEMENTATION_PLAN.md`](../implementation/STACKED_IMPLEMENTATION_PLAN.md) | exact molecular issues/branches/convergence DAG |
 
-## Change ownership
+```text
+source proposal
+  → reviewed architecture decision
+  → contract/state-machine foundation
+  → provider leaf issue
+  → exact receipt
+  → convergence/status/release
+```
 
-Issue #17 owns the source-derived architecture and licensing expansion. New implementation roots require their own issue, module/path ownership, evals, and nearest README.
+## Repository decisions that override source proposals
+
+- source code uses Git ancestry, leases, immutable bases, patches, and review—not `newest`, `prefer-beta`, or `prefer-cloud`;
+- direct permissive license is not zero legal risk; exact artifact/transitive/SBOM/notices/service terms and Human state remain separate;
+- performance/cost/security/store-compliance claims require exact current external verification and canaries;
+- local, cloud, browser, device, hardware, chain, and production are separate evidence planes;
+- no absolute security or immunity claims.
+
+Architecture documents route implementation; they do not authorize code outside the assigned issue/path lease.

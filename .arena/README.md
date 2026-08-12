@@ -1,18 +1,30 @@
-# Arena control plane
+# Arena module and composition control plane
 
-`.arena/` contains machine-readable module and consumer contracts. It is authored configuration and immutable selection metadata, not runtime state or a secret store. This file is also the nearest README for the `modules/` catalog itself; each module directory has its own child README.
+`.arena/` contains authored module manifests and consumer requirements plus generated immutable selection metadata. It is not runtime state, a secret store, or live-provider evidence.
 
-## Boundaries
+## State machine
 
-- `modules/` — one manifest per current module; the JSON manifest is machine-readable authority and the child README may explain but not contradict it.
-- `consumer.requirements.json` — requested bettor-arena release, mode, and selected module components.
-- `.consumer.lock.json`, managed manifests, and apply receipts — generated only by the admitted bettor initializer when that environment is exercised.
+```text
+MANIFEST_PROPOSED → SCHEMA_VALIDATED → ROOTS/OWNERSHIP_CHECKED
+  → CAPABILITIES_RESOLVED → INTERFACES_CHECKED → REQUIREMENTS_RESOLVED
+  → LOCK_RENDERED → PROOF SUBJECTS VERIFIED → RELEASE_RENDERED
+  → HUMAN_REVIEW → ADMITTED | REJECTED | ROLLED_BACK
+```
 
-## Module manifest contract
+Blocked states include missing module/component/capability, duplicate provider, path overlap/orphan, dependency cycle, interface conflict, mutable/stale digest, Skill/runtime conflict, stale proof, or unreceipted state promotion.
 
-Each manifest declares schema, module ID, interface version, owned roots, provided/required capabilities, local/cloud runtime state, proof command, external exposure, and secret boundary.
+## Data flow
 
-Current module contracts:
+```text
+module manifests + component requirements
+  → capability/dependency/ownership resolver
+  → composition/consumer lock
+  → selected contract/Skill/runtime/proof subjects
+  → deterministic portable release manifest
+  → external consumer and Human Admit
+```
+
+## Current module contracts
 
 - [`modules/bettor-consumer/`](modules/bettor-consumer/README.md)
 - [`modules/document-ingest/`](modules/document-ingest/README.md)
@@ -21,15 +33,16 @@ Current module contracts:
 - [`modules/runtime-fabric/`](modules/runtime-fabric/README.md)
 - [`modules/security-boundaries/`](modules/security-boundaries/README.md)
 
+## Molecular ownership
+
+Provider/product leaves may add private adapter receipts but do not edit public module registration, interface versions, `data/status/integration.json`, or `data/releases/agent-shield-module-set.json`. Those shared paths are owned by phase convergence issues #44, #53, #64, and #75.
+
 ## Rules
 
-1. Module IDs, interface versions, roots, capabilities, runtime states, proof commands, and external policy must be explicit.
-2. Every owned root exists and belongs to one module boundary; ownership roots may not overlap.
-3. Cross-module dependencies resolve through `requires`/`provides` and public typed contracts.
-4. A manifest declaration or `SUPPORTED` runtime field is not provider execution evidence.
-5. `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, and `NOT_EXERCISED` remain distinct receipt states.
-6. Generated consumer locks and receipts are content-addressed and must not be hand-edited.
-7. Mutable refs, host paths, credentials, sessions, and live-checkout dependencies are forbidden.
-8. New manifests or owned-contract changes require an eval-first issue, path ownership, capability review, and immutable release-manifest restamp.
-
-Internal files inherit this contract unless a nearer README overrides it.
+1. Manifest JSON is machine authority; README prose may explain but not override it.
+2. Each tracked root/file has one owner; cross-module dependencies use versioned capabilities/public contracts.
+3. `SUPPORTED` or a manifest entry is not execution evidence.
+4. `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, `NOT_EXERCISED`, blocked/cleanup/Human states remain separate.
+5. Generated locks/releases/receipts are content-addressed and not hand-edited.
+6. Mutable refs, host paths, secrets, sessions, live checkouts, and private flags are forbidden.
+7. See [`../docs/state-machines/README.md`](../docs/state-machines/README.md), [`../docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](../docs/implementation/STACKED_IMPLEMENTATION_PLAN.md), and [`../docs/traceability/STATE_MACHINE_INDEX.md`](../docs/traceability/STATE_MACHINE_INDEX.md).

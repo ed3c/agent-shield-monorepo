@@ -1,28 +1,30 @@
-# Agent Shield SDK contract
+# Agent Shield SDK consumer-subject contract
 
-## Purpose
+## Current state
 
-The current SDK validates a portable, immutable bettor MCP subject:
+The SDK validates:
 
 ```ts
 { repository, commit, tool }
 ```
 
-The repository must be a portable GitHub identity, the commit must be exact 40-hex, and the tool must be a public `loopctl_*` MCP name.
+The repository is a portable GitHub identity, `commit` is exact 40-hex, and `tool` is an admitted public `loopctl_*` MCP name. Construction success proves input validation only.
 
-## Outputs
+## Current state machine
 
-A `BettorMcpSubject` value suitable for a later consumer or transport. Construction success proves input validation only; it does not prove the repository is reachable, the release is admitted, the tool is exposed, or the MCP call ran.
+```text
+SUBJECT_INPUT → REPOSITORY_VALIDATED → COMMIT_VALIDATED → TOOL_VALIDATED
+  → BettorMcpSubject READY
+```
 
-## Rules
+Network acquisition, release admission, module closure, policy exposure, MCP execution, Claude/Codex, GitHub/Forgejo and cleanup remain separate states and mostly `NOT_EXERCISED`.
 
-- No mutable `main`, `HEAD`, branch, or floating tag.
-- No local absolute path or owner live checkout identity.
-- No generic shell or private loop name.
-- No credential, token, cookie, profile, or session inside subject values.
-- Network acquisition, module closure, policy exposure, call execution, and cleanup each require separate receipts.
-- New public exports require an interface/version and consumer compatibility decision.
+## Target consumer flow
 
-## Current evidence
+```text
+immutable release #65 → closure #66 → Skills #67 + runtime #68
+  → CLI/MCP #69 → Claude #70 / Codex #71 / origins #72–#74
+  → promotion/rollback #75
+```
 
-Input validation is deterministic. Bettor private initialization, GitHub/Forgejo origin equivalence, Claude/Codex live sessions, and MCP execution remain separate and may be `NOT_EXERCISED`.
+No mutable branch/tag/HEAD, local path/live checkout, generic shell/private loop, credential/session, or inferred reachability. Public exports and interface changes require compatibility review; aggregate promotion belongs to #75.
