@@ -150,34 +150,55 @@ stop_child() {
 }
 
 run_child() {
-  local token child_pid child_pgid
+  local token child_pid child_pgid actual_pgid ownership_attempt completed_rc rc
   token="$(new_run_token)"
   set -m
   bash -c 'set +m; token="$1"; shift; set +e; "$@"; rc=$?; exit "$rc"' \
     "agent-shield-child-$token" "$token" "$@" &
   child_pid=$!
   set +m
-  child_pgid="$(process_group_for_pid "$child_pid")"
-  if ! kill -0 "$child_pid" 2>/dev/null; then
-    set +e
-    wait "$child_pid"
-    local completed_rc=$?
-    set -e
-    return "$completed_rc"
-  fi
-  if [[ "$child_pgid" != "$child_pid" ]] || ! process_command_contains_token "$child_pid" "$token"; then
-    if process_command_contains_token "$child_pid" "$token"; then
-      kill -TERM "$child_pid" 2>/dev/null || true
-    fi
-    wait "$child_pid" 2>/dev/null || true
-    die 64 "child process group ownership could not be established: pid=$child_pid pgid=${child_pgid:-absent}"
-  fi
+  child_pgid="$child_pid"
   printf '%s %s %s\n' "$child_pid" "$child_pgid" "$token" > "$child_pid_file"
   chmod 600 "$child_pid_file" 2>/dev/null || true
+
+  for ownership_attempt in 1 2 3 4 5 6 7 8 9 10; do
+    if ! kill -0 "$child_pid" 2>/dev/null; then
+      set +e
+      wait "$child_pid"
+      completed_rc=$?
+      set -e
+      process_group_is_live "$child_pgid" && \
+        die 64 "child leader exited before ownership was established while PGID remains live; preserving state: $child_pgid"
+      rm -f "$child_pid_file"
+      return "$completed_rc"
+    fi
+    actual_pgid="$(process_group_for_pid "$child_pid")"
+    if [[ "$actual_pgid" == "$child_pgid" ]] && process_command_contains_token "$child_pid" "$token"; then
+      break
+    fi
+    sleep 0.1
+  done
+  actual_pgid="$(process_group_for_pid "$child_pid")"
+  if [[ "$actual_pgid" != "$child_pgid" ]] || ! process_command_contains_token "$child_pid" "$token"; then
+    if ! kill -0 "$child_pid" 2>/dev/null; then
+      set +e
+      wait "$child_pid"
+      completed_rc=$?
+      set -e
+      process_group_is_live "$child_pgid" && \
+        die 64 "child leader exited during ownership verification while PGID remains live; preserving state: $child_pgid"
+      rm -f "$child_pid_file"
+      return "$completed_rc"
+    fi
+    die 64 "child process-group ownership could not be established; preserving provisional state: pid=$child_pid pgid=$child_pgid"
+  fi
+
   set +e
   wait "$child_pid"
-  local rc=$?
+  rc=$?
   set -e
+  process_group_is_live "$child_pgid" && \
+    die 64 "child leader exited while process-group residue remains; preserving state: $child_pgid"
   rm -f "$child_pid_file"
   return "$rc"
 }
