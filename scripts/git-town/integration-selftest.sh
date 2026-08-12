@@ -548,6 +548,8 @@ test_background_lifecycle() {
   branch='fix/31-killed-controller'
   create_worker "$branch" main "$worker" worker-killed-controller GT-LIVE-005
   commit_fixture "$worker" fixture/killed-controller.txt killed-controller killed-controller
+  local killed_head
+  killed_head="$(git -C "$worker" rev-parse HEAD)"
   local slow_upload_pack="$FIXTURE/slow-upload-pack" slow_git_state="$FIXTURE/slow-git.state" real_git
   real_git="$(command -v git)"
   {
@@ -591,6 +593,9 @@ test_background_lifecycle() {
   kill -0 "$slow_git_pid" 2>/dev/null || fail "killed-controller fixture exposed no live Git descendant"
   kill -0 "$slow_delay_pid" 2>/dev/null || fail "killed-controller fixture exposed no live delay descendant"
   (cd "$worker" && bash scripts/git-town/background-sync.sh stop) >/dev/null
+  wait_for_receipt "$REPO/.git/agent-shield/receipts" 'sync-fix_31-killed-controller-*.json' || fail "killed-controller cleanup emitted no failure receipt"
+  assert_receipt "$BACKGROUND_RECEIPT" FAIL FAIL local worker-killed-controller "$branch" main \
+    GT-LIVE-005 "$killed_head" "$killed_head" 143 false
   ! kill -0 "$killed_child" 2>/dev/null || fail "stop did not clean the killed controller's orphan child"
   ! kill -0 "$slow_git_pid" 2>/dev/null || fail "stop did not clean the orphaned Git descendant"
   ! kill -0 "$slow_delay_pid" 2>/dev/null || fail "stop did not clean the orphaned delay descendant"
