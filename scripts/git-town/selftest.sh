@@ -171,15 +171,21 @@ EOF
   [[ "$WORKER_ID" == worker-static && "$ISSUE_NUMBER" == 15 && "$TASK_BRANCH" == docs/static-worker ]]
 ) || fail "linked worktree or persisted task-packet control failed"
 
-git -C "$fixture_repo" remote set-url origin 'https://user:secret@example.invalid/repo.git'
+safe_origin="$(git -C "$fixture_repo" remote get-url origin)"
+unsafe_user='user'
+unsafe_password='secret'
+printf -v unsafe_origin '%s%s:%s@%s' 'https://' "$unsafe_user" "$unsafe_password" 'example.invalid/repo.git'
+git -C "$fixture_repo" remote set-url origin "$unsafe_origin"
 if (
   cd "$fixture_repo"
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/common.sh"
   require_safe_remote_url
 ) >/dev/null 2>&1; then
+  git -C "$fixture_repo" remote set-url origin "$safe_origin"
   fail "credential-bearing origin URL was accepted"
 fi
+git -C "$fixture_repo" remote set-url origin "$safe_origin"
 
 if [[ "$mode" == "static" ]]; then
   printf 'SELFTEST GREEN: static Git Town governance controls\n'

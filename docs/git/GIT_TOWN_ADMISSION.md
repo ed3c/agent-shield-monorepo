@@ -81,9 +81,10 @@ before/after commits, mode, exit/timeout, eval/path lease, bounded log bytes and
 digest, and cleanup. Direct `git town` success is not accepted as substitute
 evidence.
 
-GT-LIVE-003 starts one public sync, waits until it has entered the admitted Git
-Town artifact while holding the repository lease, and then proves a competing
-public sync exits `64` naming `repository-sync.lock`. GT-LIVE-004 includes
+GT-LIVE-003 starts one public sync, waits until the admitted Git Town artifact
+has invoked its controlled `git fetch` boundary while holding the repository
+lease, and then proves a competing public sync exits `64` naming
+`repository-sync.lock`. GT-LIVE-004 includes
 mutation controls that remove the fail-closed flag or blocked-state assertion
 and requires the static verifier to reject each mutant. GT-LIVE-005 exercises
 repeat/stop and killed-controller cleanup with the admitted artifact. Its
@@ -92,6 +93,12 @@ wrapper's `124`, `timed_out=true`, child cleanup, and stop-on-first-failure
 contract is repeatable; that double is not evidence about Git Town internals.
 GT-LIVE-006 deliberately removes both SHA-256 commands and requires an
 `ABSENT` diagnostic with exit `64`.
+
+Background process state binds each PID to a digest of its observed process
+start/command identity. `status`, `start`, and `stop` refuse an identity
+mismatch instead of signaling a possibly reused PID. Cleanup snapshots the
+owned descendant tree, signals only identity-matching processes, verifies the
+tree is gone after escalation, and preserves diagnostic state on residue.
 
 The macOS observations above do not admit an executable for GitHub-hosted
 Ubuntu runners. GitHub Actions therefore reports the Linux runtime subject as

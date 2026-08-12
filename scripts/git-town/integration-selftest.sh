@@ -314,26 +314,24 @@ test_independent_workers_and_lease() {
   wait "$left_pid"
   wait "$right_pid"
 
-  local slow_bin="$FIXTURE/slow-bin" sync_started="$FIXTURE/sync-started"
+  local upload_pack="$FIXTURE/slow-upload-pack" sync_started="$FIXTURE/sync-started"
   local first_output_file="$FIXTURE/first-sync.out" first_rc_file="$FIXTURE/first-sync.rc"
-  local real_git_town first_pid lease_output lease_rc first_output first_receipt left_head
-  real_git_town="$(command -v git-town)"
-  mkdir -p "$slow_bin"
+  local real_git first_pid lease_output lease_rc first_output first_receipt left_head
+  real_git="$(command -v git)"
   {
     printf '#!/usr/bin/env bash\nset -euo pipefail\n'
-    printf 'real_git_town=%q\n' "$real_git_town"
+    printf 'real_git=%q\n' "$real_git"
     printf 'sync_started=%q\n' "$sync_started"
-    printf 'if [[ "${1:-}" == sync ]]; then\n'
-    printf '  : > "$sync_started"\n'
-    printf '  /bin/sleep 2\n'
-    printf 'fi\n'
-    printf 'exec "$real_git_town" "$@"\n'
-  } > "$slow_bin/git-town"
-  chmod +x "$slow_bin/git-town"
+    printf ': > "$sync_started"\n'
+    printf '/bin/sleep 2\n'
+    printf 'exec "$real_git" upload-pack "$@"\n'
+  } > "$upload_pack"
+  chmod +x "$upload_pack"
+  git -C "$left" config remote.origin.uploadpack "$upload_pack"
   left_head="$(git -C "$left" rev-parse HEAD)"
   (
     set +e
-    local_output="$(cd "$left" && PATH="$slow_bin:$PATH" bash scripts/git-town/sync-stack.sh 2>&1)"
+    local_output="$(cd "$left" && bash scripts/git-town/sync-stack.sh 2>&1)"
     local_rc=$?
     printf '%s\n' "$local_output" > "$first_output_file"
     printf '%s\n' "$local_rc" > "$first_rc_file"
@@ -344,9 +342,9 @@ test_independent_workers_and_lease() {
     [[ -f "$sync_started" ]] && break
     sleep 1
   done
-  [[ -f "$sync_started" ]] || fail "first public sync never entered the admitted Git Town artifact"
+  [[ -f "$sync_started" ]] || fail "first public sync never reached the admitted artifact's git fetch"
   set +e
-  lease_output="$(cd "$right" && PATH="$slow_bin:$PATH" bash scripts/git-town/sync-stack.sh 2>&1)"
+  lease_output="$(cd "$right" && bash scripts/git-town/sync-stack.sh 2>&1)"
   lease_rc=$?
   set -e
   [[ "$lease_rc" -eq 64 ]] || fail "competing public sync did not exit 64: $lease_output"
@@ -417,7 +415,7 @@ wait_for_live_pid_file() {
   local path="$1"
   local _ pid
   for _ in 1 2 3 4 5 6 7 8 9 10; do
-    pid="$(cat "$path" 2>/dev/null || true)"
+    pid="$(awk '{print $1}' "$path" 2>/dev/null || true)"
     [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null && return 0
     sleep 1
   done
@@ -459,7 +457,7 @@ test_background_lifecycle() {
       GT-LIVE-005 "$background_head" "$background_head" 0 false
   done < <(find "$REPO/.git/agent-shield/receipts" -maxdepth 1 -type f -name 'sync-fix_31-background-*.json' -print)
   wait_for_live_pid_file "$child_pid_file" || fail "background worker exposed no live child process state"
-  child_pid="$(cat "$child_pid_file")"
+  child_pid="$(awk '{print $1}' "$child_pid_file")"
   status_output="$(cd "$worker" && bash scripts/git-town/background-sync.sh status)"
   printf '%s\n' "$status_output" | grep -Fq 'RUNNING' || fail "background status is not RUNNING"
   stop_output="$(cd "$worker" && bash scripts/git-town/background-sync.sh stop)"
@@ -475,6 +473,21 @@ test_background_lifecycle() {
   if grep -R -Fq "$sensitive_canary" "$REPO/.git/agent-shield"; then
     fail "background state retained the synthetic sensitive canary"
   fi
+
+  local unrelated_pid stale_identity_output stale_identity_rc
+  /bin/sleep 30 &
+  unrelated_pid=$!
+  printf '%s %064d\n' "$unrelated_pid" 0 > "$child_pid_file"
+  set +e
+  stale_identity_output="$(cd "$worker" && bash scripts/git-town/background-sync.sh stop 2>&1)"
+  stale_identity_rc=$?
+  set -e
+  [[ "$stale_identity_rc" -eq 64 ]] || fail "stale child identity did not fail closed: $stale_identity_output"
+  kill -0 "$unrelated_pid" 2>/dev/null || fail "stale child identity killed an unrelated process"
+  [[ -f "$child_pid_file" ]] || fail "stale child identity state was erased before diagnosis"
+  kill -TERM "$unrelated_pid"
+  wait "$unrelated_pid" 2>/dev/null || true
+  rm -f "$child_pid_file"
 
   printf 'dirty\n' > "$worker/fixture/dirty.txt"
   set +e
@@ -515,33 +528,54 @@ test_background_lifecycle() {
   worker="$FIXTURE/worker"
   branch='fix/31-unsafe-origin'
   create_worker "$branch" main "$worker" worker-unsafe-origin GT-LIVE-005
-  git -C "$worker" remote set-url origin 'https://fixture-user:fixture-credential@example.invalid/repo.git'
+  local fixture_user='fixture-user' fixture_password='fixture-credential' unsafe_origin
+  printf -v unsafe_origin '%s%s:%s@%s' 'https://' "$fixture_user" "$fixture_password" 'example.invalid/repo.git'
+  git -C "$worker" remote set-url origin "$unsafe_origin"
   set +e
   local unsafe_output
   unsafe_output="$(cd "$worker" && bash scripts/git-town/background-sync.sh start --interval 30 2>&1)"
   local unsafe_rc=$?
   set -e
+  git -C "$worker" remote set-url origin "$REMOTE"
   [[ "$unsafe_rc" -eq 64 ]] || fail "unsafe origin did not block background start: rc=$unsafe_rc output=$unsafe_output"
   printf '%s\n' "$unsafe_output" | grep -Fq 'origin URL embeds credentials' || fail "unsafe origin refusal was not diagnostic: $unsafe_output"
+  if grep -R -Fq "$fixture_password" "$REPO/.git/agent-shield"; then
+    fail "unsafe-origin control retained synthetic credential material"
+  fi
 
   fixture_setup killed
   worker="$FIXTURE/worker"
   branch='fix/31-killed-controller'
   create_worker "$branch" main "$worker" worker-killed-controller GT-LIVE-005
   commit_fixture "$worker" fixture/killed-controller.txt killed-controller killed-controller
+  local slow_upload_pack="$FIXTURE/slow-upload-pack" slow_git_state="$FIXTURE/slow-git.state" real_git
+  real_git="$(command -v git)"
+  {
+    printf '#!/usr/bin/env bash\nset -euo pipefail\n'
+    printf 'real_git=%q\n' "$real_git"
+    printf 'state_file=%q\n' "$slow_git_state"
+    printf '/bin/sleep 30 &\n'
+    printf 'delay_pid=$!\n'
+    printf 'printf "%%s %%s\\n" "$$" "$delay_pid" > "$state_file"\n'
+    printf 'wait "$delay_pid"\n'
+    printf 'exec "$real_git" upload-pack "$@"\n'
+  } > "$slow_upload_pack"
+  chmod +x "$slow_upload_pack"
+  git -C "$worker" config remote.origin.uploadpack "$slow_upload_pack"
   start_output_file="$FIXTURE/background-start.out"
   (cd "$worker" && bash scripts/git-town/background-sync.sh start --interval 30 > "$start_output_file")
-  wait_for_receipt "$REPO/.git/agent-shield/receipts" 'sync-fix_31-killed-controller-*.json' || fail "killed-controller worker emitted no initial receipt"
-  local killed_head
-  killed_head="$(git -C "$worker" rev-parse HEAD)"
-  assert_receipt "$BACKGROUND_RECEIPT" PASS NOT_EXERCISED local worker-killed-controller "$branch" main \
-    GT-LIVE-005 "$killed_head" "$killed_head" 0 false
   local killed_pid_file="$REPO/.git/agent-shield/background/fix_31-killed-controller.pid"
   local killed_child_file="$REPO/.git/agent-shield/background/fix_31-killed-controller.child.pid"
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    [[ -s "$slow_git_state" ]] && break
+    sleep 1
+  done
+  [[ -s "$slow_git_state" ]] || fail "killed-controller fixture never reached the admitted artifact's git fetch"
   wait_for_live_pid_file "$killed_child_file" || fail "killed-controller fixture exposed no live child"
-  local killed_pid killed_child
-  killed_pid="$(cat "$killed_pid_file")"
-  killed_child="$(cat "$killed_child_file")"
+  local killed_pid killed_child slow_git_pid slow_delay_pid
+  killed_pid="$(awk '{print $1}' "$killed_pid_file")"
+  killed_child="$(awk '{print $1}' "$killed_child_file")"
+  read -r slow_git_pid slow_delay_pid < "$slow_git_state"
   kill -KILL "$killed_pid"
   for _ in 1 2 3 4 5; do
     kill -0 "$killed_pid" 2>/dev/null || break
@@ -554,8 +588,12 @@ test_background_lifecycle() {
   [[ "$killed_status_rc" -eq 2 ]] || fail "killed controller was not reported STOPPED"
   printf '%s\n' "$status_output" | grep -Fq 'STOPPED' || fail "killed controller red state was ambiguous"
   kill -0 "$killed_child" 2>/dev/null || fail "killed-controller fixture did not preserve an orphan for cleanup control"
+  kill -0 "$slow_git_pid" 2>/dev/null || fail "killed-controller fixture exposed no live Git descendant"
+  kill -0 "$slow_delay_pid" 2>/dev/null || fail "killed-controller fixture exposed no live delay descendant"
   (cd "$worker" && bash scripts/git-town/background-sync.sh stop) >/dev/null
   ! kill -0 "$killed_child" 2>/dev/null || fail "stop did not clean the killed controller's orphan child"
+  ! kill -0 "$slow_git_pid" 2>/dev/null || fail "stop did not clean the orphaned Git descendant"
+  ! kill -0 "$slow_delay_pid" 2>/dev/null || fail "stop did not clean the orphaned delay descendant"
   [[ ! -f "$killed_pid_file" && ! -f "$killed_child_file" ]] || fail "killed-controller PID state remains after cleanup"
 
   fixture_setup timeout

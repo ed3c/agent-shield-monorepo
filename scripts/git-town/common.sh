@@ -67,6 +67,17 @@ sha256_file() {
   fi
 }
 
+sha256_text() {
+  local value="$1"
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$value" | sha256sum | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    printf '%s' "$value" | shasum -a 256 | awk '{print $1}'
+  else
+    die 64 "ABSENT: sha256sum and shasum commands are unavailable"
+  fi
+}
+
 sanitize_branch() {
   printf '%s' "$1" | tr '/:@ ' '____' | tr -cd '[:alnum:]_.-'
 }
