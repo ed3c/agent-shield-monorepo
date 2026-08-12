@@ -4,13 +4,13 @@ This directory defines how humans and Worker Agents create, synchronize, propose
 
 ## Canonical documents
 
-- [`GIT_TOWN_ADMISSION.md`](GIT_TOWN_ADMISSION.md) — exact `24.0.0` decision, direct MIT evidence, and remaining artifact/transitive/legal review.
+- [`GIT_TOWN_ADMISSION.md`](GIT_TOWN_ADMISSION.md) — exact `24.0.0` decision and bounded host-local artifact admission.
 - [`STACKED_PRS.md`](STACKED_PRS.md) — topology, molecular issue design, synchronization, breadcrumbs, and merge order.
 - [`WORKER_PROTOCOL.md`](WORKER_PROTOCOL.md) — isolated worktree, task packet, leases, unattended/background sync, conflict, receipt, and recovery rules.
 - [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md) — contributor-facing summary.
 - [`../../.git-town.toml`](../../.git-town.toml) — team-owned executable configuration.
 - [`../../scripts/git-town/README.md`](../../scripts/git-town/README.md) — Bash operator entrypoints.
-- [`../../third_party/git-town/README.md`](../../third_party/git-town/README.md) — pinned upstream/version/license record.
+- [`../../third_party/git-town/README.md`](../../third_party/git-town/README.md) — pinned upstream/version/license entrypoint and exact dependency-admission record.
 - [`../licensing/README.md`](../licensing/README.md) — repository-wide dependency admission policy, delivered by issue #17.
 
 ## Invariants

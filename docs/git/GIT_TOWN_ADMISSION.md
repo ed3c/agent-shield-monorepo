@@ -5,8 +5,9 @@
 - **Upstream tag:** `v24.0.0`
 - **Direct license:** MIT
 - **Vendored notice:** `third_party/git-town/LICENSE`
-- **License SHA-256:** `7bc26795871e4f7f5b89aaa68cd0318283530abaf0e0b4f72a0ce88fa7d0ff7d`
-- **Issue:** [#15](https://github.com/ed3c/agent-shield-monorepo/issues/15)
+- **License SHA-256:** `eec8a092b92231375231488d27b959e2fa2be80559c97db60c1b0458d3298791`
+- **Policy issue:** [#15](https://github.com/ed3c/agent-shield-monorepo/issues/15)
+- **Artifact admission:** [#31](https://github.com/ed3c/agent-shield-monorepo/issues/31), recorded in [`V24_DEPENDENCY_ADMISSION.md`](../../third_party/git-town/V24_DEPENDENCY_ADMISSION.md)
 
 ## Why it fits
 
@@ -35,7 +36,7 @@ Bash wrappers own mutation. Local sync uses `--no-push`; remote publication requ
 
 The upstream MIT text permits use, copy, modification, merging, publication, distribution, sublicensing, and sale subject to retaining the copyright and permission notice. This is a permissive direct license suitable for commercial use, but **not a guarantee of absolute zero legal risk**.
 
-Before an executable artifact is admitted on a Worker image, the environment must also record:
+Before any executable artifact is admitted, the environment must also record:
 
 - exact `24.0.0` executable version;
 - acquisition source and artifact checksum;
@@ -48,14 +49,20 @@ Before an executable artifact is admitted on a Worker image, the environment mus
 
 `UNKNOWN`, custom, copyleft, source-available-only, or field-of-use-restricted terms fail closed under the repository licensing policy.
 
+Issue #31 completed those checks for one exact macOS arm64 release artifact. Human Admit permits that artifact's host-local execution, including its seven named MPL-2.0 modules. The executable is not committed or distributed, and no Worker image is promoted by this decision.
+
 Current states:
 
 | Subject | State |
 |---|---|
 | direct upstream MIT text and vendored byte identity | `PASS` |
 | exact version policy | `PASS` as repository configuration |
-| Worker executable checksum/SBOM/transitive scan | `NOT_EXERCISED` until installed by the host |
-| organization legal approval | Human/organization-owned; not represented by this document |
+| exact macOS arm64 archive checksum and build identity | `PASS` for the subject recorded in `V24_DEPENDENCY_ADMISSION.md` |
+| 51-module active inventory and license classification | `PASS` for that exact executable |
+| seven MPL-2.0 modules | Human Admit for unchanged host-local execution only |
+| GitHub release-attestation verification | `NOT_EXERCISED` after three inconclusive attempts |
+| binary distribution or Worker-image promotion | `NOT_IMPLEMENTED` and outside the admission |
+| organization legal approval beyond this bounded use | Human/organization-owned; not represented by this document |
 
 ## Safety boundary
 

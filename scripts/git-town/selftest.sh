@@ -45,7 +45,7 @@ grep -Eq '^upstream = false$' "$ROOT/.git-town.toml" || fail "upstream sync is e
 
 license="$ROOT/third_party/git-town/LICENSE"
 [[ -f "$license" ]] || fail "Git Town license notice absent"
-[[ "$(sha256_file "$license")" == "7bc26795871e4f7f5b89aaa68cd0318283530abaf0e0b4f72a0ce88fa7d0ff7d" ]] || fail "Git Town license digest mismatch"
+[[ "$(sha256_file "$license")" == "eec8a092b92231375231488d27b959e2fa2be80559c97db60c1b0458d3298791" ]] || fail "Git Town license digest mismatch"
 grep -Eq '^  required="24\.0\.0"$' "$SCRIPT_DIR/common.sh" || fail "exact Git Town version gate absent"
 grep -Fq 'cannot override the admitted version' "$SCRIPT_DIR/common.sh" || fail "version override refusal absent"
 
@@ -93,7 +93,7 @@ license_mutation="$(mktemp "${TMPDIR:-/tmp}/git-town-license-mutation.XXXXXX")"
 cleanup_paths+=("$license_mutation")
 cp "$license" "$license_mutation"
 printf '\nmutation\n' >> "$license_mutation"
-[[ "$(sha256_file "$license_mutation")" != "7bc26795871e4f7f5b89aaa68cd0318283530abaf0e0b4f72a0ce88fa7d0ff7d" ]] || fail "license mutation was not detectable"
+[[ "$(sha256_file "$license_mutation")" != "eec8a092b92231375231488d27b959e2fa2be80559c97db60c1b0458d3298791" ]] || fail "license mutation was not detectable"
 
 lease_root="$(mktemp -d "${TMPDIR:-/tmp}/git-town-lease.XXXXXX")"
 cleanup_paths+=("$lease_root")

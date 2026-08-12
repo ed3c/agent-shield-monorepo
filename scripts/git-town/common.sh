@@ -132,7 +132,7 @@ require_git_town_license() {
   local root license expected actual
   root="$(repo_root)"
   license="$root/third_party/git-town/LICENSE"
-  expected="7bc26795871e4f7f5b89aaa68cd0318283530abaf0e0b4f72a0ce88fa7d0ff7d"
+  expected="eec8a092b92231375231488d27b959e2fa2be80559c97db60c1b0458d3298791"
   [[ -f "$license" ]] || die 64 "vendored Git Town license is absent"
   actual="$(sha256_file "$license")"
   [[ "$actual" == "$expected" ]] || die 64 "vendored Git Town license digest mismatch"
