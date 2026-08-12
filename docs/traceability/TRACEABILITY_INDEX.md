@@ -1,36 +1,33 @@
 # Traceability index
 
-`PENDING_PR` means the eval-first issue exists and the branch is reserved, but no reviewed PR is yet admitted. This is not an evidence state.
-
 ## Intent and delivery matrix
 
-| Intent | Source / rationale | Decision | Owner issue | Branch | Eval IDs | Current repository state |
-|---|---|---|---|---|---|---|
-| INT-001 Bun + TypeScript primary | S-001 pages 20–24; S-002; S-003 | existing architecture contract | #11 | documentation stack | E00.4 | structural baseline `PASS`; future provider work deferred |
-| INT-002 low commercial-license risk | S-001 pages 23–25; S-004 | ADR pending in #15 | #15 | `docs/10-git-town-governance` | E10.1 | policy documentation `PENDING_PR`; exact dependency review required |
-| INT-003 honest evidence states | S-002; S-003 | ADR-0001 and existing contracts | #13 | `docs/00-intent-traceability` | E00.2 | documentation subject in progress; live states unchanged |
-| INT-004 modular ownership | S-001 planned trees; S-002 module contracts | ADR-0001 | #19, #21 | sibling README branches | E30.1–E30.4, E40.1–E40.5 | README coverage `PENDING_PR` |
-| INT-005 local/cloud independence | S-001 pages 39–41; S-002 | decision documentation pending | #17 | `docs/20-runtime-source-flows` | E20.2, E20.4, E20.5 | architecture docs `PENDING_PR`; providers unchanged |
-| INT-006 stacked parallel delivery | S-006; Git review requirements | ADR-0001 plus Git Town ADR pending | #11, #15 | stack root plus siblings | E10.2–E10.5, E60.3 | issue graph created; tool/config `PENDING_PR` |
-| INT-007 Harness-first verification | S-002 proof rules; S-006 | ADR-0001 | #22 | `docs/50-harness-evals` | E50.1–E50.5 | catalog `PENDING_PR` |
-| INT-008 content-addressed repair | S-001 sync proposal contrasted with S-002 | repository rejection of newest-wins | #15, #17 | Git and architecture siblings | E10.3, E10.4, E20.5 | policy documented in root; detailed contracts `PENDING_PR` |
-| INT-009 immutable bettor consumption | S-003; S-005 | existing integration contract | existing Phase 6 plus future consumer work | current main | existing integration checks | contract present; live private initialization `NOT_EXERCISED` |
-| INT-010 documentation before implementation | S-006 | ADR-0001 | #11, #13–#23 | full documentation stack | E00.4, E60.5 | `IN_PROGRESS` as a delivery label; product evidence unchanged |
+| Intent | Source / rationale | Decision | Delivery | Eval IDs | Current repository state |
+|---|---|---|---|---|---|
+| INT-001 Bun + TypeScript primary | S-001 pages 20–24; S-002; S-003 | existing architecture contract | #11; #13 / PR #25 | E00.4 | structural baseline `PASS`; future provider work separately gated |
+| INT-002 low commercial-license risk | S-001 pages 23–25; S-004 | licensing policy; bounded Git Town admission | #17 / PR #26; #31 / PR #33 | E20.1; E10.1; GT-LIVE-001 | policy and exact v24 host artifact review `PASS`; attestation `NOT_EXERCISED`; other dependencies unadmitted |
+| INT-003 honest evidence states | S-002; S-003 | ADR-0001 and typed contracts | #13 / PR #25; #23 | E00.2; E60.7 | integration-status blob unchanged; live states unchanged |
+| INT-004 modular ownership | S-001 planned trees; S-002 module contracts | ADR-0001 and nearest-README rule | #19 / PR #28; #21 / PR #29; #23 | E30.1–E30.4; E40.1–E40.5; E60.4 | governed-directory coverage audited `PASS` |
+| INT-005 local/cloud independence | S-001 pages 39–41; S-002 | architecture environment/data-flow contracts | #17 / PR #26 | E20.2; E20.4; E20.5 | documentation merged; provider states unchanged |
+| INT-006 stacked parallel delivery | S-006; Git review requirements | ADR-0001 and `docs/git/` | #15 / PR #27; #23 | E10.2–E10.5; E60.3; E60.5 | governance merged; final PR identities recorded; GT-LIVE-002–006 remain `NOT_EXERCISED` |
+| INT-007 Harness-first verification | S-002 proof rules; S-006 | ADR-0001; Harness/eval contracts | #22 / PR #30; #32 deferred | E50.1–E50.5; E60.6 | catalog/templates complete; mechanical Bun enforcement explicitly deferred to #32 |
+| INT-008 content-addressed repair | S-001 sync proposal contrasted with S-002 | reject newest-wins; use Git/content identity | #15 / PR #27; #17 / PR #26 | E10.3; E10.4; E20.5 | detailed policy merged; semantic recovery stays fail-closed |
+| INT-009 immutable bettor consumption | S-003; S-005 | existing integration contract | Phase 6 baseline; blocked epic #6 | existing integration checks | deterministic contract present; live private initialization `NOT_EXERCISED` |
+| INT-010 documentation before implementation | S-006 | ADR-0001 | #11; #13–#23 | E00.4; E60.1–E60.10 | convergence candidate is based on exact post-#33 main; phase closes only after reviewed #23 PR merges |
 
 ## Documentation stack
 
-```text
-main
-└── docs/00-intent-traceability        # issue #13
-    ├── docs/10-git-town-governance    # issue #15
-    ├── docs/20-runtime-source-flows   # issue #17
-    ├── docs/30-apps-services-readmes  # issue #19
-    ├── docs/40-control-plane-readmes  # issue #21
-    └── docs/50-harness-evals          # issue #22
-        └── docs/60-index-convergence  # issue #23, created after siblings stabilize
-```
+| Issue | PR | Exact reviewed head | GitHub landed commit |
+|---|---|---|---|
+| #13 | #25 | `83a270b33ca65a29c1856ff20cf53469c1a21761` | `09d1b565cf8799cf345c8fe0ff70167381de7084b9c` |
+| #17 | #26 | `3953dde6bc244d24094c025a5db625d58c46aee1` | `83a270b33ca65a29c1856ff20cf53469c1a21761` |
+| #15 | #27 | `bbd0263071a43b615aa493ea5a99d7b4ea42bdfd` | `d51463450e2bdec9f3155ff618456966336d8c6b` |
+| #19 | #28 | `93514dea943e3a816cd59252e5bf7f1f25f71189` | `0d6f316fcf031e1416167dee582375b885bdf2ba` |
+| #21 | #29 | `83ef4a5ba9b1a4f55d15574315d71db9b1cf73e3` | `5e09734da48caee205a045d0db1a1f1ffe943341` |
+| #22 | #30 | `0fc37b16149a73988206f09f9e1bec223ab8d19c` | `60fbe036f5ff544c3a9a557f10c67cfddfec0e21` |
+| #31 Phase A | #33 | `edaee5ab0ab249487f35c7d5ee9c5da63d15f659` | `533583eff9b647006a001b69f57db3895dc5e8b1` |
 
-Sibling branches are allowed to proceed concurrently because their writable paths are disjoint. They all depend on the root documentation contract and are retargeted only after their parent is merged.
+The exact audit, links, authority owners, controls, exclusions, and handoff live in [`DOCUMENTATION_CONVERGENCE.md`](DOCUMENTATION_CONVERGENCE.md). GitHub PR metadata remains the authority for delivery events; this table is the repository snapshot.
 
 ## Capability state map
 
@@ -48,6 +45,6 @@ Sibling branches are allowed to proceed concurrently because their writable path
 | wallet, ledger, settlement | S-001 pages 24–39 | typed boundary, `NOT_IMPLEMENTED` | license-reviewed exact dependencies, testnet, rollback, and Human Admit |
 | bettor consumption | S-003/S-005 | deterministic contract present | authenticated private-checkout and live Claude/Codex receipts |
 
-## Convergence checks
+## Convergence status
 
-Issue #23 must replace every `PENDING_PR` label with an actual PR reference or explicit deferral, verify every relative link and directory README, and ensure no documentation PR changed a product/provider evidence state.
+Issue #23 has replaced pre-merge placeholders with exact delivery identities or explicit deferrals. The convergence report records link and README coverage, state/no-product-drift checks, negative controls, the unexercised Agent cold-start lane, and the post-documentation backlog.

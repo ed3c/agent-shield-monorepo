@@ -20,4 +20,4 @@ An eval is complete only when it can disagree with the implementation. It names 
 
 `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, and `NOT_EXERCISED` are distinct. A document, package, skipped provider, another module's receipt, or a successful different environment cannot proxy for the named subject.
 
-Issue #22 / evals `E50.1`–`E50.5` govern this directory. This documentation does not implement a Bun enforcement gate; mechanical enforcement remains a later issue.
+Issue #22 / evals `E50.1`–`E50.5` govern this directory. Issue #23 audits the final templates and authority map. This documentation does not implement a Bun enforcement gate; mechanical enforcement is explicitly deferred to issue #32.

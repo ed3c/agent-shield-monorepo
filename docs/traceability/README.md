@@ -27,4 +27,6 @@ intent ID
 - Planned and deferred capabilities remain indexed.
 - A missing link is an orphan and blocks convergence.
 
-Canonical table: [`TRACEABILITY_INDEX.md`](TRACEABILITY_INDEX.md).
+Canonical intent table: [`TRACEABILITY_INDEX.md`](TRACEABILITY_INDEX.md).
+
+Exact post-stack audit, merged PR identities, authority map, negative-control results, remaining gaps, and implementation handoff: [`DOCUMENTATION_CONVERGENCE.md`](DOCUMENTATION_CONVERGENCE.md).

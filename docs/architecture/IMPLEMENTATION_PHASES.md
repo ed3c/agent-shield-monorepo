@@ -27,3 +27,13 @@ MPC/TSS, Secure Enclave/NFC, smart-account, ledger anchoring, and settlement are
 ## Phase 6 — Bettor integration
 
 The repo can ask bettor-arena to transactionally generate Claude Code, Codex CLI, Skill requirements, consumer lock, and a Bun/TypeScript stateless MCP launcher for an exact commit. Cross-repository live initialization remains `NOT_EXERCISED` until the private bettor checkout is available to the trusted host.
+
+## Post-documentation admission order
+
+Completion of issue #23 freezes documentation authority; it does not implement the planned providers above. The next bounded work is:
+
+1. issue #32 for Bun + TypeScript mechanical enforcement of the frozen documentation/eval/README/stack contracts;
+2. issue #31 Phase B for Git Town GT-LIVE-002 through GT-LIVE-006 under the already admitted host-local v24 artifact boundary;
+3. molecular eval-first children decomposed from blocked epics #3–#6 before any product/provider path is admitted.
+
+#31 Phase B and #32 require their own non-overlapping task packets. No phase number, epic title, source proposal, or convergence result is implementation authorization.

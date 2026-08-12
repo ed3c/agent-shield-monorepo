@@ -27,5 +27,6 @@ Every decision record contains:
 | Decision | State | Summary |
 |---|---|---|
 | [`ADR-0001`](0001-documentation-before-implementation.md) | ACCEPTED | complete provenance, directory contracts, Git governance, Harness, and eval design before the next implementation wave |
+| [`Git Town admission`](../git/GIT_TOWN_ADMISSION.md) | ACCEPTED, bounded | use exact Git Town 24.0.0 through fail-closed Bash governance; artifact/use limits live with the tool |
 
-Git Town admission, licensing details, and unattended sync policy are owned by issue #15 and receive a dedicated decision record in that PR.
+Tool-local decisions do not need a duplicate ADR when their canonical admission record contains rationale, alternatives, safety boundary, evidence states, and upgrade/supersession rules. `GIT_TOWN_ADMISSION.md` is the single authority for that decision.

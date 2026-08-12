@@ -26,5 +26,6 @@ This directory turns source material and project decisions into Agent-readable c
 - [`intent/PROJECT_INTENT.md`](intent/PROJECT_INTENT.md)
 - [`sources/SOURCE_LEDGER.md`](sources/SOURCE_LEDGER.md)
 - [`traceability/TRACEABILITY_INDEX.md`](traceability/TRACEABILITY_INDEX.md)
+- [`traceability/DOCUMENTATION_CONVERGENCE.md`](traceability/DOCUMENTATION_CONVERGENCE.md)
 
 The documentation-first stacked-PR plan is tracked by [issue #11](https://github.com/ed3c/agent-shield-monorepo/issues/11).

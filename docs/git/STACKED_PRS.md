@@ -162,11 +162,13 @@ If two tasks need the same file, serialize ownership or move that edit into conv
 
 ```text
 main
-└── docs/00-intent-traceability        # PR #25
-    ├── docs/10-git-town-governance    # issue #15
+└── docs/00-intent-traceability        # issue #13 / PR #25
+    ├── docs/10-git-town-governance    # issue #15 / PR #27
     ├── docs/20-runtime-source-flows   # issue #17 / PR #26
-    ├── docs/30-apps-services-readmes  # issue #19
-    ├── docs/40-control-plane-readmes  # issue #21
-    └── docs/50-harness-evals          # issue #22
-        └── docs/60-index-convergence  # issue #23 after siblings stabilize
+    ├── docs/30-apps-services-readmes  # issue #19 / PR #28
+    ├── docs/40-control-plane-readmes  # issue #21 / PR #29
+    └── docs/50-harness-evals          # issue #22 / PR #30
+        └── docs/60-index-convergence  # issue #23 from post-PR-#33 exact main
 ```
+
+GitHub landed the sibling PRs before the foundation PR completed its final merge, then PR #25 produced the combined documentation tree on `main`. PR #33 subsequently repaired the exact Git Town artifact admission. The immutable head/merge identities and final-tree audit are recorded in [`../traceability/DOCUMENTATION_CONVERGENCE.md`](../traceability/DOCUMENTATION_CONVERGENCE.md); this historical diagram describes intended task ancestry, not a claim that every original feature head remains a direct ancestor of current `main`.
