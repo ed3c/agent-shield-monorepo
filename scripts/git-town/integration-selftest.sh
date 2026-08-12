@@ -474,10 +474,11 @@ test_background_lifecycle() {
     fail "background state retained the synthetic sensitive canary"
   fi
 
-  local unrelated_pid stale_identity_output stale_identity_rc
+  local unrelated_pid unrelated_pgid stale_identity_output stale_identity_rc
   /bin/sleep 30 &
   unrelated_pid=$!
-  printf '%s %064d\n' "$unrelated_pid" 0 > "$child_pid_file"
+  unrelated_pgid="$(ps -p "$unrelated_pid" -o pgid= | tr -d ' ')"
+  printf '%s %s %032d\n' "$unrelated_pid" "$unrelated_pgid" 0 > "$child_pid_file"
   set +e
   stale_identity_output="$(cd "$worker" && bash scripts/git-town/background-sync.sh stop 2>&1)"
   stale_identity_rc=$?

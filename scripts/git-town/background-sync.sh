@@ -139,6 +139,15 @@ stop_child() {
       die 64 "child process group could not receive TERM: $CHILD_PGID"
   fi
   if ! wait_for_process_group_exit "$CHILD_PGID"; then
+    # TERM may have removed the original leader while leaving descendants, or
+    # the numeric PID/PGID may now name unrelated processes. Re-establish the
+    # token and group binding immediately before any stronger signal.
+    validate_child_state
+    read_child_state || die 64 "child process state became unreadable before KILL: $child_pid_file"
+    if ! process_group_is_live "$CHILD_PGID"; then
+      rm -f "$child_pid_file"
+      return 0
+    fi
     if ! kill -KILL -- "-$CHILD_PGID" 2>/dev/null; then
       process_group_is_live "$CHILD_PGID" && \
         die 64 "child process group could not receive KILL: $CHILD_PGID"
