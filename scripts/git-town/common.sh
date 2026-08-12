@@ -63,7 +63,7 @@ sha256_file() {
   elif command -v shasum >/dev/null 2>&1; then
     shasum -a 256 "$path" | awk '{print $1}'
   else
-    die 64 "sha256sum or shasum is required"
+    die 64 "ABSENT: sha256sum and shasum commands are unavailable"
   fi
 }
 

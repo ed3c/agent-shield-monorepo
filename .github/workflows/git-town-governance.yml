@@ -43,6 +43,7 @@ jobs:
       - name: Preserve runtime evidence boundary
         shell: bash
         run: |
-          printf '%s\n' 'Git Town 24.0.0 executable integration: NOT_EXERCISED'
-          printf '%s\n' 'Reason: binary checksum, provenance, SBOM/transitive-license, and trusted acquisition are host-owned admission evidence.'
+          printf '%s\n' 'Git Town 24.0.0 Linux executable integration: ABSENT'
+          printf '%s\n' 'Reason: issue #31 admitted one exact macOS arm64 host artifact; no exact Linux artifact or execution environment is admitted.'
+          printf '%s\n' 'Static contract success cannot substitute for the absent Linux runtime subject.'
           printf '%s\n' 'Run scripts/git-town/selftest.sh --integration only in an admitted Worker image.'

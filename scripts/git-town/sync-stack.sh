@@ -77,6 +77,8 @@ fi
 
 log "worker=$WORKER_ID issue=$ISSUE_NUMBER branch=$branch parent=$parent publish=$publish dry_run=$dry_run"
 log "starting bounded Git Town sync; output is retained under the Git common directory"
+: > "$raw_log"
+chmod 600 "$raw_log"
 
 set +e
 (
@@ -90,7 +92,7 @@ set +e
   export GIT_TOWN_SYNC_TAGS=false
   export GIT_TOWN_SYNC_UPSTREAM=false
   "${command[@]}"
-) > "$raw_log" 2>&1 &
+) >> "$raw_log" 2>&1 &
 command_pid=$!
 start_seconds=$SECONDS
 timed_out=false

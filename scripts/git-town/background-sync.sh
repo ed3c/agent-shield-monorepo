@@ -49,6 +49,7 @@ state_dir="$common_git_dir/agent-shield/background"
 mkdir -p "$state_dir"
 chmod 700 "$state_dir" 2>/dev/null || true
 pid_file="$state_dir/$safe_branch.pid"
+child_pid_file="$state_dir/$safe_branch.child.pid"
 log_file="$state_dir/$safe_branch.log"
 
 pid_is_live() {
@@ -59,9 +60,47 @@ pid_is_live() {
   kill -0 "$pid" 2>/dev/null
 }
 
+child_pid_is_live() {
+  [[ -f "$child_pid_file" ]] || return 1
+  local pid
+  pid="$(cat "$child_pid_file" 2>/dev/null || true)"
+  [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+  kill -0 "$pid" 2>/dev/null
+}
+
+stop_child() {
+  if child_pid_is_live; then
+    local child_pid
+    child_pid="$(cat "$child_pid_file")"
+    kill -TERM "$child_pid" 2>/dev/null || true
+    for _ in 1 2 3 4 5; do
+      kill -0 "$child_pid" 2>/dev/null || break
+      sleep 1
+    done
+    if kill -0 "$child_pid" 2>/dev/null; then
+      kill -KILL "$child_pid" 2>/dev/null || true
+    fi
+  fi
+  rm -f "$child_pid_file"
+}
+
+run_child() {
+  "$@" &
+  local child_pid=$!
+  printf '%s\n' "$child_pid" > "$child_pid_file"
+  chmod 600 "$child_pid_file" 2>/dev/null || true
+  set +e
+  wait "$child_pid"
+  local rc=$?
+  set -e
+  rm -f "$child_pid_file"
+  return "$rc"
+}
+
 case "$action" in
   start)
     pid_is_live && die 64 "background sync already running for $branch"
+    stop_child
     rm -f "$pid_file"
     if [[ "$publish" == true && "${ALLOW_GIT_TOWN_PUSH:-0}" != "1" ]]; then
       die 64 "--publish requires ALLOW_GIT_TOWN_PUSH=1"
@@ -73,8 +112,10 @@ case "$action" in
     require_no_git_operation
     require_not_blocked
     require_task_identity
+    sync_lease="$common_git_dir/agent-shield/leases/repository-sync.lock"
+    [[ ! -e "$sync_lease" ]] || die 64 "lease already exists: $sync_lease"
 
-    daemon_command=("$SCRIPT_DIR/background-sync.sh" __run --interval "$interval")
+    daemon_command=(bash "$SCRIPT_DIR/background-sync.sh" __run --interval "$interval")
     [[ "$publish" == false ]] || daemon_command+=(--publish)
     nohup "${daemon_command[@]}" >> "$log_file" 2>&1 </dev/null &
     pid=$!
@@ -83,13 +124,13 @@ case "$action" in
     printf 'STARTED branch=%s pid=%s interval=%s publish=%s\n' "$branch" "$pid" "$interval" "$publish"
     ;;
   __run)
-    trap 'exit 0' TERM INT
+    trap 'stop_child; exit 0' TERM INT
+    trap 'stop_child; rm -f "$pid_file"' EXIT
     while true; do
       sync_args=()
       [[ "$publish" == false ]] || sync_args+=(--publish)
-      "$SCRIPT_DIR/sync-stack.sh" "${sync_args[@]}" || exit $?
-      sleep "$interval" &
-      wait $!
+      run_child bash "$SCRIPT_DIR/sync-stack.sh" "${sync_args[@]}" || exit $?
+      run_child sleep "$interval" || exit $?
     done
     ;;
   status)
@@ -102,6 +143,7 @@ case "$action" in
     ;;
   stop)
     if ! pid_is_live; then
+      stop_child
       rm -f "$pid_file"
       printf 'STOPPED branch=%s already=true\n' "$branch"
       exit 0
@@ -115,6 +157,7 @@ case "$action" in
     if kill -0 "$pid" 2>/dev/null; then
       die 64 "background process did not stop cleanly: $pid"
     fi
+    stop_child
     rm -f "$pid_file"
     printf 'STOPPED branch=%s pid=%s\n' "$branch" "$pid"
     ;;
