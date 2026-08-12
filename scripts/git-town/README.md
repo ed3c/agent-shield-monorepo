@@ -77,7 +77,7 @@ Any conflict, timeout, dirty state, unknown parent, exact-version/license mismat
 
 ## Version and licensing
 
-The only admitted executable version is `24.0.0`. `GIT_TOWN_REQUIRED_VERSION` may repeat that exact value but may not loosen it to a version line. The direct MIT notice is pinned under `third_party/git-town/`; executable artifact checksum, provenance, SBOM/transitive scan, and organization legal review remain host-owned evidence.
+The only admitted executable version is `24.0.0`. `GIT_TOWN_REQUIRED_VERSION` may repeat that exact value but may not loosen it to a version line. The exact direct MIT notice is pinned under `third_party/git-town/`; `V24_DEPENDENCY_ADMISSION.md` records the bounded macOS arm64 artifact and transitive-license decision. Executable bytes remain host-owned and may not be committed or distributed. Release-attestation verification remains `NOT_EXERCISED`, and the admission does not promote a Worker image or grant blanket organization legal approval.
 
 ## Receipts
 
