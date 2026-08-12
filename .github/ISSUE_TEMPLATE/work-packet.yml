@@ -1,0 +1,82 @@
+name: Eval-first work packet
+description: Define an independently reviewable task before implementation
+title: "[Work] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not begin implementation until the subject, path lease, parentage, evals, negative controls, and evidence boundary are complete.
+  - type: input
+    id: goal
+    attributes:
+      label: Goal
+      description: One reviewable outcome.
+    validations:
+      required: true
+  - type: input
+    id: parent
+    attributes:
+      label: Parent branch or PR
+      description: Use main only for a stack root.
+    validations:
+      required: true
+  - type: textarea
+    id: paths
+    attributes:
+      label: Path lease
+      description: List allowed and excluded paths. Declare any intentional overlap and its single owner.
+      placeholder: |
+        Allowed:
+        - docs/example/**
+        Excluded:
+        - services/**
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and parallel siblings
+      description: Name blocking issues and path-disjoint work that may run concurrently.
+    validations:
+      required: true
+  - type: textarea
+    id: evals
+    attributes:
+      label: Evals designed before implementation
+      description: For each eval name subject, preconditions, action, observable, artifact, expected state, and owner.
+    validations:
+      required: true
+  - type: textarea
+    id: controls
+    attributes:
+      label: Negative and mutation controls
+      description: Plant at least one defect that makes each load-bearing gate disagree.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Evidence boundary
+      description: Name states allowed to change and environment-owned states that must not be promoted.
+    validations:
+      required: true
+  - type: textarea
+    id: handoff
+    attributes:
+      label: Merge order and handoff
+      description: State the parent-first merge order, re-evaluation point, and human-owned action.
+    validations:
+      required: true
+  - type: checkboxes
+    id: guarantees
+    attributes:
+      label: Admission checks
+      options:
+        - label: The issue is eval-first and has not begun implementation.
+          required: true
+        - label: No secret, session, profile, key, `.env`, or host path is part of the task packet.
+          required: true
+        - label: Prose and dependency presence will not be treated as PASS.
+          required: true
+        - label: Product/provider work is excluded when this is a documentation-only issue.
+          required: true
