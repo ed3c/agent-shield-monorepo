@@ -4,7 +4,7 @@ This matrix preserves the broad technology choices from `S-001` while preventing
 
 | Capability | Source candidate(s) | Source-stated license class | Repository decision | Current evidence |
 |---|---|---|---|---|
-| stacked PRs | Git Town | MIT | selected at v24.0.0 under issue #15 | direct license reviewed; artifact/SBOM runtime scan pending |
+| stacked PRs | Git Town | MIT direct; 29 MIT, 12 BSD-family, 3 Apache-2.0, 7 MPL-2.0 active modules | v24.0.0 host-local artifact admitted by #31 / PR #33 | exact macOS arm64 checksum/build/inventory `PASS`; MPL modules Human-admitted for host-local use; attestation `NOT_EXERCISED`; no binary distribution |
 | cloud sandbox | E2B, Cloudflare Computer, Daytona | Apache-2.0 / provider-specific | candidate providers behind `runtime.provider/v1` | `NOT_IMPLEMENTED`, `VERIFY_REQUIRED` |
 | local sandbox | Apple Container | Apache-2.0 | candidate local provider | `NOT_EXERCISED`, `VERIFY_REQUIRED` |
 | terminal lifecycle | tmux | BSD | candidate session adapter | `NOT_EXERCISED`, `VERIFY_REQUIRED` |

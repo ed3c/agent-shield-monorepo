@@ -11,6 +11,7 @@ This directory defines how humans and Worker Agents create, synchronize, propose
 - [`../../.git-town.toml`](../../.git-town.toml) — team-owned executable configuration.
 - [`../../scripts/git-town/README.md`](../../scripts/git-town/README.md) — Bash operator entrypoints.
 - [`../../third_party/git-town/README.md`](../../third_party/git-town/README.md) — pinned upstream/version/license entrypoint and exact dependency-admission record.
+- [`../traceability/DOCUMENTATION_CONVERGENCE.md`](../traceability/DOCUMENTATION_CONVERGENCE.md) — final merged PR identities, exact-main audit, and post-documentation handoff.
 - [`../licensing/README.md`](../licensing/README.md) — repository-wide dependency admission policy, delivered by issue #17.
 
 ## Invariants

@@ -17,6 +17,7 @@ This is the canonical navigation surface for humans and Agents. Read documents i
 | [`sources/SOURCE_LEDGER.md`](sources/SOURCE_LEDGER.md) | stable source IDs, locators, and claim treatment |
 | [`decisions/README.md`](decisions/README.md) | decision-record index and decision states |
 | [`traceability/TRACEABILITY_INDEX.md`](traceability/TRACEABILITY_INDEX.md) | intent → source → decision → issue → eval → status |
+| [`traceability/DOCUMENTATION_CONVERGENCE.md`](traceability/DOCUMENTATION_CONVERGENCE.md) | exact merged PR identities, authority map, E60 controls, gaps, and implementation handoff |
 
 ## 3. Architecture and phases
 
@@ -33,6 +34,8 @@ This is the canonical navigation surface for humans and Agents. Read documents i
 | Git Town and unattended Worker-Agent protocol | [#15](https://github.com/ed3c/agent-shield-monorepo/issues/15) |
 | Harness and reusable eval catalog | [#22](https://github.com/ed3c/agent-shield-monorepo/issues/22) |
 | Final link/coverage convergence | [#23](https://github.com/ed3c/agent-shield-monorepo/issues/23) |
+| Mechanical documentation/eval validator after convergence | [#32](https://github.com/ed3c/agent-shield-monorepo/issues/32) |
+| Git Town live sync/background/conflict canaries after convergence | [#31](https://github.com/ed3c/agent-shield-monorepo/issues/31) |
 
 ## 5. Directory contracts
 

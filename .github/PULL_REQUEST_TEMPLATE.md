@@ -24,9 +24,9 @@ main
 
 ## Evals designed before implementation
 
-| Eval ID | Subject | Preconditions | Action | Observable | Negative control | Artifact | Expected state |
-|---|---|---|---|---|---|---|---|
-| E??.? | | | | | | | |
+| Eval ID | Requirement refs | Subject / owner | Preconditions | Action | Positive assertion / observable | Negative control | Artifact | Expected exit/state |
+|---|---|---|---|---|---|---|---|---|
+| E??.? | | | | | | | | |
 
 ## Evidence boundary
 
@@ -34,6 +34,7 @@ main
 
 - States allowed to change:
 - States that must remain unchanged:
+- Exclusions:
 - `NOT_IMPLEMENTED` remaining:
 - `NOT_EXERCISED` remaining:
 
@@ -44,6 +45,7 @@ main
 - Live canaries:
 - Cleanup/residue:
 - Generated artifacts and digests:
+- Rollback subject:
 
 ## Stacked-PR checks
 

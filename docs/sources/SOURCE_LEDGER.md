@@ -41,15 +41,15 @@ The ledger records what each source supports and what it does **not** prove. Sou
 ## S-004 — Git Town official project
 
 - **Subjects:** Git Town 24.0 official documentation and `git-town/git-town` license.
-- **Repository classification:** external dependency evidence pending repository admission.
+- **Repository classification:** external dependency evidence plus bounded `REPOSITORY_DECISION`.
 - **Supports:**
   - MIT direct license;
   - team configuration through `git-town.toml` or `.git-town.toml`;
   - `git town sync --stack --non-interactive --push`;
   - feature `rebase` strategy with safe force-push protection;
   - stack breadcrumbs and explicit proposal flow.
-- **Does not prove:** zero legal risk, transitive dependency acceptability, conflict-free unattended operation, or suitability for every Git workflow.
-- **Repository treatment:** chosen for stacked branch orchestration, with pinned version, license record, isolated worktrees, and fail-closed semantic conflicts under issue #15.
+- **Does not prove:** zero legal risk, conflict-free unattended operation, portability to an unreviewed artifact/OS, cryptographic release attestation, or suitability for every Git workflow.
+- **Repository treatment:** issue #15 chose Git Town for stacked branch orchestration; issue #31 and PR #33 admitted one exact macOS arm64 v24.0.0 artifact for host-local use. The exact 51-module review and seven-module MPL-2.0 Human Admit are recorded in `third_party/git-town/V24_DEPENDENCY_ADMISSION.md`; binary distribution and Worker-image promotion remain outside scope, and release-attestation verification remains `NOT_EXERCISED`.
 
 ## S-005 — bettor-arena integration baseline
 

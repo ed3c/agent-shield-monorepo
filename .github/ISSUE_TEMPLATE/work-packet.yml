@@ -43,7 +43,7 @@ body:
     id: evals
     attributes:
       label: Evals designed before implementation
-      description: For each eval name subject, preconditions, action, observable, artifact, expected state, and owner.
+      description: For each eval name requirement refs, subject, owner, preconditions, action, positive assertion, observable, artifact, and exit/state semantics.
     validations:
       required: true
   - type: textarea
@@ -57,7 +57,14 @@ body:
     id: boundary
     attributes:
       label: Evidence boundary
-      description: Name states allowed to change and environment-owned states that must not be promoted.
+      description: Name states allowed to change, explicit exclusions, and environment-owned states that must not be promoted.
+    validations:
+      required: true
+  - type: textarea
+    id: residue
+    attributes:
+      label: Cleanup/residue and rollback subject
+      description: Name processes, worktrees, sessions, files, locks, leases, external resources, and the exact rollback subject.
     validations:
       required: true
   - type: textarea

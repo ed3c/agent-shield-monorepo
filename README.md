@@ -35,10 +35,10 @@ main
     ├── #19 apps/services nearest READMEs         → PR #28
     ├── #21 control-plane/package/data READMEs    → PR #29
     └── #22 Harness/eval contracts                → PR #30
-        └── #23 merged-tree convergence audit     → created after human merge order
+        └── #23 merged-tree convergence audit     → active from post-PR-#33 main
 ```
 
-Only #13 is serial. Issues #15, #17, #19, #21, and #22 own disjoint paths and can be completed by independent Worker Agents. Shared indexes, final ancestry, README coverage, and cross-document closure belong to #23; siblings do not race on those files. Every issue contains its evals before implementation, and every PR targets its direct stack parent.
+Issues #13, #15, #17, #19, #21, and #22 are merged through PRs #25–#30. PR #33 repaired the exact Git Town v24 artifact admission before #23 started from clean commit `533583eff9b647006a001b69f57db3895dc5e8b1`. Shared indexes, delivery identities, README coverage, negative controls, and the implementation handoff belong to #23; exact results are in [`docs/traceability/DOCUMENTATION_CONVERGENCE.md`](docs/traceability/DOCUMENTATION_CONVERGENCE.md).
 
 ## Documentation map
 
@@ -51,6 +51,7 @@ Start with [`AGENTS.md`](AGENTS.md), then follow [`docs/INDEX.md`](docs/INDEX.md
 | Architecture planes | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Implementation phases and evidence boundary | [`docs/architecture/IMPLEMENTATION_PHASES.md`](docs/architecture/IMPLEMENTATION_PHASES.md) |
 | Intent-to-issue/eval/status index | [`docs/traceability/TRACEABILITY_INDEX.md`](docs/traceability/TRACEABILITY_INDEX.md) |
+| Exact documentation convergence and handoff | [`docs/traceability/DOCUMENTATION_CONVERGENCE.md`](docs/traceability/DOCUMENTATION_CONVERGENCE.md) |
 | Documentation-first stacked-PR epic | [issue #11](https://github.com/ed3c/agent-shield-monorepo/issues/11) |
 
 The nearest directory `README.md` is the local ownership contract. Planned modules remain in architecture documents until an implementation issue admits their paths.
