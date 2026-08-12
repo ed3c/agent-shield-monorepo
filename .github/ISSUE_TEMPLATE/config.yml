@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation-first stacked-PR epic
+    url: https://github.com/ed3c/agent-shield-monorepo/issues/11
+    about: Review stack topology, completion contract, and evidence boundaries before opening work.

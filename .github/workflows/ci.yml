@@ -31,6 +31,10 @@ jobs:
             scripts/release-manifest.ts \
             --target=bun \
             --outdir=/tmp/build
+      - name: Check Git Town Bash entrypoints
+        run: |
+          bash -n scripts/git-town/*.sh
+          bash scripts/git-town/selftest.sh
       - run: bun scripts/verify.ts
       - run: bun scripts/selftest.ts
       - run: bun scripts/verify-bettor-integration.ts
