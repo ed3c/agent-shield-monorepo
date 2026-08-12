@@ -89,14 +89,21 @@ bash scripts/git-town/selftest.sh --integration
 Integration mode uses disposable repositories, bare remotes, linked worktrees,
 task packets, receipts, and logs. It calls the public wrappers rather than
 substituting direct Git Town success. The canary covers parent-first rebase and
-publication, stale-remote refusal, repository lease serialization, semantic
-conflict preservation, background start/status/stop, dirty and missing-packet
-refusal, bounded timeout, and cleanup. Host fixtures are removed unless an
-operator explicitly retains one for a failed-run audit.
+publication, proposal base/head binding, stale-remote refusal, actual competing
+public-sync lease serialization, semantic conflict preservation and mutation
+controls, background repeat/start/status/stop, killed-controller child cleanup,
+dirty/missing-packet/stale-lease/unsafe-origin refusal, secret-residue checks,
+bounded timeout, stop-on-first-failure, and cleanup. The proposal canary fakes
+only the GitHub API boundary. The zero-second timeout uses an executable-boundary
+double to deterministically exercise wrapper timeout behavior; it makes no claim
+about Git Town internals. Host fixtures are removed unless an operator explicitly
+retains one for a failed-run audit.
 
 The exact macOS arm64 artifact admitted by issue #31 exercises this path.
 Linux execution remains `ABSENT` until an exact Linux artifact and environment
-receive their own admission; successful static checks cannot proxy for it.
+receive their own admission; successful static checks cannot proxy for it. The
+unavailable-SHA-command negative control also reports `ABSENT` with exit `64`
+instead of silently treating a missing prerequisite as a test result.
 
 ## Failure rule
 

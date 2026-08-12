@@ -10,6 +10,15 @@ fail() {
   exit 2
 }
 
+sync_is_fail_closed() {
+  grep -Fq -- '--no-auto-resolve' "$1" && ! grep -Fq -- '--auto-resolve' "$1"
+}
+
+conflict_harness_preserves_blocked_state() {
+  grep -Fq 'conflict did not mark worktree blocked' "$1" &&
+    grep -Fq 'suspended rebase state was not preserved' "$1"
+}
+
 sha256_file() {
   if command -v sha256sum >/dev/null 2>&1; then
     sha256sum "$1" | awk '{print $1}'
@@ -50,7 +59,7 @@ grep -Eq '^  required="24\.0\.0"$' "$SCRIPT_DIR/common.sh" || fail "exact Git To
 grep -Fq 'cannot override the admitted version' "$SCRIPT_DIR/common.sh" || fail "version override refusal absent"
 
 grep -Fq 'git town sync --stack --non-interactive --push --no-auto-resolve' "$ROOT/docs/git/STACKED_PRS.md" || fail "canonical publish subject absent"
-grep -Fq -- '--no-auto-resolve' "$SCRIPT_DIR/sync-stack.sh" || fail "sync wrapper allows auto resolution"
+sync_is_fail_closed "$SCRIPT_DIR/sync-stack.sh" || fail "sync wrapper allows auto resolution"
 grep -Fq -- '--no-push' "$SCRIPT_DIR/sync-stack.sh" || fail "local no-push mode absent"
 grep -Fq 'ALLOW_GIT_TOWN_PUSH' "$SCRIPT_DIR/sync-stack.sh" || fail "publish guard absent"
 grep -Fq 'sync-stack.sh' "$SCRIPT_DIR/background-sync.sh" || fail "background worker does not delegate to canonical wrapper"
@@ -90,6 +99,18 @@ if grep -Fq -- '--no-auto-resolve' "$mutation"; then
   fail "mutation control did not remove fail-closed flag"
 fi
 grep -Fq -- '--auto-resolve' "$mutation" || fail "mutation fixture was not planted"
+if sync_is_fail_closed "$mutation"; then
+  fail "fail-closed assertion accepted an auto-resolve mutation"
+fi
+
+integration_harness="$SCRIPT_DIR/integration-selftest.sh"
+conflict_harness_preserves_blocked_state "$integration_harness" || fail "conflict harness lacks blocked/suspended-state assertions"
+blocked_mutation="$(mktemp "${TMPDIR:-/tmp}/git-town-blocked-mutation.XXXXXX")"
+cleanup_paths+=("$blocked_mutation")
+sed '/conflict did not mark worktree blocked/d' "$integration_harness" > "$blocked_mutation"
+if conflict_harness_preserves_blocked_state "$blocked_mutation"; then
+  fail "conflict control accepted removal of the blocked-state assertion"
+fi
 
 license_mutation="$(mktemp "${TMPDIR:-/tmp}/git-town-license-mutation.XXXXXX")"
 cleanup_paths+=("$license_mutation")
@@ -165,6 +186,5 @@ if [[ "$mode" == "static" ]]; then
   exit 0
 fi
 
-integration_harness="$SCRIPT_DIR/integration-selftest.sh"
 [[ -x "$integration_harness" ]] || fail "wrapper-level integration harness is absent or not executable"
 exec "$integration_harness"
