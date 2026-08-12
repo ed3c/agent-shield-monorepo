@@ -166,6 +166,10 @@ Timeout is a distinct failure. Leaked process, lock, worktree, log, or suspended
 - successful worktrees remain until branch, PR, receipts, and handoff are confirmed;
 - no branch with unshipped changes is deleted automatically;
 - background PID/log state stays under the Git common directory.
+- background controller/child records bind PID and child process group to
+  host-generated run tokens visible in their owning commands; a reused or
+  unverifiable PID/PGID is never signaled, and group residue keeps its state
+  for diagnosis instead of being reported as clean.
 
 ## Human-owned operations
 

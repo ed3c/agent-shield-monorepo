@@ -71,6 +71,13 @@ bash scripts/git-town/background-sync.sh status
 bash scripts/git-town/background-sync.sh stop
 ```
 
+Controller state binds the numeric PID to a host-generated 128-bit run token
+that remains observable in its command. Each bounded child run owns a dedicated
+process group and a separate observable token. A token or group mismatch fails
+closed without signaling the PID/PGID. Stop signals the owned group and does
+not erase state until that group is verified absent; `ps` and `od` are therefore
+explicit runtime prerequisites.
+
 ## Integration canary
 
 Static policy checks run without an executable artifact:
@@ -89,8 +96,9 @@ bash scripts/git-town/selftest.sh --integration
 Integration mode uses disposable repositories, bare remotes, linked worktrees,
 task packets, receipts, and logs. It calls the public wrappers rather than
 substituting direct Git Town success. The canary covers parent-first rebase and
-publication, proposal base/head binding, stale-remote refusal, actual competing
-public-sync lease serialization, semantic conflict preservation and mutation
+publication, proposal base/head binding, stale-remote refusal, competing public
+sync serialization while the admitted artifact is blocked at its controlled
+`git fetch` boundary, semantic conflict preservation and mutation
 controls, background repeat/start/status/stop, killed-controller child cleanup,
 dirty/missing-packet/stale-lease/unsafe-origin refusal, secret-residue checks,
 bounded timeout, stop-on-first-failure, and cleanup. The proposal canary fakes

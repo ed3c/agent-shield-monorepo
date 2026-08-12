@@ -19,6 +19,11 @@ conflict_harness_preserves_blocked_state() {
     grep -Fq 'suspended rebase state was not preserved' "$1"
 }
 
+kill_escalation_revalidates_child_ownership() {
+  sed -n '/if ! wait_for_process_group_exit.*CHILD_PGID/,/kill -KILL.*CHILD_PGID/p' "$1" |
+    grep -Fq 'validate_child_state'
+}
+
 sha256_file() {
   if command -v sha256sum >/dev/null 2>&1; then
     sha256sum "$1" | awk '{print $1}'
@@ -65,6 +70,7 @@ grep -Fq 'ALLOW_GIT_TOWN_PUSH' "$SCRIPT_DIR/sync-stack.sh" || fail "publish guar
 grep -Fq 'sync-stack.sh' "$SCRIPT_DIR/background-sync.sh" || fail "background worker does not delegate to canonical wrapper"
 grep -Fq 'daemon_command=(bash "$SCRIPT_DIR/background-sync.sh"' "$SCRIPT_DIR/background-sync.sh" || fail "background daemon executes a non-executable script directly"
 grep -Fq 'bash "$SCRIPT_DIR/sync-stack.sh"' "$SCRIPT_DIR/background-sync.sh" || fail "background worker executes a non-executable canonical wrapper directly"
+kill_escalation_revalidates_child_ownership "$SCRIPT_DIR/background-sync.sh" || fail "KILL escalation does not revalidate child ownership after TERM"
 if grep -Fq 'git town sync' "$SCRIPT_DIR/background-sync.sh"; then
   fail "background worker contains a second sync implementation"
 fi
@@ -171,15 +177,21 @@ EOF
   [[ "$WORKER_ID" == worker-static && "$ISSUE_NUMBER" == 15 && "$TASK_BRANCH" == docs/static-worker ]]
 ) || fail "linked worktree or persisted task-packet control failed"
 
-git -C "$fixture_repo" remote set-url origin 'https://user:secret@example.invalid/repo.git'
+safe_origin="$(git -C "$fixture_repo" remote get-url origin)"
+unsafe_user='user'
+unsafe_password='secret'
+printf -v unsafe_origin '%s%s:%s@%s' 'https://' "$unsafe_user" "$unsafe_password" 'example.invalid/repo.git'
+git -C "$fixture_repo" remote set-url origin "$unsafe_origin"
 if (
   cd "$fixture_repo"
   # shellcheck disable=SC1090
   source "$SCRIPT_DIR/common.sh"
   require_safe_remote_url
 ) >/dev/null 2>&1; then
+  git -C "$fixture_repo" remote set-url origin "$safe_origin"
   fail "credential-bearing origin URL was accepted"
 fi
+git -C "$fixture_repo" remote set-url origin "$safe_origin"
 
 if [[ "$mode" == "static" ]]; then
   printf 'SELFTEST GREEN: static Git Town governance controls\n'
