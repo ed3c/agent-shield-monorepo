@@ -71,6 +71,33 @@ bash scripts/git-town/background-sync.sh status
 bash scripts/git-town/background-sync.sh stop
 ```
 
+## Integration canary
+
+Static policy checks run without an executable artifact:
+
+```bash
+bash scripts/git-town/selftest.sh
+```
+
+The wrapper-level live canary requires the independently admitted Git Town
+`24.0.0` artifact on the host:
+
+```bash
+bash scripts/git-town/selftest.sh --integration
+```
+
+Integration mode uses disposable repositories, bare remotes, linked worktrees,
+task packets, receipts, and logs. It calls the public wrappers rather than
+substituting direct Git Town success. The canary covers parent-first rebase and
+publication, stale-remote refusal, repository lease serialization, semantic
+conflict preservation, background start/status/stop, dirty and missing-packet
+refusal, bounded timeout, and cleanup. Host fixtures are removed unless an
+operator explicitly retains one for a failed-run audit.
+
+The exact macOS arm64 artifact admitted by issue #31 exercises this path.
+Linux execution remains `ABSENT` until an exact Linux artifact and environment
+receive their own admission; successful static checks cannot proxy for it.
+
 ## Failure rule
 
 Any conflict, timeout, dirty state, unknown parent, exact-version/license mismatch, unsafe config, overlapping sync lease, missing eval metadata, path-lease violation, or safe-push disagreement stops the Worker. Scripts do not invoke `git town continue`, `skip`, `undo`, `ship`, semantic conflict edits, merge, or permission widening.

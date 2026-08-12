@@ -60,9 +60,31 @@ Current states:
 | exact macOS arm64 archive checksum and build identity | `PASS` for the subject recorded in `V24_DEPENDENCY_ADMISSION.md` |
 | 51-module active inventory and license classification | `PASS` for that exact executable |
 | seven MPL-2.0 modules | Human Admit for unchanged host-local execution only |
+| GT-LIVE-002 parent-first rebase, publication, and stale-remote refusal | `PASS` on the admitted macOS arm64 host artifact |
+| GT-LIVE-003 independent worktrees and repository lease serialization | `PASS` on the admitted macOS arm64 host artifact |
+| GT-LIVE-004 semantic-conflict fail-closed behavior | `PASS` on the admitted macOS arm64 host artifact |
+| GT-LIVE-005 background lifecycle, timeout, and cleanup | `PASS` on the admitted macOS arm64 host artifact |
+| GT-LIVE-006 macOS public receipt behavior | `PASS` on the admitted macOS arm64 host artifact |
+| GT-LIVE-006 Linux artifact and execution environment | `ABSENT`; no Linux runtime claim is made |
 | GitHub release-attestation verification | `NOT_EXERCISED` after three inconclusive attempts |
 | binary distribution or Worker-image promotion | `NOT_IMPLEMENTED` and outside the admission |
 | organization legal approval beyond this bounded use | Human/organization-owned; not represented by this document |
+
+## Runtime canary boundary
+
+Issue #31 Phase B runs `bash scripts/git-town/selftest.sh --integration` against
+the exact admitted host artifact. The tracked harness creates only disposable
+repositories and remotes, drives the public Bash wrappers, and asserts the
+receipt and cleanup contracts for GT-LIVE-002 through GT-LIVE-006. Direct
+`git town` success is not accepted as substitute evidence.
+
+The macOS observations above do not admit an executable for GitHub-hosted
+Ubuntu runners. GitHub Actions therefore reports the Linux runtime subject as
+`ABSENT` while continuing to run the artifact-free static contract. Host logs,
+receipts, and failed-run fixtures remain outside Git; the exact-head PR and
+issue #31 carry their digests and state summary. No result in this section
+promotes a Worker image, distributes binary bytes, verifies the release
+attestation, or broadens the existing Human Admit.
 
 ## Safety boundary
 
