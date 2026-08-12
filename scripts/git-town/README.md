@@ -71,11 +71,12 @@ bash scripts/git-town/background-sync.sh status
 bash scripts/git-town/background-sync.sh stop
 ```
 
-Controller and child state records bind the numeric PID to a stable process
-identity. A mismatch fails closed without signaling the PID. Stop snapshots
-the owned descendant tree, terminates only identity-matching processes, and
-does not erase state until the tree is verified absent; `ps` and `pgrep` are
-therefore explicit runtime prerequisites.
+Controller state binds the numeric PID to a host-generated 128-bit run token
+that remains observable in its command. Each bounded child run owns a dedicated
+process group and a separate observable token. A token or group mismatch fails
+closed without signaling the PID/PGID. Stop signals the owned group and does
+not erase state until that group is verified absent; `ps` and `od` are therefore
+explicit runtime prerequisites.
 
 ## Integration canary
 

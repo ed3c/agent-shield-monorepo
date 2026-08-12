@@ -94,11 +94,14 @@ contract is repeatable; that double is not evidence about Git Town internals.
 GT-LIVE-006 deliberately removes both SHA-256 commands and requires an
 `ABSENT` diagnostic with exit `64`.
 
-Background process state binds each PID to a digest of its observed process
-start/command identity. `status`, `start`, and `stop` refuse an identity
-mismatch instead of signaling a possibly reused PID. Cleanup snapshots the
-owned descendant tree, signals only identity-matching processes, verifies the
-tree is gone after escalation, and preserves diagnostic state on residue.
+Background controller state binds its PID to a host-generated 128-bit run token
+that remains observable in the controller command. Every bounded child run has
+its own process group and separately observable token. `status`, `start`, and
+`stop` refuse a token or group mismatch instead of signaling a possibly reused
+PID/PGID. Cleanup signals the owned group, verifies the group is absent after
+escalation, and preserves diagnostic state if its leader disappears or residue
+remains. Group ownership avoids a one-time descendant snapshot and its fork
+race.
 
 The macOS observations above do not admit an executable for GitHub-hosted
 Ubuntu runners. GitHub Actions therefore reports the Linux runtime subject as

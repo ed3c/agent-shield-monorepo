@@ -23,20 +23,23 @@ action="$1"
 shift
 interval=300
 publish=false
+run_token=""
 while (($#)); do
   case "$1" in
     --interval) interval="${2:-}"; shift ;;
     --publish) publish=true ;;
+    --run-token) run_token="${2:-}"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) die 64 "unknown argument: $1" ;;
   esac
   shift
 done
 [[ "$interval" =~ ^[0-9]+$ ]] && ((interval >= 30)) || die 64 "interval must be an integer >= 30"
+[[ "$action" == __run || -z "$run_token" ]] || die 64 "--run-token is reserved for the internal controller"
 
 require_command git
 require_command ps
-require_command pgrep
+require_command od
 root="$(repo_root)"
 cd "$root"
 require_linked_worktree
@@ -54,143 +57,123 @@ pid_file="$state_dir/$safe_branch.pid"
 child_pid_file="$state_dir/$safe_branch.child.pid"
 log_file="$state_dir/$safe_branch.log"
 
-process_identity() {
-  local pid="$1" description
-  description="$(ps -p "$pid" -o lstart= -o command= 2>/dev/null || true)"
-  [[ -n "${description//[[:space:]]/}" ]] || return 1
-  sha256_text "$description"
+new_run_token() {
+  LC_ALL=C od -An -N16 -tx1 /dev/urandom | tr -d ' \n'
 }
 
-read_process_state() {
-  local file="$1" extra=""
-  STATE_PID=""
-  STATE_IDENTITY=""
-  IFS=' ' read -r STATE_PID STATE_IDENTITY extra < "$file" || true
-  [[ "$STATE_PID" =~ ^[0-9]+$ && "$STATE_IDENTITY" =~ ^[0-9a-f]{64}$ && -z "$extra" ]]
+process_command_contains_token() {
+  local pid="$1" token="$2" command
+  command="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+  [[ -n "$command" && "$command" == *"$token"* ]]
 }
 
-process_matches() {
-  local pid="$1" expected="$2" actual
-  kill -0 "$pid" 2>/dev/null || return 1
-  actual="$(process_identity "$pid" 2>/dev/null || true)"
-  [[ -n "$actual" && "$actual" == "$expected" ]]
+process_group_for_pid() {
+  ps -p "$1" -o pgid= 2>/dev/null | tr -d ' '
 }
 
-validate_process_state() {
-  local file="$1" label="$2" actual
-  [[ -f "$file" ]] || return 0
-  read_process_state "$file" || die 64 "$label process state is invalid; preserve it for diagnosis: $file"
-  if kill -0 "$STATE_PID" 2>/dev/null; then
-    actual="$(process_identity "$STATE_PID" 2>/dev/null || true)"
-    [[ -n "$actual" ]] || die 64 "$label process identity cannot be resolved; refusing to signal PID $STATE_PID"
-    [[ "$actual" == "$STATE_IDENTITY" ]] || die 64 "$label PID identity differs; refusing to signal reused PID $STATE_PID"
+process_group_is_live() {
+  local pgid="$1"
+  kill -0 -- "-$pgid" 2>/dev/null
+}
+
+read_controller_state() {
+  local extra=""
+  CONTROLLER_PID=""
+  CONTROLLER_TOKEN=""
+  IFS=' ' read -r CONTROLLER_PID CONTROLLER_TOKEN extra < "$pid_file" || true
+  [[ "$CONTROLLER_PID" =~ ^[0-9]+$ && "$CONTROLLER_TOKEN" =~ ^[0-9a-f]{32}$ && -z "$extra" ]]
+}
+
+read_child_state() {
+  local extra=""
+  CHILD_PID=""
+  CHILD_PGID=""
+  CHILD_TOKEN=""
+  IFS=' ' read -r CHILD_PID CHILD_PGID CHILD_TOKEN extra < "$child_pid_file" || true
+  [[ "$CHILD_PID" =~ ^[0-9]+$ && "$CHILD_PGID" =~ ^[0-9]+$ && "$CHILD_TOKEN" =~ ^[0-9a-f]{32}$ && -z "$extra" ]]
+}
+
+validate_controller_state() {
+  [[ -f "$pid_file" ]] || return 0
+  read_controller_state || die 64 "controller process state is invalid; preserve it for diagnosis: $pid_file"
+  if kill -0 "$CONTROLLER_PID" 2>/dev/null; then
+    process_command_contains_token "$CONTROLLER_PID" "$CONTROLLER_TOKEN" || \
+      die 64 "controller PID ownership differs; refusing to signal reused PID $CONTROLLER_PID"
   fi
 }
 
-write_process_state() {
-  local file="$1" pid="$2" identity="" previous="" sample_attempt
-  for sample_attempt in 1 2 3 4 5 6 7 8 9 10; do
-    identity="$(process_identity "$pid" 2>/dev/null || true)"
-    if [[ -n "$identity" && "$identity" == "$previous" ]]; then
-      printf '%s %s\n' "$pid" "$identity" > "$file"
-      chmod 600 "$file" 2>/dev/null || true
-      return 0
-    fi
-    previous="$identity"
-    kill -0 "$pid" 2>/dev/null || return 1
-    sleep 0.1
+validate_child_state() {
+  local actual_pgid
+  [[ -f "$child_pid_file" ]] || return 0
+  read_child_state || die 64 "child process state is invalid; preserve it for diagnosis: $child_pid_file"
+  if kill -0 "$CHILD_PID" 2>/dev/null; then
+    process_command_contains_token "$CHILD_PID" "$CHILD_TOKEN" || \
+      die 64 "child PID ownership differs; refusing to signal reused PID $CHILD_PID"
+    actual_pgid="$(process_group_for_pid "$CHILD_PID")"
+    [[ "$actual_pgid" == "$CHILD_PGID" ]] || \
+      die 64 "child process-group ownership differs; refusing to signal PGID $CHILD_PGID"
+  elif process_group_is_live "$CHILD_PGID"; then
+    die 64 "child group leader is absent while PGID $CHILD_PGID remains live; preserving state for recovery"
+  fi
+}
+
+wait_for_process_group_exit() {
+  local pgid="$1" wait_attempt
+  for wait_attempt in 1 2 3 4 5; do
+    process_group_is_live "$pgid" || return 0
+    sleep 1
   done
   return 1
 }
 
-state_process_is_live() {
-  local file="$1"
-  [[ -f "$file" ]] || return 1
-  read_process_state "$file" || return 1
-  process_matches "$STATE_PID" "$STATE_IDENTITY"
-}
-
-stop_process_tree() {
-  local file="$1" label="$2" root_pid root_identity pid identity child
-  local term_index kill_index check_index wait_attempt residue
-  local -a queue=() tree_pids=() tree_identities=()
-  [[ -f "$file" ]] || return 0
-  validate_process_state "$file" "$label"
-  read_process_state "$file" || die 64 "$label process state became unreadable: $file"
-  root_pid="$STATE_PID"
-  root_identity="$STATE_IDENTITY"
-  if ! process_matches "$root_pid" "$root_identity"; then
-    rm -f "$file"
+stop_child() {
+  [[ -f "$child_pid_file" ]] || return 0
+  validate_child_state
+  read_child_state || die 64 "child process state became unreadable: $child_pid_file"
+  if ! process_group_is_live "$CHILD_PGID"; then
+    rm -f "$child_pid_file"
     return 0
   fi
-
-  queue+=("$root_pid")
-  while ((${#queue[@]})); do
-    pid="${queue[0]}"
-    queue=("${queue[@]:1}")
-    identity="$(process_identity "$pid" 2>/dev/null || true)"
-    [[ -n "$identity" ]] || continue
-    tree_pids+=("$pid")
-    tree_identities+=("$identity")
-    while IFS= read -r child; do
-      [[ "$child" =~ ^[0-9]+$ ]] && queue+=("$child")
-    done < <(pgrep -P "$pid" 2>/dev/null || true)
-  done
-
-  for ((term_index=0; term_index<${#tree_pids[@]}; term_index++)); do
-    pid="${tree_pids[$term_index]}"
-    identity="${tree_identities[$term_index]}"
-    if process_matches "$pid" "$identity" && ! kill -TERM "$pid" 2>/dev/null; then
-      process_matches "$pid" "$identity" && die 64 "$label process could not receive TERM: $pid"
+  if ! kill -TERM -- "-$CHILD_PGID" 2>/dev/null; then
+    process_group_is_live "$CHILD_PGID" && \
+      die 64 "child process group could not receive TERM: $CHILD_PGID"
+  fi
+  if ! wait_for_process_group_exit "$CHILD_PGID"; then
+    if ! kill -KILL -- "-$CHILD_PGID" 2>/dev/null; then
+      process_group_is_live "$CHILD_PGID" && \
+        die 64 "child process group could not receive KILL: $CHILD_PGID"
     fi
-  done
-  for wait_attempt in 1 2 3 4 5; do
-    process_matches "$root_pid" "$root_identity" || break
-    sleep 1
-  done
-  for ((kill_index=0; kill_index<${#tree_pids[@]}; kill_index++)); do
-    pid="${tree_pids[$kill_index]}"
-    identity="${tree_identities[$kill_index]}"
-    if process_matches "$pid" "$identity" && ! kill -KILL "$pid" 2>/dev/null; then
-      process_matches "$pid" "$identity" && die 64 "$label process could not receive KILL: $pid"
-    fi
-  done
-  for wait_attempt in 1 2 3 4 5; do
-    residue=false
-    for ((check_index=0; check_index<${#tree_pids[@]}; check_index++)); do
-      if process_matches "${tree_pids[$check_index]}" "${tree_identities[$check_index]}"; then
-        residue=true
-        break
-      fi
-    done
-    [[ "$residue" == true ]] || break
-    sleep 1
-  done
-  for ((check_index=0; check_index<${#tree_pids[@]}; check_index++)); do
-    process_matches "${tree_pids[$check_index]}" "${tree_identities[$check_index]}" && \
-      die 64 "$label process residue remains; preserving state: ${tree_pids[$check_index]}"
-  done
-  rm -f "$file"
-}
-
-pid_is_live() {
-  state_process_is_live "$pid_file"
-}
-
-stop_child() {
-  stop_process_tree "$child_pid_file" child
+    wait_for_process_group_exit "$CHILD_PGID" || \
+      die 64 "child process-group residue remains; preserving state: $CHILD_PGID"
+  fi
+  rm -f "$child_pid_file"
 }
 
 run_child() {
-  "$@" &
-  local child_pid=$!
-  if ! write_process_state "$child_pid_file" "$child_pid"; then
+  local token child_pid child_pgid
+  token="$(new_run_token)"
+  set -m
+  bash -c 'set +m; token="$1"; shift; set +e; "$@"; rc=$?; exit "$rc"' \
+    "agent-shield-child-$token" "$token" "$@" &
+  child_pid=$!
+  set +m
+  child_pgid="$(process_group_for_pid "$child_pid")"
+  if ! kill -0 "$child_pid" 2>/dev/null; then
     set +e
     wait "$child_pid"
-    local early_rc=$?
+    local completed_rc=$?
     set -e
-    return "$early_rc"
+    return "$completed_rc"
   fi
+  if [[ "$child_pgid" != "$child_pid" ]] || ! process_command_contains_token "$child_pid" "$token"; then
+    if process_command_contains_token "$child_pid" "$token"; then
+      kill -TERM "$child_pid" 2>/dev/null || true
+    fi
+    wait "$child_pid" 2>/dev/null || true
+    die 64 "child process group ownership could not be established: pid=$child_pid pgid=${child_pgid:-absent}"
+  fi
+  printf '%s %s %s\n' "$child_pid" "$child_pgid" "$token" > "$child_pid_file"
+  chmod 600 "$child_pid_file" 2>/dev/null || true
   set +e
   wait "$child_pid"
   local rc=$?
@@ -199,10 +182,63 @@ run_child() {
   return "$rc"
 }
 
+pid_is_live() {
+  [[ -f "$pid_file" ]] || return 1
+  read_controller_state || return 1
+  kill -0 "$CONTROLLER_PID" 2>/dev/null && \
+    process_command_contains_token "$CONTROLLER_PID" "$CONTROLLER_TOKEN"
+}
+
+write_controller_state() {
+  local pid="$1" token="$2" observe_attempt
+  printf '%s %s\n' "$pid" "$token" > "$pid_file"
+  chmod 600 "$pid_file" 2>/dev/null || true
+  for observe_attempt in 1 2 3 4 5 6 7 8 9 10; do
+    if process_command_contains_token "$pid" "$token"; then
+      return 0
+    fi
+    if ! kill -0 "$pid" 2>/dev/null; then
+      rm -f "$pid_file"
+      return 1
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+
+stop_controller() {
+  local pid token wait_attempt
+  validate_controller_state
+  read_controller_state || die 64 "controller process state became unreadable: $pid_file"
+  pid="$CONTROLLER_PID"
+  token="$CONTROLLER_TOKEN"
+  if ! kill -0 "$pid" 2>/dev/null; then
+    rm -f "$pid_file"
+    return 0
+  fi
+  process_command_contains_token "$pid" "$token" || \
+    die 64 "controller PID ownership differs; refusing to signal reused PID $pid"
+  if ! kill -TERM "$pid" 2>/dev/null; then
+    process_command_contains_token "$pid" "$token" && \
+      die 64 "controller process could not receive TERM: $pid"
+  fi
+  for wait_attempt in 1 2 3 4 5; do
+    process_command_contains_token "$pid" "$token" || break
+    sleep 1
+  done
+  if process_command_contains_token "$pid" "$token"; then
+    kill -KILL "$pid" 2>/dev/null || true
+    sleep 1
+    process_command_contains_token "$pid" "$token" && \
+      die 64 "controller process residue remains; preserving state: $pid"
+  fi
+  rm -f "$pid_file"
+}
+
 case "$action" in
   start)
-    validate_process_state "$pid_file" controller
-    validate_process_state "$child_pid_file" child
+    validate_controller_state
+    validate_child_state
     pid_is_live && die 64 "background sync already running for $branch"
     stop_child
     rm -f "$pid_file"
@@ -219,15 +255,17 @@ case "$action" in
     sync_lease="$common_git_dir/agent-shield/leases/repository-sync.lock"
     [[ ! -e "$sync_lease" ]] || die 64 "lease already exists: $sync_lease"
 
-    daemon_command=(bash "$SCRIPT_DIR/background-sync.sh" __run --interval "$interval")
+    controller_token="$(new_run_token)"
+    daemon_command=(bash "$SCRIPT_DIR/background-sync.sh" __run --interval "$interval" --run-token "$controller_token")
     [[ "$publish" == false ]] || daemon_command+=(--publish)
     nohup "${daemon_command[@]}" >> "$log_file" 2>&1 </dev/null &
     pid=$!
-    write_process_state "$pid_file" "$pid" || die 64 "background process exited before its identity could be recorded: $pid"
+    write_controller_state "$pid" "$controller_token" || die 64 "background process ownership could not be recorded: $pid"
     chmod 600 "$log_file" 2>/dev/null || true
     printf 'STARTED branch=%s pid=%s interval=%s publish=%s\n' "$branch" "$pid" "$interval" "$publish"
     ;;
   __run)
+    [[ "$run_token" =~ ^[0-9a-f]{32}$ ]] || die 64 "__run requires a valid host-generated run token"
     trap 'stop_child; exit 0' TERM INT
     trap 'stop_child; rm -f "$pid_file"' EXIT
     while true; do
@@ -238,27 +276,27 @@ case "$action" in
     done
     ;;
   status)
-    validate_process_state "$pid_file" controller
+    validate_controller_state
     if pid_is_live; then
-      read_process_state "$pid_file" || die 64 "controller process state became unreadable"
-      printf 'RUNNING branch=%s pid=%s\n' "$branch" "$STATE_PID"
+      read_controller_state || die 64 "controller process state became unreadable"
+      printf 'RUNNING branch=%s pid=%s\n' "$branch" "$CONTROLLER_PID"
       exit 0
     fi
     printf 'STOPPED branch=%s\n' "$branch"
     exit 2
     ;;
   stop)
-    validate_process_state "$pid_file" controller
-    validate_process_state "$child_pid_file" child
+    validate_controller_state
+    validate_child_state
     if ! pid_is_live; then
       stop_child
       rm -f "$pid_file"
       printf 'STOPPED branch=%s already=true\n' "$branch"
       exit 0
     fi
-    read_process_state "$pid_file" || die 64 "controller process state became unreadable"
-    pid="$STATE_PID"
-    stop_process_tree "$pid_file" controller
+    read_controller_state || die 64 "controller process state became unreadable"
+    pid="$CONTROLLER_PID"
+    stop_controller
     stop_child
     printf 'STOPPED branch=%s pid=%s\n' "$branch" "$pid"
     ;;
