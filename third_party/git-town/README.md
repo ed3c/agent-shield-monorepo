@@ -1,6 +1,4 @@
-# Git Town dependency notice
-
-This directory records the exact release and license evidence for the Git Town executable used by the repository's stacked-PR Bash tooling.
+# Git Town v24.0.0 dependency and host-execution state
 
 | Field | Value |
 |---|---|
@@ -10,9 +8,35 @@ This directory records the exact release and license evidence for the Git Town e
 | Source tree | `01547d3ad145f2fdef722e240feef59e1c934038` |
 | Direct license | MIT |
 | Vendored license SHA-256 | `eec8a092b92231375231488d27b959e2fa2be80559c97db60c1b0458d3298791` |
-| Policy issue | #15 |
-| Artifact admission issue | #31 |
+| Governance issue | #15 |
+| Artifact/live issue | #31 |
 
-The executable itself is not vendored here. [`V24_DEPENDENCY_ADMISSION.md`](V24_DEPENDENCY_ADMISSION.md) records the exact macOS arm64 release artifact, build identity, 51-module inventory, license classification, and bounded Human Admit. That decision allows host-local execution only: it does not admit committing or distributing the binary, promote a Worker image, or turn the unverified release-attestation lane into `PASS`.
+## State machine
 
-Direct MIT evidence lowers licensing risk but does not guarantee zero legal risk. See `docs/git/GIT_TOWN_ADMISSION.md` and `docs/licensing/README.md`.
+```text
+SOURCE/LICENSE PINNED → MACOS_ARM64 ARTIFACT/CHECKSUM/BUILD ID VERIFIED
+  → TRANSITIVE 51-MODULE REVIEW → BOUNDED HUMAN ADMIT
+  → HOST-LOCAL WRAPPER CANARIES → MACOS EXECUTION PASS
+```
+
+Remaining states:
+
+```text
+Linux exact artifact/environment = ABSENT
+upstream release attestation = NOT_EXERCISED
+committed/distributed executable = FORBIDDEN BY CURRENT ADMISSION
+promoted Worker image = NOT_IMPLEMENTED
+blanket organization legal approval = NOT CLAIMED
+```
+
+## Data flow
+
+```text
+exact upstream source/license/release artifact metadata
+  → `V24_DEPENDENCY_ADMISSION.md`
+  → host-owned macOS binary
+  → `scripts/git-town/` wrapper canaries
+  → metadata-only receipts and Git/PR evidence
+```
+
+The binary is not vendored. Direct MIT plus bounded transitive review does not guarantee zero legal risk or future release equivalence. Git Town PASS applies only to branch-management assertions and cannot promote product/provider/security/release state.

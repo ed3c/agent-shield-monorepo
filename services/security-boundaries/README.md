@@ -1,51 +1,58 @@
-# Security boundary service contract
+# Security boundary contract and molecular implementation stack
 
-## Owner
+## Owner/current evidence
 
-- Module: `security-boundaries`
-- Interface: `1.0.0`
+- Module: `security-boundaries@1.0.0`
 - Capability: `security.provider-boundaries/v1`
-- Runtime declaration: local `PARTIAL`; cloud `NOT_IMPLEMENTED`
-- External exposure: denied; secrets: none
+- local runtime: `PARTIAL`; cloud: `NOT_IMPLEMENTED`
+- closed settlement-intent validation: present
+- OPA, durable workflow, OpenBao, verified ledger/anchor, Secure Enclave, CoreNFC, MPC/TSS, smart account, bundler/paymaster, settlement: `NOT_IMPLEMENTED`
 
-## Purpose
+## Target state machine
 
-Validate the closed shape of a settlement intent and report whether high-risk security/provider capabilities are implemented. The directory deliberately prevents architecture sketches from being mistaken for cryptographic, hardware, wallet, ledger, or chain execution.
+Foundation [#54](https://github.com/ed3c/agent-shield-monorepo/issues/54):
 
-## Inputs
+```text
+DRAFT → INTENT_VALIDATED → RISK_EVALUATED → ROUTED
+LOW:  → SESSION_AUTHORIZED → OPERATION_PREPARED → SUBMISSION_PENDING
+HIGH: → CHALLENGE_ISSUED → WAITING_FOR_HARDWARE → EVIDENCE_VERIFIED
+      → SIGNING_AUTHORIZED → OPERATION_PREPARED → SUBMISSION_PENDING
+```
 
-A `SettlementIntent` with non-empty target, positive integer minor amount, constrained uppercase currency code, and unique evidence references.
+Terminal/blocked: `DENIED`, `EXPIRED`, `REVOKED`, `REPLAY_REFUSED`, `WAITING_FOR_HUMAN`, `WAITING_FOR_HARDWARE`, provider absence/unimplemented/unexercised, and separate policy/evidence/signing/ledger/submission/recovery failures.
 
-## Outputs
+## Data flow
 
-- validation success or explicit exception for malformed intent;
-- `SecurityCapabilityReceipt` entries for named high-risk capabilities.
+```text
+canonical settlement intent/evidence refs
+  → OPA policy #55
+  → durable workflow #56
+  → OpenBao reference/broker #57
+  → ledger #58
+  → Secure Enclave #59 + CoreNFC #60
+  → MPC/TSS #61
+  → audited smart-account contracts #62
+  → testnet submission #63
+  → adversarial/recovery convergence #64
+```
 
-## Current capability states
+Each provider emits an independent receipt. No component or license/source claim produces end-to-end security PASS.
 
-| Capability | State | Missing proof boundary |
+## Provider state ownership
+
+| Issue | Private owner | Evidence class |
 |---|---|---|
-| MPC/TSS | `NOT_IMPLEMENTED` | audited native provider, ceremonies, adversarial/recovery receipts |
-| Secure Enclave + NFC | `NOT_IMPLEMENTED` | native implementation, attestation, anti-replay, revocation, device evidence |
-| smart account | `NOT_IMPLEMENTED` | audited bytecode, deployment address, chain/testnet receipt |
-| ledger anchor | `NOT_IMPLEMENTED` | append-only store, restore, Merkle/anchor receipt |
-| settlement | `NOT_IMPLEMENTED` | chain, bundler, paymaster, policy, rollback and Human Admit |
+| #55 | OPA policy bundle/adapter | policy epoch decision |
+| #56 | durable workflow | replay/idempotency/wait/compensation |
+| #57 | OpenBao broker | metadata-only lease/audit |
+| #58 | append-only ledger/restore | append/proof/replay/invariants |
+| #59 | Secure Enclave native provider | non-exportable key/challenge evidence |
+| #60 | CoreNFC provider | card challenge/anti-replay/revocation |
+| #61 | MPC/TSS | audited protocol/ceremony/sign/reshare |
+| #62 | smart-account contracts | reproducible bytecode/audit/local validation |
+| #63 | testnet bundler/paymaster | simulate/submit/include/confirm |
+| #64 | aggregate adversarial/recovery/status/release/Human dossier | reference/testnet admission only |
 
-## Non-goals and prohibitions
+## Prohibitions
 
-- No custody, signing authority, key generation, key shard, device session, transaction broadcast, or financial settlement.
-- No source document, dependency name, contract interface, or deterministic validation can promote a capability to `PASS`.
-- No claim of absolute security, immunity, fixed resistance percentage, legal compliance, or financial safety.
-- No private key, shard, NFC secret, attestation token, wallet session, seed, `.env`, or provider credential may enter Git, logs, MCP payloads, or receipts.
-- High-risk operations cannot bypass independent policy, hardware evidence, and Human Admit.
-
-## Required eval families before any implementation
-
-- threat model and exact cryptographic/security assumptions;
-- independent code/security and dependency/license review;
-- malicious node, replay, downgrade, substitution, lost device, compromised host, split-brain, and recovery controls;
-- key ceremony, resharing, revocation, backup, and destruction receipts;
-- audited bytecode/deployment/testnet/rollback evidence;
-- Human Admit for every custody, permission, network, hardware, or settlement expansion.
-
-Issue #19 owns this README only. All listed provider states remain unchanged.
+No custody/signing authority/key/shard/device session/transaction broadcast in current code; no raw secret/key/NFC/attestation/wallet token in Git/log/MCP/receipt; no source/dependency/interface as PASS; no simulator/testnet proxy for hardware/mainnet; no absolute security/immunity/compliance/financial-safety claim.

@@ -1,21 +1,21 @@
 # Shared packages
 
-`packages/` contains portable TypeScript contracts and client helpers shared across modules. Packages are not deployment environments and may not hide provider sessions or product logic.
+`packages/` contains portable public contracts and client helpers. Packages are not runtimes, providers, products, sessions, or evidence by themselves.
 
-## Current packages
+## Package state machine
 
-| Directory | Role |
-|---|---|
-| `contracts/` | canonical evidence, artifact, provider, product, browser-workflow, and security-capability types |
-| `agent-shield-sdk/` | validates immutable bettor MCP subject identities for external consumers |
+```text
+API_PROPOSED → CLOSED_TYPES/SCHEMAS_DEFINED → COMPATIBILITY_TESTED
+  → PUBLIC_EXPORT_ADMITTED → CONSUMERS_LOCKED → RELEASED
+```
 
-## Rules
+Blocked states: duplicate/ambiguous type, unknown-field escape, breaking change without version, private import, host/session/secret/mutable ref, incompatible consumer, or stale generated release.
 
-- Public exports are the only supported cross-module import surface.
-- Internal `src` paths inherit the nearest package README and are private unless explicitly exported.
-- Types preserve all evidence states; no helper converts absence/unexercised state into PASS.
-- Portable contracts contain no host paths, credentials, sessions, device IDs, or mutable refs.
-- Breaking changes require a new interface/schema version and transitive consumer review.
-- New dependencies require exact direct/transitive license and distribution review.
+## Current packages and flow
 
-Package presence proves type availability only, not provider or product execution.
+| Directory | Role | Data flow | Future owners |
+|---|---|---|---|
+| `contracts/` | canonical evidence/provider/product/security vocabulary | typed request → state/artifact/receipt | foundations #38/#45/#54/#65 |
+| `agent-shield-sdk/` | immutable bettor MCP subject validator | repo+commit+tool → validated subject | consumer stack #65–#75 |
+
+Cross-module imports use public exports only. Leaf `src/` is private and inherits its package README. Types preserve every evidence state and cannot promote absence/unexercised state. New dependencies require exact direct/transitive license/distribution review.

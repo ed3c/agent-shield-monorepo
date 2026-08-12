@@ -1,4 +1,4 @@
-# research-orchestrator module
+# research-orchestrator module state route
 
 - Interface: `1.1.0`
 - Root: `services/research-orchestrator`
@@ -7,6 +7,16 @@
 - Runtime: local `SUPPORTED`; cloud `PARTIAL`
 - External exposure: false; secrets: none
 
-The current deterministic subject selects the raw-primary `external-verify` route. DR signed-in Stage 1 and local GCR browser work remain `NOT_EXERCISED`; the cloud signed-in GCR broker is `NOT_IMPLEMENTED`.
+## State machine/data flow
 
-Routing logic never proves browser execution, source truth, or subscription availability. See the service README for file-only body and session boundaries.
+```text
+workflow/artifact request → route policy
+  → external-verify raw-primary selection: deterministic route PASS
+  → signed-in DR/GCR local: NOT_EXERCISED
+  → cloud signed-in GCR: NOT_IMPLEMENTED
+  → downstream browser/source receipt remains separate
+```
+
+Routing never proves browser execution, source truth, subscription availability, or body isolation. Profile/cookie/OAuth/session state stays host-owned.
+
+See [`../../../services/research-orchestrator/README.md`](../../../services/research-orchestrator/README.md) and [`../../../docs/state-machines/README.md`](../../../docs/state-machines/README.md#4-research-routing).

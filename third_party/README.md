@@ -1,14 +1,26 @@
-# Third-party dependency records
+# Third-party dependency admission records
 
-`third_party/` stores reviewed license/provenance notices required to understand an admitted external tool. It does not vendor executables, credentials, caches, or provider sessions unless a dedicated supply-chain decision explicitly allows them.
+`third_party/` stores reviewed source/license/provenance/admission records. It does not vendor executables, credentials, caches, provider sessions, or unreviewed binaries.
 
-## Rules
+## Admission state machine
 
-- One child directory per dependency/tool identity.
-- Record upstream source, exact version, direct license, license-byte digest, admission issue, and remaining SBOM/transitive/notice work.
-- A permissive direct license lowers risk but does not guarantee zero legal risk.
-- Executable acquisition requires exact artifact identity/checksum and trusted provenance outside this notice directory.
-- `UNKNOWN`, conflicting, copyleft, source-available-only, or field-of-use-restricted terms fail closed until Human Admit.
-- Never copy a license file without retaining its required notice and upstream identity.
+```text
+CANDIDATE → SOURCE/RELEASE PINNED → DIRECT LICENSE VERIFIED
+  → ARTIFACT/CHECKSUM/PROVENANCE VERIFIED
+  → TRANSITIVE/SBOM/NOTICES/SERVICE TERMS REVIEWED
+  → PLATFORM CANARY → HUMAN/LEGAL ADMIT → ADMITTED
+```
 
-Current record: [`git-town/`](git-town/README.md).
+Blocked states include mutable release, wrong artifact/checksum, `UNKNOWN` or disallowed terms, missing source/notices/SBOM, unsupported platform, attestation gap, or Human rejection.
+
+## Data flow
+
+```text
+upstream source/release/license/artifact metadata
+  → dependency admission record
+  → host-owned exact executable/package
+  → provider/tool canary receipt
+  → consumer policy
+```
+
+Direct MIT/Apache/BSD evidence lowers risk but never proves zero legal/commercial risk. One child directory owns each dependency identity; new provider issues #39–#63 must create exact records where required. Current record: [`git-town/`](git-town/README.md).

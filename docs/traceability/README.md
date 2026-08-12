@@ -1,32 +1,40 @@
-# Traceability
+# Traceability control plane
 
-This directory links project intent to sources, decisions, issues, PRs, evals, artifacts, and evidence states.
+This directory provides forward and reverse navigation from intent/source/decision through directory/module/state machine, issue/eval, branch/PR, receipt, status/release, and Human Admit.
 
-## Trace unit
-
-A complete row contains:
+## State machine
 
 ```text
-intent ID
-→ source ID / rationale
-→ decision ID
-→ owner and issue
-→ parent branch / PR
-→ eval IDs and negative controls
-→ implementation or documentation subject
-→ artifact / receipt
-→ current evidence state
+IDENTIFIER_DISCOVERED → OWNER_RESOLVED → FORWARD_LINKED → REVERSE_LINKED
+  → SUBJECT_VERIFIED → STATE_VERIFIED → TRACE_CLOSED
+```
+
+Blocked states: duplicate or orphan ID, missing owner, stale branch/PR/receipt, ungrounded evidence state, conflicting authority, missing rollback, or one-way-only link.
+
+## Canonical indexes
+
+- [`TRACEABILITY_INDEX.md`](TRACEABILITY_INDEX.md) — intent/source/decision/issue/eval/status mapping.
+- [`STATE_MACHINE_INDEX.md`](STATE_MACHINE_INDEX.md) — directory/module/current state/data flow/terminal issue/eval/receipt mapping.
+- [`DOCUMENTATION_CONVERGENCE.md`](DOCUMENTATION_CONVERGENCE.md) — exact prior documentation-stack merge evidence and handoff.
+
+## Data flow
+
+```text
+intent/source/decision
+  ↔ directory/module/state-machine
+  ↔ issue/eval/path lease
+  ↔ branch/PR/exact subject
+  ↔ receipt/status/release
+  ↔ Human Admit/rollback
 ```
 
 ## Rules
 
-- Every accepted decision has at least one intent ID and source/rationale.
-- Every implementation issue has evals before changed paths.
-- Every PR declares its parent and writable path set.
-- Every `PASS` links to an exact immutable subject and artifact.
-- Planned and deferred capabilities remain indexed.
-- A missing link is an orphan and blocks convergence.
+1. Forward and reverse links are both required.
+2. Planned issue/branch/receipt is never shown as merged/exercised evidence.
+3. Current evidence comes from exact implementation/manifests/status/receipts; source proposals remain labeled.
+4. One provider/platform/carrier/origin cannot proxy another.
+5. Convergence issues update aggregate indexes and shared state; leaves update only their owned rows/receipts.
+6. Secrets, host paths, session values, and private reasoning never enter trace records.
 
-Canonical intent table: [`TRACEABILITY_INDEX.md`](TRACEABILITY_INDEX.md).
-
-Exact post-stack audit, merged PR identities, authority map, negative-control results, remaining gaps, and implementation handoff: [`DOCUMENTATION_CONVERGENCE.md`](DOCUMENTATION_CONVERGENCE.md).
+Issue [#37](https://github.com/ed3c/agent-shield-monorepo/issues/37) adds the state-machine and Phase 3–6 implementation index without changing product/provider states.

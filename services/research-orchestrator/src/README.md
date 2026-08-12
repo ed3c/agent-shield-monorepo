@@ -1,7 +1,11 @@
-# Research-orchestrator source boundary
+# Research orchestrator private source boundary
 
-This leaf inherits [`../README.md`](../README.md), root `AGENTS.md`, and module `research-orchestrator`. It owns deterministic route selection for `research.route/v1`, not browser execution or truth by itself.
+This directory inherits [`../README.md`](../README.md). The current code implements deterministic route selection, not browser or source-verification execution.
 
-Inputs are typed `BrowserWorkflowRequest` values and content-addressed input references. Outputs are `ModuleReceipt` route decisions. `external-verify` prefers raw/static primary evidence; signed-in browser routes remain separate adapters with explicit evidence class.
+```text
+typed workflow/environment/artifact request
+  → route policy
+  → route ID + evidence state + artifact ref receipt
+```
 
-Do not import browser profiles, cookies, owner live checkouts, or another module's private driver. A selected route is not a completed research run. Cloud signed-in routes remain `NOT_IMPLEMENTED`; unrun local lanes remain `NOT_EXERCISED`. Issue #19 / evals `E30.1`–`E30.4` govern this README.
+Cross-module consumers use `research.route/v1`, not this private path. Any live actor/transport/session provider requires its own issue, exact environment receipt, file-only body boundary, cleanup, and status transition.

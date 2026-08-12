@@ -1,7 +1,10 @@
-# Contracts source boundary
+# Contracts private source boundary
 
-This leaf inherits [`../README.md`](../README.md), root `AGENTS.md`, and all module manifests that consume the shared contract package. It contains TypeScript type/data-contract implementation only.
+This directory implements the public exports described by [`../README.md`](../README.md). It is the only source root for shared TypeScript contract bodies; consumers import the package entrypoint, not this private path.
 
-Allowed work: portable closed types, state vocabularies, artifact references, canonical validation helpers, and versioned compatibility changes. Forbidden work: provider execution, storage, secrets, browser/device sessions, cryptography, wallet/chain behavior, private module imports, or host-specific paths.
+```text
+foundation issue → closed type/schema/validator → compatibility and mutation tests
+  → public package export → module/consumer lock
+```
 
-A type or interface declaration never proves its runtime behavior. Contract changes require compatibility replay, negative controls, consumer impact review, and immutable release regeneration. Issue #21 / evals `E40.1`–`E40.5` govern this README.
+Issues #38, #45, #54, and #65 own disjoint contract families and must coordinate shared exports/versioning. No provider execution, secret, session, host path, mutable ref, or evidence promotion belongs here.

@@ -1,19 +1,30 @@
-# Repository data
+# Repository status and release projections
 
-`data/` stores checked-in status and release projections. It does not store user documents, secrets, live sessions, provider workspaces, mutable caches, or production databases.
+`data/` stores checked-in status and deterministic portable release projections. It does not store live provider workspaces, user documents, secrets, sessions, mutable caches, production databases, or raw environment receipts.
 
-## Boundaries
+## State machine
 
-- `status/` — authored integration-state ledger for currently named capabilities.
-- `releases/` — deterministic content-addressed portable module release manifests.
+```text
+LEAF_RECEIPTS_PENDING → SAME_SUBJECT VERIFIED → STATE TRANSITIONS REVIEWED
+  → STATUS_RENDERED → RELEASE_RENDERED → BYTE_COMPARE
+  → HUMAN_REVIEW → ADMITTED | REJECTED | ROLLED_BACK
+```
 
-## Rules
+## Data flow
 
-1. Generated release files are rebuilt and byte-compared in CI.
-2. Status files preserve `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, and `NOT_EXERCISED` exactly.
-3. A release manifest binds portable module/contract bytes; it is not a live provider receipt.
-4. Live receipts belong to an evidence system with immutable subject, environment, command, exit, artifact digests, and cleanup—not to ad hoc JSON edits here.
-5. No credential, browser profile, device identifier, private key, `.env`, host path, or temporary artifact is checked in.
-6. Data schema changes require an eval-first issue, migration/compatibility analysis, and negative control.
+```text
+module manifests/contracts + exact leaf receipts
+  → convergence matrix and disagreement controls
+  → `status/integration.json`
+  → `releases/agent-shield-module-set.json`
+  → consumer/Human review
+```
 
-Internal files inherit the nearest child README.
+## Ownership
+
+- `status/` preserves current named evidence states.
+- `releases/` binds portable module/interface/contract bytes.
+- Runtime/provider/carrier/origin receipts stay in their governed evidence store and are referenced by digest/subject, not copied ad hoc here.
+- Phase convergence issues #44, #53, #64, and #75 own relevant shared changes.
+
+A release manifest is not a live provider receipt. No credential/profile/device/key/host path/temp artifact. Schema/state change requires eval-first issue, compatibility/migration analysis, disagreement control, cleanup/rollback and Human review.

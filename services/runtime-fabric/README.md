@@ -1,55 +1,66 @@
-# Runtime fabric service contract
+# Runtime fabric service contract and implementation stack
 
-## Owner
+## Owner/current provider states
 
-- Module: `runtime-fabric`
-- Interface: `1.1.0`
+- Module: `runtime-fabric@1.1.0`
 - Capability: `runtime.provider/v1`
-- Runtime declaration: local `SUPPORTED`; cloud `NOT_IMPLEMENTED`
-- External exposure: denied; secrets: broker-only
+- secrets: broker-only; external exposure denied
 
-## Purpose
+| Provider | State |
+|---|---|
+| `local-disposable-worktree` | deterministic `PASS` |
+| `apple-container` | `NOT_EXERCISED` |
+| `openshell-tmux-local` | `NOT_EXERCISED` |
+| `e2b-firecracker` | `NOT_IMPLEMENTED` |
+| `cloudflare-computer` | `NOT_IMPLEMENTED` |
+| unknown ID | `ABSENT` |
 
-Register runtime-provider capabilities and report each provider state without borrowing live environments. The current deterministic provider is a disposable local Git worktree contract. Other provider entries are declarations awaiting host/provider receipts.
+## Current state machine
 
-## Current provider catalog
+```text
+REQUESTED → PROVIDER_ID_VALIDATED → CATALOG_LOOKUP
+  → exact provider state/capability receipt
+```
 
-| Provider | Scope | State | Credential boundary |
-|---|---|---|---|
-| `local-disposable-worktree` | local | deterministic `PASS` | none |
-| `apple-container` | local | `NOT_EXERCISED` | host-only |
-| `openshell-tmux-local` | local | `NOT_EXERCISED` | host-only |
-| `e2b-firecracker` | cloud | `NOT_IMPLEMENTED` | broker-only |
-| `cloudflare-computer` | cloud | `NOT_IMPLEMENTED` | broker-only |
-| unknown provider | declared by request | `ABSENT` | none |
+Only `local-disposable-worktree` currently performs an isolated deterministic run. Catalog declaration is not execution.
 
-## Inputs
+## Target provider lifecycle
 
-- exact provider ID;
-- immutable source/release identity where applicable;
-- bounded workload and artifact contract;
-- broker-owned credentials supplied outside repository state.
+Foundation [#38](https://github.com/ed3c/agent-shield-monorepo/issues/38):
 
-## Outputs
+```text
+UNRESOLVED → RESOLVED → ADMISSION_CHECKED → MATERIALIZING → READY
+  → RUNNING → COLLECTING → CLEANING → COMPLETED
+```
 
-A `ProviderReceipt` containing provider ID, scope, state, capabilities, immutable subject when exercised, and detail. A provider catalog entry is not a live execution receipt.
+Blocked/terminal states include absence, not implemented, not exercised, policy/admission/materialization/execution/artifact/cleanup failure, cancellation, and timeout.
 
-## Non-goals and prohibitions
+## Data flow
 
-- Do not import a sibling live checkout, `node_modules`, venv, browser profile, Keychain, or host session.
-- Do not copy `.env` or provider credentials into a workspace or artifact.
-- Do not treat E2B/OpenShell/Apple Container package presence or source benchmarks as runtime evidence.
-- Do not use bidirectional timestamp-based source overwrite; source exchange uses Git/patch/content identity.
-- Do not expose generic shell-over-MCP.
+```text
+closed runtime request + immutable selected closure + broker refs
+  → provider resolver/admission
+  → fresh isolated workspace
+  → exact environment/network/secret/timeout limits
+  → bounded execution
+  → content-addressed artifacts and touched-path/exit receipt
+  → process/workspace/session/lease cleanup receipt
+```
 
-## Required eval families before provider implementation
+Hybrid exchange is data-class-specific: Git/patch for source, immutable object for artifacts, epoch for policy, image rebuild for OS, replay for data, broker refs for secrets/sessions. Timestamp/newest-wins is forbidden.
 
-- exact immutable source and provider-version acquisition;
-- fresh isolated workspace and dependency closure;
-- local-only, cloud-independent, and hybrid route independence;
-- network/secret allowlist refusal;
-- timeout, cancellation, artifact bounds, process/session/worktree cleanup;
-- planted provider absence and execution failure;
-- license/SBOM/notices, cost, performance, and isolation receipts for the exact release.
+## Molecular Stack PR ownership
 
-Issue #19 owns this README only. Provider adapters require separate eval-first issues.
+- #38 SPI/state machine
+- #39 Apple Container
+- #40 E2B
+- #41 OpenShell policy
+- #42 tmux/PTY
+- #43 exchange/repair
+- #44 public registry/module/status/release and cross-provider convergence
+
+Leaves own private provider roots and receipts. #44 alone promotes public registry/interface/status/release.
+
+## Prohibitions
+
+No sibling live checkout/node_modules/venv/profile/Keychain/session; no credential in workspace/artifact; no generic shell-over-MCP; no source benchmark/license/provider name as runtime PASS; no local/cloud proxying.

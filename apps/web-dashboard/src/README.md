@@ -1,7 +1,21 @@
 # Web dashboard source boundary
 
-This leaf inherits [`../README.md`](../README.md), root `AGENTS.md`, and module `product-adapters`. It contains adapter-neutral TypeScript dashboard state and future UI projection code.
+This private source directory inherits [`../README.md`](../README.md). Public cross-module use goes through `product.dashboard/v1` and typed receipt/action contracts.
 
-Allowed work: typed dashboard views, bounded action requests, accessibility contracts, and receipt rendering. Forbidden work: generic PTY/shell exposure, credentials or browser/session state, direct runtime-provider imports, or treating a framework/package declaration as a live dashboard.
+## Local state machine
 
-Current code is a `nextjs-contract` state declaration. GenUI, terminal, bettor MCP, authenticated browser, and deployment evidence remain `NOT_EXERCISED`, `NOT_INITIALIZED`, or `NOT_IMPLEMENTED`. Issue #19 / evals `E30.1`–`E30.4` govern this README.
+```text
+SOURCE_CHANGE → TYPE/BUILD CHECK → RECEIPT-STATE FIXTURE CHECK
+  → ACCESSIBILITY/AUTH/BOUNDS CONTROLS → PREVIEW CANARY → CLEANUP RECEIPT
+```
+
+Current implementation is a contract skeleton; GenUI, terminal, browser and cloud deployment remain unexercised or unimplemented as listed by the parent.
+
+## Data flow
+
+```text
+typed receipts/actions → private view model/components → accessible rendered state
+  → optional public action request → owning module receipt
+```
+
+Do not import runtime/provider private source, add generic terminal/action passthrough, persist sessions/secrets, or change shared status/release outside #53.

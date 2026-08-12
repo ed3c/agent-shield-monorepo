@@ -1,22 +1,21 @@
-# Integration status ledger
+# Integration evidence-state projection
 
-`integration.json` is the compact, reviewed view of current named capability states. It helps Agents avoid inferring implementation from architecture prose.
+`integration.json` is the authored current-state ledger for named capabilities. It is not changed by architecture prose, package presence, or a leaf issue without its convergence owner.
 
-## Semantics
+## State machine
 
-- `PASS` — exact deterministic subject exercised successfully.
-- `FAIL` — exact subject exercised and disagreed.
-- `ABSENT` — required subject/input does not exist.
-- `NOT_IMPLEMENTED` — adapter/provider/mechanism intentionally does not exist.
-- `NOT_EXERCISED` — contract exists but its live/environment-owned canary has not run.
+```text
+CURRENT_STATE → EXACT RECEIPT VALIDATED → ASSERTION/CONTROL/CLEANUP REVIEWED
+  → TRANSITION AUTHORIZED → STATUS UPDATED → RELEASE/TRACE RESTAMPED
+```
 
-## Rules
+Allowed states remain distinct: `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, `NOT_EXERCISED`; blocked/Human/cleanup detail lives in the owning receipt/index until schema admission.
 
-1. Every `PASS` must be traceable to a deterministic test or immutable receipt.
-2. A successful routing decision cannot promote its downstream provider.
-3. Optional skips, missing private checkout, missing auth, or unavailable device/browser remain non-PASS states.
-4. Status keys are stable identities; renames require traceability migration.
-5. Manual status changes require an issue/PR that names the exact new evidence.
-6. The ledger is not a progress percentage and must not collapse multiple provider states.
+```text
+exact provider/product/driver/origin receipt
+  → state-transition review
+  → `integration.json`
+  → README/trace/release consumer
+```
 
-The current ledger intentionally keeps PDF/cloud runtime/product/security/bettor/live session gaps visible.
+Phase convergence owners: runtime #44, product #53, security #64, bettor integration #75. Unrelated module states must not change because repository HEAD moved.

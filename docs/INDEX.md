@@ -1,63 +1,76 @@
 # Agent Shield documentation index
 
-This is the canonical navigation surface for humans and Agents. Read documents in the order shown for the selected task.
+This is the canonical navigation surface for humans and Agents. Read the mandatory sequence in root [`AGENTS.md`](../AGENTS.md), then use the task routes below.
 
-## 1. Identity and intent
+## 1. Identity, source, and decisions
 
 | Document | Role |
 |---|---|
-| [`../README.md`](../README.md) | concise project boundary, rules, and Harness narratives |
+| [`../README.md`](../README.md) | concise current state, directory/data-flow map, and phase Stack DAG |
 | [`../AGENTS.md`](../AGENTS.md) | mandatory Agent operating contract |
-| [`intent/PROJECT_INTENT.md`](intent/PROJECT_INTENT.md) | north star, constraints, current phase, and deferrals |
+| [`intent/PROJECT_INTENT.md`](intent/PROJECT_INTENT.md) | north star, constraints, and deferrals |
+| [`sources/SOURCE_LEDGER.md`](sources/SOURCE_LEDGER.md) | source IDs, locators, claims, and repository treatment |
+| [`decisions/README.md`](decisions/README.md) | decision-record index |
+| [`licensing/README.md`](licensing/README.md) | exact dependency/license admission policy |
 
-## 2. Provenance and repository truth
-
-| Document | Role |
-|---|---|
-| [`sources/SOURCE_LEDGER.md`](sources/SOURCE_LEDGER.md) | stable source IDs, locators, and claim treatment |
-| [`decisions/README.md`](decisions/README.md) | decision-record index and decision states |
-| [`traceability/TRACEABILITY_INDEX.md`](traceability/TRACEABILITY_INDEX.md) | intent → source → decision → issue → eval → status |
-| [`traceability/DOCUMENTATION_CONVERGENCE.md`](traceability/DOCUMENTATION_CONVERGENCE.md) | exact merged PR identities, authority map, E60 controls, gaps, and implementation handoff |
-
-## 3. Architecture and phases
+## 2. Architecture, state machines, and implementation ownership
 
 | Document | Role |
 |---|---|
-| [`../ARCHITECTURE.md`](../ARCHITECTURE.md) | current six-plane architecture contract |
-| [`architecture/IMPLEMENTATION_PHASES.md`](architecture/IMPLEMENTATION_PHASES.md) | staged implementation and evidence boundaries |
-| [issue #17](https://github.com/ed3c/agent-shield-monorepo/issues/17) | source-derived data flows, environment modes, licensing, and planned tree |
+| [`../ARCHITECTURE.md`](../ARCHITECTURE.md) | current plane/module/placement authority |
+| [`architecture/IMPLEMENTATION_PHASES.md`](architecture/IMPLEMENTATION_PHASES.md) | high-level phase boundaries |
+| [`architecture/DATA_FLOWS.md`](architecture/DATA_FLOWS.md) | source-derived and repository-reviewed target data flows |
+| [`state-machines/README.md`](state-machines/README.md) | canonical current and target transition/data-flow map |
+| [`implementation/README.md`](implementation/README.md) | implementation admission rules and convergence ownership |
+| [`implementation/STACKED_IMPLEMENTATION_PLAN.md`](implementation/STACKED_IMPLEMENTATION_PLAN.md) | complete Phase 3–6 issue/branch/base/path/eval DAG |
 
-## 4. Git, Harness, and eval governance
+## 3. Evidence, Git, and Worker governance
 
-| Workstream | Canonical issue |
+| Document | Role |
 |---|---|
-| Git Town and unattended Worker-Agent protocol | [#15](https://github.com/ed3c/agent-shield-monorepo/issues/15) |
-| Harness and reusable eval catalog | [#22](https://github.com/ed3c/agent-shield-monorepo/issues/22) |
-| Final link/coverage convergence | [#23](https://github.com/ed3c/agent-shield-monorepo/issues/23) |
-| Mechanical documentation/eval validator after convergence | [#32](https://github.com/ed3c/agent-shield-monorepo/issues/32) |
-| Git Town live sync/background/conflict canaries after convergence | [#31](https://github.com/ed3c/agent-shield-monorepo/issues/31) |
+| [`harness/README.md`](harness/README.md) | Harness classes and evidence arrival rules |
+| [`evals/README.md`](evals/README.md) | eval schema, states, and disagreement controls |
+| [`git/README.md`](git/README.md) | Git Town governance and current admission state |
+| [`../scripts/git-town/README.md`](../scripts/git-town/README.md) | executable Worker/stack state machine and macOS canary boundary |
+| [`traceability/DOCUMENTATION_CONVERGENCE.md`](traceability/DOCUMENTATION_CONVERGENCE.md) | prior documentation convergence and exact merged identities |
 
-## 5. Directory contracts
+## 4. Complete traceability
 
-The nearest `README.md` owns local guidance. Coverage is split so multiple Agents can work without overlapping paths:
+| Document | Role |
+|---|---|
+| [`traceability/TRACEABILITY_INDEX.md`](traceability/TRACEABILITY_INDEX.md) | intent/source/decision/issue/eval/status index |
+| [`traceability/STATE_MACHINE_INDEX.md`](traceability/STATE_MACHINE_INDEX.md) | directory/module/current state/data flow/terminal issue/eval reverse index |
+| [issue #37](https://github.com/ed3c/agent-shield-monorepo/issues/37) | documentation-only state-machine and molecular implementation index |
 
-- apps and services — [issue #19](https://github.com/ed3c/agent-shield-monorepo/issues/19);
-- Arena, GitHub, packages, data, scripts, and remaining control planes — [issue #21](https://github.com/ed3c/agent-shield-monorepo/issues/21).
+## 5. Molecular implementation phase entry points
 
-## 6. Machine-readable contracts
+| Phase | Foundation | Leaves | Convergence |
+|---|---|---|---|
+| Runtime fabric | [#38](https://github.com/ed3c/agent-shield-monorepo/issues/38) | #39–#43 | [#44](https://github.com/ed3c/agent-shield-monorepo/issues/44) |
+| Product/mobile automation | [#45](https://github.com/ed3c/agent-shield-monorepo/issues/45) | #46–#52 | [#53](https://github.com/ed3c/agent-shield-monorepo/issues/53) |
+| Security/hardware/testnet | [#54](https://github.com/ed3c/agent-shield-monorepo/issues/54) | #55–#63 | [#64](https://github.com/ed3c/agent-shield-monorepo/issues/64) |
+| Bettor reference consumer | [#65](https://github.com/ed3c/agent-shield-monorepo/issues/65) | #66–#74 | [#75](https://github.com/ed3c/agent-shield-monorepo/issues/75) |
+
+Exact branch parentage and parallel groups are in the Stack plan, not inferred from issue numbers.
+
+## 6. Directory contracts and machine truth
+
+The nearest `README.md` owns local guidance. Machine truth remains:
 
 | Path | Meaning |
 |---|---|
 | `.arena/modules/*/module.json` | module roots, capabilities, runtime states, proof command, external policy |
-| `data/status/integration.json` | current integration evidence-state ledger |
-| `data/releases/agent-shield-module-set.json` | immutable portable module release manifest |
-| `packages/contracts/src/index.ts` | shared TypeScript contract surface |
+| `packages/contracts/src/index.ts` | current public TypeScript contract surface |
+| `data/status/integration.json` | current product/provider evidence-state ledger |
+| `data/releases/agent-shield-module-set.json` | deterministic portable module release manifest |
+| exact provider/driver/origin receipt | environment-specific exercised subject |
 
 ## Navigation rule
 
-When two documents appear to disagree:
+When authorities differ:
 
 1. preserve the source statement in the source ledger;
-2. prefer the newest admitted repository decision for policy;
-3. prefer an immutable executed receipt for evidence state;
-4. record the disagreement rather than silently reconciling it.
+2. use the newest admitted repository decision for policy;
+3. use exact code/manifest/status for current implemented shape;
+4. use an immutable executed receipt for live evidence;
+5. record disagreement instead of silently reconciling it.

@@ -1,28 +1,34 @@
-# Canonical contracts package
+# Canonical contracts package and state-machine foundations
 
-## Purpose
-
-`packages/contracts` is the shared TypeScript vocabulary for evidence and module boundaries. Its exports are portable data contracts; they do not execute providers.
+`packages/contracts` is the host-neutral TypeScript vocabulary for closed requests, capabilities, artifacts, evidence states, provider/product/security/integration receipts, and cleanup boundaries. It executes no provider.
 
 ## Current public types
 
-- `EvidenceState`: `PASS | FAIL | ABSENT | NOT_IMPLEMENTED | NOT_EXERCISED`
-- `ArtifactRef`
-- `ModuleReceipt`
-- `BrowserWorkflowRequest`
-- `ProviderReceipt`
-- `ProductAdapterReceipt`
-- `SecurityCapabilityReceipt`
+`EvidenceState`, `ArtifactRef`, `ModuleReceipt`, `BrowserWorkflowRequest`, `ProviderReceipt`, `ProductAdapterReceipt`, and `SecurityCapabilityReceipt` are the current baseline. `PASS` requires an exercised immutable subject.
 
-## Rules
+## Contract lifecycle
 
-1. Every receipt names its module/provider/adapter/capability and exact state.
-2. `PASS` requires an exercised immutable subject; callers may not infer it from a type or artifact reference.
-3. Artifact paths are optional and must never expose temporary server or host-private paths across trust boundaries; prefer digest plus typed bytes/reference.
-4. New fields default to closed validation. Unknown fields require a schema/interface version decision.
-5. Cross-module imports use the public package entrypoint, not another module's private source.
-6. Contract changes require compatibility evals, mutation controls, consumer impact review, and immutable release regeneration.
+```text
+PROPOSED → SCHEMA_DEFINED → CLOSED_VALIDATION → POSITIVE/NEGATIVE TESTED
+  → COMPATIBILITY CLASSIFIED → INTERFACE_VERSIONED → EXPORTED → CONSUMER_LOCKED
+```
 
-## Non-goals
+## Phase foundations
 
-No network, storage, secret resolution, browser session, runtime, device, cryptography, wallet, or chain behavior belongs in this package.
+| Issue | Contract family | Downstream leaves |
+|---|---|---|
+| #38 | runtime request/provider lifecycle/artifact/cleanup | #39–#44 |
+| #45 | product action/accessibility/projection/authorization | #46–#53 |
+| #54 | security intent/challenge/evidence/workflow/key/ledger/operation | #55–#64 |
+| #65 | consumer/release/closure/bindings/surfaces/origins/rollback | #66–#75 |
+
+## Data flow
+
+```text
+untrusted input → closed schema and semantic validation
+  → versioned typed packet/capability
+  → owning module public port
+  → typed artifact/receipt
+```
+
+No network, storage, secret resolution, browser/device session, runtime, cryptography, wallet, chain, or Human decision belongs in this package. A leaf may not bypass the public entrypoint or edit another foundation's contract without a compatibility/Stack decision.
