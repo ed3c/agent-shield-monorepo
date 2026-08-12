@@ -9,7 +9,8 @@ This is the canonical navigation surface for humans and Agents. Read root [`AGEN
 | [`architecture/DOCUMENT_ROUTING.md`](architecture/DOCUMENT_ROUTING.md) | same-name route semantics and assertions |
 | [`architecture/STATE_MACHINES.md`](architecture/STATE_MACHINES.md) | thin route to canonical state-machine owner |
 | [`integration/CROSS_REPO_INTEGRATION.md`](integration/CROSS_REPO_INTEGRATION.md) | four-repository module/release/binding flow |
-| [`traceability/TRACEABILITY_INDEX.md`](traceability/TRACEABILITY_INDEX.md) | standard trace route to detailed indexes |
+| [`traceability/TRACEABILITY_INDEX.md`](traceability/TRACEABILITY_INDEX.md) | canonical repository trace matrix |
+| [`traceability/FOUR_REPO_INTEGRATION.md`](traceability/FOUR_REPO_INTEGRATION.md) | current four-repository documentation PR topology |
 
 ## Identity, source, and decisions
 
@@ -42,14 +43,6 @@ This is the canonical navigation surface for humans and Agents. Read root [`AGEN
 | [`evals/README.md`](evals/README.md) | eval schema, states, and disagreement controls |
 | [`git/README.md`](git/README.md) | Git Town governance and admission state |
 | [`../scripts/git-town/README.md`](../scripts/git-town/README.md) | executable Worker/stack state machine and canary boundary |
-
-## Traceability
-
-| Document | Role |
-|---|---|
-| [`traceability/TRACEABILITY_INDEX.md`](traceability/TRACEABILITY_INDEX.md) | standard trace route |
-| [`traceability/STATE_MACHINE_INDEX.md`](traceability/STATE_MACHINE_INDEX.md) | directory/module/state/data-flow/terminal issue/eval reverse index |
-| [`traceability/DOCUMENTATION_CONVERGENCE.md`](traceability/DOCUMENTATION_CONVERGENCE.md) | prior exact merged documentation identities |
 
 ## Molecular implementation phases
 
