@@ -54,6 +54,8 @@ grep -Fq -- '--no-auto-resolve' "$SCRIPT_DIR/sync-stack.sh" || fail "sync wrappe
 grep -Fq -- '--no-push' "$SCRIPT_DIR/sync-stack.sh" || fail "local no-push mode absent"
 grep -Fq 'ALLOW_GIT_TOWN_PUSH' "$SCRIPT_DIR/sync-stack.sh" || fail "publish guard absent"
 grep -Fq 'sync-stack.sh' "$SCRIPT_DIR/background-sync.sh" || fail "background worker does not delegate to canonical wrapper"
+grep -Fq 'daemon_command=(bash "$SCRIPT_DIR/background-sync.sh"' "$SCRIPT_DIR/background-sync.sh" || fail "background daemon executes a non-executable script directly"
+grep -Fq 'bash "$SCRIPT_DIR/sync-stack.sh"' "$SCRIPT_DIR/background-sync.sh" || fail "background worker executes a non-executable canonical wrapper directly"
 if grep -Fq 'git town sync' "$SCRIPT_DIR/background-sync.sh"; then
   fail "background worker contains a second sync implementation"
 fi
@@ -163,54 +165,6 @@ if [[ "$mode" == "static" ]]; then
   exit 0
 fi
 
-command -v git-town >/dev/null 2>&1 || fail "integration mode requires git-town 24.0.0"
-actual="$(git-town --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)"
-[[ "$actual" == "24.0.0" ]] || fail "integration mode requires Git Town 24.0.0, observed ${actual:-unknown}"
-
-base="$(mktemp -d "${TMPDIR:-/tmp}/git-town-integration.XXXXXX")"
-cleanup_paths+=("$base")
-remote="$base/remote.git"
-repo="$base/repo"
-git init --bare -q "$remote"
-git init -q -b main "$repo"
-git -C "$repo" config user.name 'Git Town integration selftest'
-git -C "$repo" config user.email 'git-town-integration@example.invalid'
-printf 'base\n' > "$repo/subject.txt"
-cp "$ROOT/.git-town.toml" "$repo/.git-town.toml"
-git -C "$repo" add subject.txt .git-town.toml
-git -C "$repo" commit -q -m base
-git -C "$repo" remote add origin "$remote"
-git -C "$repo" push -q -u origin main
-
-(
-  cd "$repo"
-  export GIT_TOWN_INTERACTIVE=false
-  export GIT_TOWN_AUTO_RESOLVE=false
-  git town hack docs/fixture-parent --non-interactive --no-auto-resolve --no-stash
-  printf 'parent-v1\n' > parent.txt
-  git add parent.txt
-  git commit -q -m parent-v1
-  git town sync --stack --non-interactive --push --no-auto-resolve
-  git town append docs/fixture-child --non-interactive --push --no-auto-resolve --no-stash
-  printf 'child-v1\n' > child.txt
-  git add child.txt
-  git commit -q -m child-v1
-  git town sync --stack --non-interactive --push --no-auto-resolve
-  git switch -q docs/fixture-parent
-  printf 'parent-v2\n' > conflict.txt
-  git add conflict.txt
-  git commit -q -m parent-v2
-  git push -q origin docs/fixture-parent
-  git switch -q docs/fixture-child
-  printf 'child-v2\n' > conflict.txt
-  git add conflict.txt
-  git commit -q -m child-v2
-  set +e
-  git town sync --stack --non-interactive --push --no-auto-resolve >/dev/null 2>&1
-  rc=$?
-  set -e
-  [[ "$rc" -ne 0 ]] || fail "planted semantic conflict was accepted"
-  [[ -n "$(git diff --name-only --diff-filter=U)" ]] || fail "conflict run left no inspectable unmerged path"
-)
-
-printf 'SELFTEST GREEN: Git Town green-path and conflict controls\n'
+integration_harness="$SCRIPT_DIR/integration-selftest.sh"
+[[ -x "$integration_harness" ]] || fail "wrapper-level integration harness is absent or not executable"
+exec "$integration_harness"

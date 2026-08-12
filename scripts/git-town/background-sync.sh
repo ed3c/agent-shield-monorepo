@@ -74,7 +74,7 @@ case "$action" in
     require_not_blocked
     require_task_identity
 
-    daemon_command=("$SCRIPT_DIR/background-sync.sh" __run --interval "$interval")
+    daemon_command=(bash "$SCRIPT_DIR/background-sync.sh" __run --interval "$interval")
     [[ "$publish" == false ]] || daemon_command+=(--publish)
     nohup "${daemon_command[@]}" >> "$log_file" 2>&1 </dev/null &
     pid=$!
@@ -87,7 +87,7 @@ case "$action" in
     while true; do
       sync_args=()
       [[ "$publish" == false ]] || sync_args+=(--publish)
-      "$SCRIPT_DIR/sync-stack.sh" "${sync_args[@]}" || exit $?
+      bash "$SCRIPT_DIR/sync-stack.sh" "${sync_args[@]}" || exit $?
       sleep "$interval" &
       wait $!
     done
