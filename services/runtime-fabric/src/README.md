@@ -2,18 +2,19 @@
 
 This directory inherits [`../README.md`](../README.md).
 
-## Current source planes
+## Current planes
 
-- `index.ts` — the existing provider catalog/state projection and disposable local worktree subject; its registry and evidence states are unchanged by issue #38.
-- `spi/` — provider-neutral admission, materialization, execution, artifact, and cleanup boundary.
-- `state-machine/` — explicit lifecycle graph plus deterministic RT-FND controls.
+- `index.ts` — existing provider catalog/state projection and disposable local-worktree subject; unchanged by issue #38.
+- `spi/` — exact-subject provider-neutral admission, materialization, execution, collection, recovery-cleanup, and cleanup boundary.
+- `state-machine/` — lifecycle graph and RT-FND contract, availability, execution, timeout/cancellation, recovery, artifact, and cleanup controls.
 
 ```text
 closed immutable runtime request
+  → bounded stage contexts
   → provider SPI and lifecycle
-  → bounded artifact and cleanup receipt
+  → stage-aware artifact/cleanup receipt
 ```
 
-Future provider roots are owned by issues #39–#43. They use the SPI and runtime contract, keep local and cloud evidence independent, and avoid cross-provider implementation imports. `index.ts`, module manifests, `data/status/integration.json`, release bytes, and aggregate evidence remain convergence #44 ownership.
+Issues #39–#43 own provider-private roots after this foundation is admitted. They may consume the public runtime subpath and SPI but may not import sibling provider internals. `index.ts`, `.arena` manifest/interface version, `data/status/integration.json`, immutable release bytes, aggregate evidence, and promotion remain convergence #44 ownership.
 
-The issue #38 fixture runs in memory only and changes no live provider, performance, cost, or production evidence state.
+The issue #38 fixture runs in memory only. It changes no live provider, platform, credential, isolation, performance, cost, cleanup, or production evidence state.
