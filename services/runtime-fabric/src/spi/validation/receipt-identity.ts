@@ -3,6 +3,7 @@ import {
   runtimeEvidenceForOutcome,
   validateRuntimeEnvironmentSubject,
   validateRuntimeProviderSubject,
+  type RuntimeLifecycleState,
   type RuntimeOutcomeState,
   type RuntimeReceipt,
   type RuntimeRequest,
@@ -18,6 +19,38 @@ export interface ReceiptIdentityContext {
   receipt: RuntimeReceipt;
   taskStage: Exclude<RuntimeStage, "cleanup"> | null;
   terminalStage: RuntimeStage | null;
+}
+
+type RuntimeTaskStage = Exclude<RuntimeStage, "cleanup"> | null;
+
+const TASK_PHASE_STATES = new Set<RuntimeLifecycleState>([
+  "ADMISSION_CHECKED",
+  "MATERIALIZING",
+  "READY",
+  "RUNNING",
+  "COLLECTING",
+  "CLEANING",
+]);
+
+const EXPECTED_TASK_PHASES: Readonly<Record<Exclude<RuntimeStage, "cleanup">, readonly RuntimeLifecycleState[]>> = {
+  admission: ["ADMISSION_CHECKED"],
+  materialization: ["ADMISSION_CHECKED", "MATERIALIZING", "CLEANING"],
+  execution: ["ADMISSION_CHECKED", "MATERIALIZING", "READY", "RUNNING", "CLEANING"],
+  collection: ["ADMISSION_CHECKED", "MATERIALIZING", "READY", "RUNNING", "COLLECTING", "CLEANING"],
+};
+
+function assertTaskStageMatchesLifecycle(
+  taskStage: RuntimeTaskStage,
+  trace: readonly RuntimeLifecycleState[],
+): void {
+  const observed = trace.filter((state) => TASK_PHASE_STATES.has(state));
+  const expected = taskStage === null ? [] : EXPECTED_TASK_PHASES[taskStage];
+  if (
+    observed.length !== expected.length ||
+    observed.some((state, index) => state !== expected[index])
+  ) {
+    throw new Error(`runtime receipt lifecycle does not match taskStage ${taskStage ?? "resolution"}`);
+  }
 }
 
 function assertOutcome(value: unknown, name: string): asserts value is RuntimeOutcomeState {
@@ -56,6 +89,7 @@ export function validateReceiptIdentity(receiptValue: RuntimeReceipt, request: R
 
   const taskStage = receipt.taskStage === null ? null : enumValue(receipt.taskStage, "runtime receipt taskStage", ["admission", "materialization", "execution", "collection"] as const);
   const terminalStage = receipt.terminalStage === null ? null : enumValue(receipt.terminalStage, "runtime receipt terminalStage", ["admission", "materialization", "execution", "collection", "cleanup"] as const);
+  assertTaskStageMatchesLifecycle(taskStage, receipt.lifecycle);
   assertOutcome(receipt.taskOutcome, "runtime receipt taskOutcome");
   assertOutcome(receipt.outcome, "runtime receipt outcome");
   if (!stageOwnsOutcome(taskStage, receipt.taskOutcome)) throw new Error("runtime receipt taskStage does not own taskOutcome");

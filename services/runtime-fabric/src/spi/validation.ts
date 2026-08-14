@@ -15,5 +15,5 @@ export {
   validateWorkspaceIdentity,
 } from "./validation/basic.ts";
 export { normalizeCleanup, normalizeCollection } from "./validation/artifacts.ts";
-export { descriptorForRequest } from "./validation/descriptor.ts";
+export { assertRuntimeRequestExecutable, descriptorForRequest } from "./validation/descriptor.ts";
 export { assertRuntimeReceiptMatchesRequest } from "./validation/receipt.ts";

@@ -2,7 +2,7 @@ import { validateRuntimeRequestV2, type RuntimeReceipt } from "../../../../../pa
 import { RuntimeLifecycle } from "../../state-machine/index.ts";
 import { RuntimeProviderRegistry } from "../registry.ts";
 import type { RuntimeRunOptions } from "../types.ts";
-import { deepFreeze, unexercisedAdmission } from "../validation.ts";
+import { assertRuntimeRequestExecutable, deepFreeze, unexercisedAdmission } from "../validation.ts";
 import { earlyReceipt } from "./receipt.ts";
 import { runRuntimeProvider } from "./run.ts";
 
@@ -12,6 +12,7 @@ export async function dispatchRuntimeRequest(
   options: RuntimeRunOptions = {},
 ): Promise<RuntimeReceipt> {
   const request = deepFreeze(validateRuntimeRequestV2(value));
+  assertRuntimeRequestExecutable(request);
   const provider = registry.resolve(request.providerId, request.scope);
   if (provider) return runRuntimeProvider(provider, request, options);
   const lifecycle = new RuntimeLifecycle();

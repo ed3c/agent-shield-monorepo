@@ -1,8 +1,19 @@
-import type { RuntimeProviderDescriptor, RuntimeRequest } from "../../../../../packages/contracts/src/runtime/index.ts";
+import {
+  isLegacyRuntimeEnvelopeRequest,
+  type RuntimeProviderDescriptor,
+  type RuntimeRequest,
+} from "../../../../../packages/contracts/src/runtime/index.ts";
 import type { RuntimeProviderSpi } from "../types.ts";
 import { canonical, normalizeDescriptor } from "./common.ts";
 
+export function assertRuntimeRequestExecutable(request: RuntimeRequest): void {
+  if (isLegacyRuntimeEnvelopeRequest(request)) {
+    throw new Error("legacy runtime envelope is not executable by a provider");
+  }
+}
+
 export function descriptorForRequest(provider: RuntimeProviderSpi, request: RuntimeRequest): RuntimeProviderDescriptor {
+  assertRuntimeRequestExecutable(request);
   const descriptor = normalizeDescriptor(provider.descriptor);
   if (descriptor.id !== request.providerId) throw new Error("provider ID mismatch");
   if (descriptor.version !== request.providerVersion) throw new Error("provider version mismatch");

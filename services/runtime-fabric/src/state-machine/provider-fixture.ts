@@ -22,6 +22,7 @@ export class FixtureProvider implements RuntimeProviderSpi {
   executeCalled = 0;
   collectCalled = 0;
   cleanupCalled = 0;
+  materializationMode: "PASS" | "THROW" = "PASS";
   executionState: RuntimeExecutionResult["state"] = "PASS";
   cleanupState: RuntimeCleanupReceipt["state"] = "PASS";
   recoveryCleanupState: RuntimeCleanupReceipt["state"] = "PASS";
@@ -48,6 +49,7 @@ export class FixtureProvider implements RuntimeProviderSpi {
   }
   async materialize(_request: RuntimeRequest, _context: RuntimeOperationContext): Promise<RuntimeMaterialization> {
     this.materializeCalled += 1;
+    if (this.materializationMode === "THROW") throw new Error("fixture materialization failed");
     return { workspaceIdentity: `fixture-workspace:sha256:${"c".repeat(64)}`, handle: {} };
   }
   async cleanupFailedMaterialization(
