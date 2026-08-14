@@ -16,10 +16,21 @@ import {
 const GIT_OID = /^[a-f0-9]{40}$/;
 const SHA_256 = /^[a-f0-9]{64}$/;
 
-// INT-CLAUDE-002. The passive-context files this carrier reads on its own. Named rather than
-// discovered, because "the carrier found what it needed" is not a claim anyone can check and
-// "these four files were present and hashed to this" is.
-export const REQUIRED_CONTEXT_FILES = ["AGENTS.md", "CLAUDE.md", "CONTEXT.md", "ARCHITECTURE.md"] as const;
+// INT-CLAUDE-002 and INT-CODEX-002. The passive-context files each carrier reads *on its own*.
+// Named rather than discovered, because "the carrier found what it needed" is not a claim anyone
+// can check and "these four files were present and hashed to this" is.
+//
+// Derived from the carrier for the same reason `foreignMarkersFor` is: the two carriers share
+// the repository-level context and differ only in their own adapter file, so parameterising is
+// what lets one rule serve both instead of two rules that drift.
+const SHARED_CONTEXT_FILES = ["AGENTS.md", "CONTEXT.md", "ARCHITECTURE.md"] as const;
+
+export function requiredContextFilesFor(carrier: CarrierKind): readonly string[] {
+  return [...SHARED_CONTEXT_FILES, carrier === "claude-code" ? "CLAUDE.md" : ".codex/config.toml"];
+}
+
+/** @deprecated Prefer `requiredContextFilesFor`. Kept as the Claude-Code list it always was. */
+export const REQUIRED_CONTEXT_FILES = requiredContextFilesFor("claude-code");
 
 // INT-CLAUDE-004. State belonging to the other carrier. A path under either of these means the
 // two carriers can see each other's sessions, which is the cross-carrier leak the control names.
@@ -58,10 +69,10 @@ export function hostPolicyRefusal(policy: HostPolicyReport, carrier: CarrierKind
 
 // INT-CLAUDE-002. Every required file present, content-addressed, and the whole set frozen to
 // one digest so a later stage can prove nothing moved.
-export function contextRefusal(report: ContextReport): string | null {
+export function contextRefusal(report: ContextReport, carrier: CarrierKind = "claude-code"): string | null {
   if (!SHA_256.test(report.frozenDigest)) return "the frozen context digest is not content-addressed";
   const present = report.files.map((file) => file.path);
-  for (const required of REQUIRED_CONTEXT_FILES) {
+  for (const required of requiredContextFilesFor(carrier)) {
     if (!present.includes(required)) return `the materialized context is missing ${required}`;
   }
   for (const file of report.files) {
@@ -200,7 +211,7 @@ export function runCarrierCanary(request: CanaryRequest): { receipt: CarrierCana
     lifecycle.push("CONTEXT_MISMATCH");
     return done("the native context could not be frozen");
   }
-  const contextRefused = contextRefusal(context);
+  const contextRefused = contextRefusal(context, request.carrier);
   if (contextRefused !== null) {
     lifecycle.push("CONTEXT_MISMATCH");
     return done(contextRefused);
