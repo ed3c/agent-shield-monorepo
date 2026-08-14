@@ -5,6 +5,9 @@
     "": {
       "name": "agent-shield-monorepo",
     },
+    "apps/ios-hardware-brake": {
+      "name": "@agent-shield/ios-hardware-brake",
+    },
     "apps/mobile-app": {
       "name": "@agent-shield/mobile-app",
     },
@@ -52,6 +55,8 @@
     "@agent-shield/document-ingest": ["@agent-shield/document-ingest@workspace:services/document-ingest"],
 
     "@agent-shield/intent-ledger": ["@agent-shield/intent-ledger@workspace:services/intent-ledger"],
+
+    "@agent-shield/ios-hardware-brake": ["@agent-shield/ios-hardware-brake@workspace:apps/ios-hardware-brake"],
 
     "@agent-shield/mobile-app": ["@agent-shield/mobile-app@workspace:apps/mobile-app"],
 
