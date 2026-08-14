@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { ingest } from "../services/document-ingest/src/index.ts";
 import { routeResearch } from "../services/research-orchestrator/src/index.ts";
 import { providerReceipt } from "../services/runtime-fabric/src/index.ts";
+import { runtimeFoundationSelftest } from "../services/runtime-fabric/src/state-machine/selftest.ts";
 import { adapterReceipt } from "../services/mobile-automation/src/index.ts";
 import { securityCapabilities, validateIntent } from "../services/security-boundaries/src/index.ts";
 import { decide } from "../services/intent-ledger/src/index.ts";
@@ -24,5 +25,6 @@ try{
  if(decide({id:"i2",target:"vendor",amountMinor:1_000_000n,evidence:["e1"]}).state!=="FAIL")throw new Error("human boundary missing");
  subject("https://github.com/ed3c/bettor-arena","a".repeat(40),"loopctl_ctg_run");
  let red=false;try{subject("https://github.com/ed3c/bettor-arena","main","loopctl_ctg_run")}catch{red=true}if(!red)throw new Error("mutable bettor ref accepted");
- console.log("SELFTEST GREEN: Agent Shield phased contracts");
+ await runtimeFoundationSelftest();
+ console.log("SELFTEST GREEN: Agent Shield phased contracts + RT-FND");
 }finally{rmSync(root,{recursive:true,force:true});}
