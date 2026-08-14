@@ -12,7 +12,7 @@ platform-native rather than because it is a product surface.
 | Directory | Capability | Current state | Issue |
 |---|---|---|---|
 | `SecureEnclave/` | `security.provider-boundaries/v1` hardware evidence | contract and lifecycle present; device key generation, user-presence authorization and attestation verification `NOT_EXERCISED` | #59 |
-| `NFC/` | CoreNFC card possession | `ABSENT` | #60 |
+| `NFC/` | CoreNFC card possession | challenge, anti-replay and revocation present behind a native bridge; reader session, card exchange and cryptogram verification `NOT_EXERCISED` | #60 |
 
 `SecureEnclave/` owns no shared registry, module manifest, integration status, release manifest
 or public provider index. `services/security-boundaries/src/index.ts` still reports
