@@ -1,34 +1,68 @@
 # Runtime provider SPI
 
-This directory implements the provider-neutral execution boundary admitted by issue [#38](https://github.com/ed3c/agent-shield-monorepo/issues/38).
+Issue [#38](https://github.com/ed3c/agent-shield-monorepo/issues/38) owns this provider-neutral boundary.
 
-## Provider contract
-
-A provider supplies five bounded operations:
+## Operations
 
 ```text
 admit → materialize → execute → collect → cleanup
+                  ↘ failed-materialization recovery cleanup
 ```
 
-The orchestrator validates and freezes the request before handing it to a provider. It independently checks descriptor/capability/credential compatibility, portable workspace identity, exit consistency, output bytes, requested artifacts, mutation roots, and cleanup receipts.
+Every operation receives a bounded context:
+
+```text
+stage
+AbortSignal
+startedAtEpochMs
+deadlineEpochMs
+cancellationGraceMs
+```
+
+Task stages share the request deadline. Cleanup receives its own bounded deadline and still runs after task cancellation. A provider that fails to settle during cancellation grace cannot keep a green cleanup receipt.
+
+## Exact identity
+
+A provider must match the request's:
+
+```text
+id
+version
+source/artifact/binary SHA-256 subject
+image/template/profile SHA-256 subject
+scope
+required capabilities
+credential class
+```
 
 ## Receipt separation
 
-`taskOutcome` records the operation result before cleanup. `outcome` records the overall terminal state. A cleanup failure therefore cannot erase whether execution completed, failed, timed out, or was cancelled.
-
 ```text
-taskOutcome=COMPLETED + cleanup=FAIL
-  → outcome=FAILED_CLEANUP
+taskStage     = stage that produced the task result
+terminalStage = taskStage, unless cleanup changes the final result
+taskOutcome   = result before cleanup
+outcome       = final result after cleanup
 ```
 
-Unknown, absent, unimplemented, policy-refused, not-exercised, admission, execution, artifact, timeout, cancellation, and cleanup states remain distinct.
+Example:
 
-## Boundaries
+```text
+taskStage=COLLECTION
+taskOutcome=COMPLETED
+cleanup=FAIL
+terminalStage=CLEANUP
+outcome=FAILED_CLEANUP
+```
 
-- No generic shell, arbitrary command, host `cwd`, environment value, or provider-private flag is part of the SPI.
-- Secrets are logical broker references only.
-- Artifacts are content-addressed metadata; temporary host paths are not portable outputs.
-- Provider exceptions are converted to bounded generic details so raw provider errors cannot leak into receipts.
-- The in-memory fixture in `../state-machine/selftest.ts` is deterministic contract evidence only.
+Workspace cleanup is explicit:
 
-Issues #39–#43 own disjoint provider/repair roots. They may consume this SPI but may not edit one another, the aggregate provider registry, module/status/release data, or convergence-owned evidence.
+```text
+DELETED
+PRESERVED_BY_POLICY + content-addressed preservationRef
+ABSENT
+UNKNOWN
+```
+
+## Forbidden coupling
+
+No generic shell, executable/argv, caller host path, mutable checkout, raw secret, provider-private flag or cross-provider source import is part of this SPI. Provider exceptions are reduced to bounded metadata. The fixture suite is in-memory deterministic evidence, not provider execution.

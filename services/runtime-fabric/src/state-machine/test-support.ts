@@ -13,3 +13,8 @@ export async function redAsync(action: () => Promise<unknown>, message: string):
   try { await action(); } catch { failed = true; }
   ok(failed, `${message} stayed green`);
 }
+
+export function waitForAbort(signal: AbortSignal): Promise<void> {
+  if (signal.aborted) return Promise.resolve();
+  return new Promise((resolve) => signal.addEventListener("abort", () => resolve(), { once: true }));
+}

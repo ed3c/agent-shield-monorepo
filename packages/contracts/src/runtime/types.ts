@@ -13,6 +13,14 @@ export type RuntimeImplementationState = "IMPLEMENTED" | "NOT_IMPLEMENTED";
 export type RuntimeAvailabilityState = "AVAILABLE" | "ABSENT" | "REFUSED_POLICY";
 export type RuntimeExerciseState = "PASS" | "FAIL" | "NOT_EXERCISED";
 
+export type RuntimeStage =
+  | "RESOLUTION"
+  | "ADMISSION"
+  | "MATERIALIZATION"
+  | "EXECUTION"
+  | "COLLECTION"
+  | "CLEANUP";
+
 export type RuntimePhaseState =
   | "UNRESOLVED"
   | "RESOLVED"
@@ -53,6 +61,19 @@ export interface RuntimeArtifactSourceRef {
 }
 
 export type RuntimeSourceRef = RuntimeGitSourceRef | RuntimeArtifactSourceRef;
+
+export type RuntimeProviderSubjectKind = "source" | "artifact" | "binary";
+export type RuntimeEnvironmentSubjectKind = "image" | "template" | "profile";
+
+export interface RuntimeImmutableSubject<K extends string = string> {
+  kind: K;
+  id: string;
+  version: string;
+  sha256: string;
+}
+
+export type RuntimeProviderSubject = RuntimeImmutableSubject<RuntimeProviderSubjectKind>;
+export type RuntimeEnvironmentSubject = RuntimeImmutableSubject<RuntimeEnvironmentSubjectKind>;
 
 export interface RuntimeWorkload {
   id: string;
@@ -108,6 +129,9 @@ export interface RuntimeRequest {
   schema: typeof RUNTIME_REQUEST_SCHEMA;
   requestId: string;
   providerId: string;
+  providerVersion: string;
+  providerSubject: RuntimeProviderSubject;
+  environmentSubject: RuntimeEnvironmentSubject;
   scope: RuntimeScope;
   requiredCapabilities: string[];
   source: RuntimeSourceRef;
@@ -125,6 +149,8 @@ export interface RuntimeRequest {
 export interface RuntimeProviderDescriptor {
   id: string;
   version: string;
+  subject: RuntimeProviderSubject;
+  environmentSubject: RuntimeEnvironmentSubject;
   scope: RuntimeScope;
   capabilities: string[];
   credentialBoundary: RuntimeCredentialBoundary;
@@ -157,24 +183,39 @@ export interface RuntimeArtifactRef {
   mediaType: string;
 }
 
+export type RuntimeWorkspaceDisposition = "DELETED" | "PRESERVED_BY_POLICY" | "ABSENT" | "UNKNOWN";
+
 export interface RuntimeCleanupReceipt {
   state: "PASS" | "FAIL" | "NOT_EXERCISED";
   durationMs: number;
   processesChecked: boolean;
   workspaceChecked: boolean;
   sessionsChecked: boolean;
+  workspaceDisposition: RuntimeWorkspaceDisposition;
+  preservationRef: RuntimeArtifactRef | null;
   residue: string[];
   detail: string;
+}
+
+export interface RuntimeObservedProvider {
+  id: string;
+  version: string;
+  scope: RuntimeScope;
+  capabilities: string[];
+  subject: RuntimeProviderSubject | null;
+  environmentSubject: RuntimeEnvironmentSubject | null;
 }
 
 export interface RuntimeReceipt {
   schema: typeof RUNTIME_RECEIPT_SCHEMA;
   requestId: string;
   requestDigest: string;
-  provider: Pick<RuntimeProviderDescriptor, "id" | "version" | "scope"> & { capabilities: string[] };
+  provider: RuntimeObservedProvider;
   source: RuntimeSourceRef;
   workspaceIdentity: string | null;
   lifecycle: RuntimeLifecycleState[];
+  taskStage: RuntimeStage;
+  terminalStage: RuntimeStage;
   admission: RuntimeAdmissionReceipt;
   taskOutcome: RuntimeOutcomeState;
   outcome: RuntimeOutcomeState;

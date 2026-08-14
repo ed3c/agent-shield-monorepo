@@ -30,17 +30,24 @@ CANCELLED
 TIMED_OUT
 ```
 
-Execution that does not collect artifacts still enters `CLEANING`; a successful task cannot skip collection or cleanup. Materialization failure is terminal only when no owned workspace was transferred to the orchestrator.
+Materialization failure, timeout or cancellation always enters recovery cleanup. Execution and collection retain different timeout semantics: an execution timeout marks the execution exit, while a collection timeout preserves the successful execution exit. Cleanup failure never erases the earlier task result.
 
 ## Deterministic controls
 
-`selftest.ts` drives the same public contracts/SPI and proves:
+The exact-head suite exercises:
 
-- illegal transition skips turn red;
-- missing limits and nested generic shell controls are rejected;
-- unavailable states do not become `PASS`;
-- request bytes are frozen and request digests are canonical;
-- stale receipts, missing capabilities, undeclared secret references, non-portable workspace identities, out-of-scope writes, missing artifacts, oversized output, inconsistent timeout evidence, and false cleanup success turn red;
-- task failure and cleanup failure remain separate receipt lanes.
+- illegal transition skips;
+- unavailable-state separation;
+- own-key/closed-schema and prototype controls;
+- provider version, provider subject and environment subject drift;
+- generic command aliases and host/path-like inputs;
+- canonical digest and frozen request/receipt bytes;
+- output, artifact, mutation-root and stale-receipt controls;
+- pre-cancelled requests;
+- cooperative admission/materialization/execution/collection/cleanup interruption;
+- uncooperative operation grace expiry;
+- failed-materialization recovery cleanup;
+- workspace deletion/preservation/unknown-state rules;
+- independent task and cleanup outcomes.
 
-The root `scripts/selftest.ts` invokes this suite in exact-head CI. It uses no selected provider, network, device, cloud runtime, or external executable.
+The root `scripts/selftest.ts` invokes this suite in Bun CI. It performs no provider allocation, network call, subprocess spawn, device operation or credential access.
