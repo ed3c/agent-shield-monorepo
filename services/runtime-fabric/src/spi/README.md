@@ -42,6 +42,12 @@ execution       ADMISSION_CHECKED → MATERIALIZING → READY → RUNNING → CL
 collection      ADMISSION_CHECKED → MATERIALIZING → READY → RUNNING → COLLECTING → CLEANING
 ```
 
-Workspace disposition is `DELETED`, `PRESERVED_BY_POLICY` with a content-addressed reference, `ABSENT`, or `UNKNOWN`. An operation that remains unsettled beyond cancellation grace cannot retain a green cleanup receipt.
+A provider reported as `version=unresolved` can emit only the exact registry-miss trace `UNRESOLVED → RESOLVED → ABSENT`, with no provider subject, environment subject, capability, workspace, admission, or cleanup evidence.
 
-No generic shell, executable/argv, host `cwd`, raw secret, provider-private flag, mutable checkout, or cross-provider private import is part of this SPI.
+Workspace disposition is `DELETED`, `PRESERVED_BY_POLICY` with a content-addressed reference, `ABSENT`, or `UNKNOWN`. Preservation requires a `preserve-on-failure` request and a non-completed task even when cleanup itself fails. An operation that remains unsettled beyond cancellation grace cannot retain a green cleanup receipt.
+
+Runtime requests and collection receipts reject `.git`, `.env*`, `.ssh`, credential/secret/session path classes, browser profiles, keychains, and common private-key file suffixes. Workload JSON is bounded by depth, per-container entries, total input bytes, and an aggregate traversal budget.
+
+The dedicated pull-request workflow uses SHA-pinned checkout/Bun setup actions and a positive path allowlist. It exercises allowed and forbidden path fixtures before compiling and running the exact-head Bun controls.
+
+No generic shell, executable/argv, host `cwd`, raw secret, provider-private flag, mutable checkout, sensitive workspace path, or cross-provider private import is part of this SPI.

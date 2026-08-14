@@ -12,12 +12,50 @@ export const MAX_RUNTIME_BYTES = 1_073_741_824;
 export const MAX_TOUCHED_PATHS = 100_000;
 const MAX_JSON_DEPTH = 32;
 const MAX_JSON_ENTRIES = 4096;
+const MAX_JSON_NODES = 16_384;
 const MAX_JSON_KEY_LENGTH = 256;
 const FORBIDDEN_OBJECT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 const FORBIDDEN_WORKLOAD_KEYS = new Set([
   "args", "arguments", "argv", "cmd", "command", "cwd", "entrypoint", "env", "environment",
   "executable", "hostpath", "privateflags", "program", "script", "shell", "workdir", "workingdirectory",
 ]);
+const FORBIDDEN_RUNTIME_PATH_SEGMENTS = new Set([
+  ".git",
+  ".ssh",
+  "browser-profile",
+  "cookies",
+  "credentials",
+  "device-session",
+  "keychain",
+  "private-key",
+  "secrets",
+]);
+
+interface TraversalBudget {
+  remaining: number;
+}
+
+function consumeTraversalBudget(budget: TraversalBudget, name: string): void {
+  budget.remaining -= 1;
+  if (budget.remaining < 0) fail(`${name} exceeds the aggregate JSON node budget`);
+}
+
+function assertRuntimePathSegmentsSafe(segments: readonly string[], name: string): void {
+  for (const segment of segments) {
+    const lowered = segment.toLowerCase();
+    if (
+      FORBIDDEN_RUNTIME_PATH_SEGMENTS.has(lowered) ||
+      lowered === ".env" ||
+      lowered.startsWith(".env.") ||
+      lowered.endsWith(".pem") ||
+      lowered.endsWith(".key") ||
+      lowered.endsWith(".p12") ||
+      lowered.endsWith(".pfx")
+    ) {
+      fail(`${name} enters a forbidden secret, credential, repository-control, or session path class`);
+    }
+  }
+}
 
 export function fail(message: string): never {
   throw new Error(`invalid runtime contract: ${message}`);
@@ -27,7 +65,9 @@ export function record(value: unknown, name: string): Record<string, unknown> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) fail(`${name} must be an object`);
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) fail(`${name} must be a plain own-key object`);
-  for (const key of Object.keys(value)) {
+  const keys = Object.keys(value);
+  if (keys.length > MAX_JSON_ENTRIES) fail(`${name} contains too many entries`);
+  for (const key of keys) {
     if (key.length === 0 || key.length > MAX_JSON_KEY_LENGTH || /\p{Cc}/u.test(key) || FORBIDDEN_OBJECT_KEYS.has(key)) {
       fail(`${name} contains an unsafe object key`);
     }
@@ -89,6 +129,7 @@ export function relativePath(value: string, name: string): void {
   if (segments.some((segment) => segment.length === 0 || segment === "." || segment === ".." || /\p{Cc}/u.test(segment))) {
     fail(`${name} must be normalized and traversal-free`);
   }
+  assertRuntimePathSegmentsSafe(segments, name);
 }
 
 export function portableRepository(value: string, name: string): void {
@@ -100,23 +141,36 @@ export function portableRepository(value: string, name: string): void {
   if (!/^\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\.git)?$/.test(parsed.pathname)) fail(`${name} must identify one portable repository`);
 }
 
-export function rejectGenericControls(value: unknown, name: string, depth = 0): void {
+export function rejectGenericControls(
+  value: unknown,
+  name: string,
+  depth = 0,
+  budget: TraversalBudget = { remaining: MAX_JSON_NODES },
+): void {
+  consumeTraversalBudget(budget, name);
   if (depth > MAX_JSON_DEPTH) fail(`${name} exceeds maximum nesting depth`);
   if (value === null || typeof value !== "object") return;
   if (Array.isArray(value)) {
     if (value.length > MAX_JSON_ENTRIES) fail(`${name} contains too many entries`);
-    for (let index = 0; index < value.length; index += 1) rejectGenericControls(value[index], `${name}[${index}]`, depth + 1);
+    for (let index = 0; index < value.length; index += 1) {
+      rejectGenericControls(value[index], `${name}[${index}]`, depth + 1, budget);
+    }
     return;
   }
   const entries = Object.entries(record(value, name));
-  if (entries.length > MAX_JSON_ENTRIES) fail(`${name} contains too many entries`);
   for (const [key, entry] of entries) {
     if (FORBIDDEN_WORKLOAD_KEYS.has(key.toLowerCase().replace(/[_-]/g, ""))) fail(`${name}.${key} would expose a generic runtime control`);
-    rejectGenericControls(entry, `${name}.${key}`, depth + 1);
+    rejectGenericControls(entry, `${name}.${key}`, depth + 1, budget);
   }
 }
 
-export function json(value: unknown, name: string, depth = 0): JsonValue {
+export function json(
+  value: unknown,
+  name: string,
+  depth = 0,
+  budget: TraversalBudget = { remaining: MAX_JSON_NODES },
+): JsonValue {
+  consumeTraversalBudget(budget, name);
   if (depth > MAX_JSON_DEPTH) fail(`${name} exceeds maximum nesting depth`);
   if (value === null || typeof value === "string" || typeof value === "boolean") return value;
   if (typeof value === "number") {
@@ -125,11 +179,10 @@ export function json(value: unknown, name: string, depth = 0): JsonValue {
   }
   if (Array.isArray(value)) {
     if (value.length > MAX_JSON_ENTRIES) fail(`${name} contains too many entries`);
-    return value.map((entry, index) => json(entry, `${name}[${index}]`, depth + 1));
+    return value.map((entry, index) => json(entry, `${name}[${index}]`, depth + 1, budget));
   }
   const entries = Object.entries(record(value, name));
-  if (entries.length > MAX_JSON_ENTRIES) fail(`${name} contains too many entries`);
   const result: JsonObject = {};
-  for (const [key, entry] of entries) result[key] = json(entry, `${name}.${key}`, depth + 1);
+  for (const [key, entry] of entries) result[key] = json(entry, `${name}.${key}`, depth + 1, budget);
   return result;
 }

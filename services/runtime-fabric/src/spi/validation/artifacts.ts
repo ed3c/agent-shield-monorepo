@@ -9,6 +9,35 @@ import {
   SAFE_LOGICAL_ID, SAFE_MEDIA, boolean, enumValue, exactKeys, nonNegativeInteger, portableDetail, record,
 } from "./common.ts";
 
+const FORBIDDEN_RUNTIME_PATH_SEGMENTS = new Set([
+  ".git",
+  ".ssh",
+  "browser-profile",
+  "cookies",
+  "credentials",
+  "device-session",
+  "keychain",
+  "private-key",
+  "secrets",
+]);
+
+function assertRuntimePathSegmentsSafe(segments: readonly string[], name: string): void {
+  for (const segment of segments) {
+    const lowered = segment.toLowerCase();
+    if (
+      FORBIDDEN_RUNTIME_PATH_SEGMENTS.has(lowered) ||
+      lowered === ".env" ||
+      lowered.startsWith(".env.") ||
+      lowered.endsWith(".pem") ||
+      lowered.endsWith(".key") ||
+      lowered.endsWith(".p12") ||
+      lowered.endsWith(".pfx")
+    ) {
+      throw new Error(`${name} enters a forbidden secret, credential, repository-control, or session path class`);
+    }
+  }
+}
+
 function workspaceRelativePath(value: unknown, name: string): string {
   if (
     typeof value !== "string" || value.length === 0 || value.length > 255 || value.startsWith("/") ||
@@ -18,6 +47,7 @@ function workspaceRelativePath(value: unknown, name: string): string {
   if (segments.some((segment) => segment.length === 0 || segment === "." || segment === ".." || /\p{Cc}/u.test(segment))) {
     throw new Error(`${name} is not normalized or traversal-free`);
   }
+  assertRuntimePathSegmentsSafe(segments, name);
   return value;
 }
 function normalizeArtifactRef(value: unknown, name: string, maxBytes: number): RuntimeArtifactRef {
@@ -92,6 +122,10 @@ export function normalizeCleanup(
   if (new Set(residue).size !== residue.length) throw new Error("runtime cleanup residue contains duplicates");
   if (workspaceDisposition === "PRESERVED_BY_POLICY" && preservationRef === null) throw new Error("preserved workspace lacks a preservationRef");
   if (workspaceDisposition !== "PRESERVED_BY_POLICY" && preservationRef !== null) throw new Error("non-preserved workspace contains preservationRef");
+  if (workspaceDisposition === "PRESERVED_BY_POLICY") {
+    if (request.cleanup.workspaceCleanup !== "preserve-on-failure") throw new Error("workspace preservation was not authorized");
+    if (taskOutcome === "COMPLETED") throw new Error("successful task cannot preserve a failure workspace");
+  }
   if (state === "PASS") {
     if (!processesChecked || !workspaceChecked || !sessionsChecked || residue.length > 0 || workspaceDisposition === "UNKNOWN") {
       throw new Error("PASS cleanup receipt has unchecked, unknown, or residual state");
@@ -100,8 +134,6 @@ export function normalizeCleanup(
     if (request.cleanup.workspaceCleanup === "delete" && workspaceDisposition !== "DELETED" && !(mode === "recovery" && workspaceDisposition === "ABSENT")) {
       throw new Error("delete cleanup policy did not delete or prove absence of workspace");
     }
-    if (taskOutcome === "COMPLETED" && workspaceDisposition === "PRESERVED_BY_POLICY") throw new Error("successful task cannot preserve workspace");
-    if (workspaceDisposition === "PRESERVED_BY_POLICY" && request.cleanup.workspaceCleanup !== "preserve-on-failure") throw new Error("workspace preservation was not authorized");
   }
   if (state === "NOT_EXERCISED" && (
     durationMs !== 0 || processesChecked || workspaceChecked || sessionsChecked || workspaceDisposition !== "ABSENT" ||

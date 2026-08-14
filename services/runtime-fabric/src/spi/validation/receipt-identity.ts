@@ -64,6 +64,25 @@ function stageOwnsOutcome(stage: Exclude<RuntimeStage, "cleanup"> | null, outcom
   return ["COMPLETED", "FAILED_ARTIFACT", "CANCELLED", "TIMED_OUT"].includes(outcome);
 }
 
+function assertUnresolvedProviderReceipt(
+  receipt: RuntimeReceipt,
+  taskStage: RuntimeTaskStage,
+  terminalStage: RuntimeStage | null,
+): void {
+  const expectedLifecycle: readonly RuntimeLifecycleState[] = ["UNRESOLVED", "RESOLVED", "ABSENT"];
+  if (
+    taskStage !== null ||
+    terminalStage !== null ||
+    receipt.taskOutcome !== "ABSENT" ||
+    receipt.outcome !== "ABSENT" ||
+    receipt.state !== "ABSENT" ||
+    receipt.lifecycle.length !== expectedLifecycle.length ||
+    receipt.lifecycle.some((state, index) => state !== expectedLifecycle[index])
+  ) {
+    throw new Error("unresolved provider receipt must represent only a resolved registry miss");
+  }
+}
+
 export function validateReceiptIdentity(receiptValue: RuntimeReceipt, request: RuntimeRequest): ReceiptIdentityContext {
   const receipt = record(receiptValue, "runtime receipt") as unknown as RuntimeReceipt;
   exactKeys(receipt as unknown as Record<string, unknown>, RECEIPT_KEYS, "runtime receipt");
@@ -75,7 +94,8 @@ export function validateReceiptIdentity(receiptValue: RuntimeReceipt, request: R
   if (receipt.provider.id !== request.providerId || receipt.provider.scope !== request.scope) throw new Error("runtime receipt provider mismatch");
   if (!Array.isArray(receipt.provider.capabilities) || new Set(receipt.provider.capabilities).size !== receipt.provider.capabilities.length) throw new Error("runtime receipt capabilities invalid");
   if (receipt.provider.capabilities.join("\u0000") !== [...receipt.provider.capabilities].sort().join("\u0000")) throw new Error("runtime receipt capabilities not canonical");
-  if (receipt.provider.version === "unresolved") {
+  const unresolvedProvider = receipt.provider.version === "unresolved";
+  if (unresolvedProvider) {
     if (receipt.provider.subject !== null || receipt.provider.environmentSubject !== null || receipt.provider.capabilities.length !== 0) throw new Error("unresolved provider contains identity");
   } else {
     if (receipt.provider.version !== request.providerVersion || receipt.provider.subject === null || receipt.provider.environmentSubject === null) throw new Error("runtime receipt exact provider identity missing");
@@ -92,6 +112,7 @@ export function validateReceiptIdentity(receiptValue: RuntimeReceipt, request: R
   assertTaskStageMatchesLifecycle(taskStage, receipt.lifecycle);
   assertOutcome(receipt.taskOutcome, "runtime receipt taskOutcome");
   assertOutcome(receipt.outcome, "runtime receipt outcome");
+  if (unresolvedProvider) assertUnresolvedProviderReceipt(receipt, taskStage, terminalStage);
   if (!stageOwnsOutcome(taskStage, receipt.taskOutcome)) throw new Error("runtime receipt taskStage does not own taskOutcome");
   if (receipt.outcome !== receipt.lifecycle[receipt.lifecycle.length - 1]) throw new Error("runtime receipt outcome does not match lifecycle");
   if (receipt.outcome === "FAILED_CLEANUP") {

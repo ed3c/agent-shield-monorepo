@@ -3,6 +3,7 @@ import { runtimeAvailabilitySelftest } from "./availability-selftest.ts";
 import { runtimeCleanupSelftest } from "./cleanup-selftest.ts";
 import { runtimeContractSelftest } from "./contract-selftest.ts";
 import { runtimeExecutionSelftest } from "./execution-selftest.ts";
+import { runtimeHardeningSelftest } from "./hardening-selftest.ts";
 import { FixtureProvider } from "./provider-fixture.ts";
 import { request } from "./request-fixture.ts";
 import { runtimeStageSelftest } from "./stage-selftest.ts";
@@ -26,4 +27,5 @@ export async function runtimeFoundationSelftest(): Promise<void> {
   await runtimeExecutionSelftest(valid);
   await runtimeCleanupSelftest(valid);
   await runtimeStageSelftest();
+  await runtimeHardeningSelftest(valid, receipt);
 }
