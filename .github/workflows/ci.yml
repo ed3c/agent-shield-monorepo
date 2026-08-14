@@ -98,6 +98,52 @@ jobs:
           else
             echo 'No Bun test files are present on this exact head.'
           fi
+      # `bun test` above discovers *.test.ts and nothing else, so a provider that names its eval
+      # suite `selftest.ts` is type-checked by `bunx tsc --noEmit` and never executed. Six open
+      # leaves are in exactly that state -- see #117 -- and their negative controls have never
+      # run once. This step is what makes the file name stop mattering.
+      - name: Run provider selftests when present
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          discover() {
+            find apps services packages -name 'selftest.ts' -not -path '*/node_modules/*' 2>/dev/null | sort
+          }
+
+          # A gate whose red path was never observed is the defect it exists to prevent, one
+          # level up. Both controls run before the real suites, and both use a fixture in the
+          # runner's own temp directory so nothing is ever created inside the checkout.
+          control="${RUNNER_TEMP:-/tmp}/agent-shield-selftest-control"
+          mkdir -p "$control"
+          printf 'throw new Error("planted");\n' > "$control/selftest.ts"
+
+          # 1. A throwing suite must fail. If `bun <file>` exited zero on a throw, every suite
+          #    below would pass by construction.
+          if bun "$control/selftest.ts" >/dev/null 2>&1; then
+            echo 'A throwing selftest exited zero.' >&2
+            exit 1
+          fi
+          # 2. Discovery must be scoped to the three declared roots. A fixture outside them must
+          #    not appear, or this step would run whatever happens to be on the runner.
+          if discover | grep -q 'agent-shield-selftest-control'; then
+            echo 'Discovery reached outside the declared roots.' >&2
+            exit 1
+          fi
+          echo 'controls: a throwing suite fails, and discovery stays inside apps/services/packages'
+
+          mapfile -t suites < <(discover)
+          if ((${#suites[@]} == 0)); then
+            # Distinguishable from "they all passed", which is the whole point of #117.
+            echo 'No provider selftest is present on this exact head.'
+            exit 0
+          fi
+
+          for suite in "${suites[@]}"; do
+            echo "--- $suite"
+            bun "$suite"
+          done
+
       - run: bun scripts/verify-bettor-integration.ts
       - name: Rebuild immutable module release
         run: bun scripts/release-manifest.ts --output /tmp/agent-shield-module-set.json
