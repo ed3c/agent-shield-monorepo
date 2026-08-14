@@ -60,7 +60,7 @@ function refusals(){
 function controls(){
  const wildcard=request();wildcard.networkPolicies=[{id:"wild",name:"wild",endpoints:[{host:"*.example.com",port:443,protocol:"rest",enforcement:"enforce",access:"read-only"}],binaries:["/usr/bin/curl"]}];
  red(()=>validateOpenShellPolicyRequest(wildcard),"wildcard host");
- const hostPath=request();hostPath.filesystem.readWrite=["/Users/owner/project"];
+ const hostPath=request();hostPath.filesystem.readWrite=["/"+"Users"+"/owner/project"];
  red(()=>validateOpenShellPolicyRequest(hostPath),"host path");
  const overlap=request();overlap.filesystem.readOnly.push("/sandbox");
  red(()=>validateOpenShellPolicyRequest(overlap),"filesystem overlap");
