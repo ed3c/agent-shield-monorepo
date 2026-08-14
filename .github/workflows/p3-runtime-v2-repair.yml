@@ -43,7 +43,7 @@ jobs:
             services/runtime-fabric/src/spi/index.ts \
             services/runtime-fabric/src/state-machine/selftest.ts \
             services/runtime-fabric/src/providers/tmux/selftest.ts \
-            services/runtime-fabric/src/exchange/selftest.ts \
+            services/runtime-fabric/src/exchange/index.ts \
             --target=bun \
             --outdir=/tmp/runtime-v2-build
       - name: Run repository and runtime foundation selftests
@@ -53,6 +53,6 @@ jobs:
       - name: Run OpenShell and tmux envelope tests
         run: bun test services/runtime-fabric/src/providers/openshell/openshell.test.ts services/runtime-fabric/src/providers/tmux/tmux.test.ts
       - name: Run hybrid exchange selftest
-        run: bun services/runtime-fabric/src/exchange/selftest.ts
+        run: bun test services/runtime-fabric/src/exchange/exchange.test.ts
       - name: Type-check exact head
         run: bunx tsc --noEmit
