@@ -2,12 +2,15 @@
 
 `apps/` contains user-facing product surfaces. It owns projections and typed user actions, not runtime providers, device sessions, security policy, cryptography, custody, or settlement.
 
+`ios-hardware-brake/` is the one exception, and it is a placement decision rather than a widening of that boundary: [`../docs/architecture/PLANNED_REPOSITORY_TREE.md`](../docs/architecture/PLANNED_REPOSITORY_TREE.md) puts the native Swift boundary here because the code is platform-native, and [`../docs/architecture/SOURCE_DERIVED_ARCHITECTURE.md`](../docs/architecture/SOURCE_DERIVED_ARCHITECTURE.md) admits platform-native languages only at the Secure Enclave and CoreNFC boundaries. It is not a product surface and exposes no user action.
+
 ## Directory/state ownership
 
 | Directory | Module/capability | Current state | State-machine issues |
 |---|---|---|---|
 | `mobile-app/` | `product-adapters@1.0.0`, `product.mobile/v1` | contract present; local build `NOT_EXERCISED`; cloud/In-App bridge gaps | #45, #48, #49, convergence #53 |
 | `web-dashboard/` | `product-adapters@1.0.0`, `product.dashboard/v1` | contract present; GenUI/terminal/deploy `NOT_EXERCISED`/`NOT_IMPLEMENTED` | #45, #46, #47, convergence #53 |
+| `ios-hardware-brake/` | `security-boundaries@1.0.0`, `security.provider-boundaries/v1` | Secure Enclave lifecycle present behind a native bridge; device key generation/user presence/attestation `NOT_EXERCISED`; CoreNFC `ABSENT` | #59, #60, convergence #64 |
 
 ## Shared application state machine
 

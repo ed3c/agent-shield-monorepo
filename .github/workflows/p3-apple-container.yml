@@ -1,0 +1,34 @@
+name: Phase 3 Apple Container provider contracts
+
+on:
+  pull_request:
+    paths:
+      - "services/runtime-fabric/src/providers/apple-container/**"
+      - ".github/workflows/p3-apple-container.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/runtime-fabric/src/providers/apple-container/**"
+      - ".github/workflows/p3-apple-container.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Compile Apple Container provider selftest
+        run: bun build services/runtime-fabric/src/providers/apple-container/selftest.ts --target=bun --outdir=/tmp/rt-apple-build
+      - name: Run Apple Container positive and disagreement controls
+        run: bun services/runtime-fabric/src/providers/apple-container/selftest.ts
+      - name: Typecheck repository
+        run: bunx tsc --noEmit
