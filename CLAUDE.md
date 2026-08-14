@@ -41,7 +41,7 @@ Mandatory laws:
 - Local/Forgejo implementation authority and GitHub publication/Actions authority remain distinct and converge through exact commit ancestry and receipts.
 - Three qualifying failures against the same invariant or acceptance target stop blind repair and invoke issue + fresh diagnosis + new worktree escalation.
 - Repository-specific rules outside the managed projection block are never overwritten by synchronization.
-- AGENTS.md is the cross-host repository procedure; repo CLAUDE.md is a Claude host adapter; global ~/.claude/CLAUDE.md is local host policy only.
+- AGENTS.md is the cross-host repository procedure; repo CLAUDE.md is a Claude host adapter; the user-level `.claude/CLAUDE.md` under the host home directory is local host policy only.
 - Cloud and local freshness are separate evidence lanes. Neither environment may fabricate verification of the other.
 - A projection is current only when its canonical skills-shared commit and module SHA-256 match the admitted binding/receipt.
 - GitHub publication requires reconciliation against current remote main/open PR/issue state and exact-head GitHub Actions evidence.
