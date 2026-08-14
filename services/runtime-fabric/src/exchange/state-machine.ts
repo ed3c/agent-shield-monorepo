@@ -80,3 +80,9 @@ export function validateExchangeLifecycle(trace: readonly ExchangeState[]): Exch
   }
   return outcome;
 }
+
+// Compatibility names consumed by the already-merged planner, validator, and selftest.
+// They are aliases of the same implementation, not a second state machine.
+export { ExchangeLifecycle as RuntimeExchangeLifecycle };
+export const assertRuntimeExchangeTransition = assertExchangeTransition;
+export const validateRuntimeExchangeLifecycle = validateExchangeLifecycle;

@@ -50,9 +50,11 @@ jobs:
         run: bun scripts/selftest.ts
       - name: Run fixed-workflow tmux provider selftest
         run: bun services/runtime-fabric/src/providers/tmux/selftest.ts
-      - name: Run OpenShell and tmux envelope tests
-        run: bun test services/runtime-fabric/src/providers/openshell/openshell.test.ts services/runtime-fabric/src/providers/tmux/tmux.test.ts
-      - name: Run hybrid exchange selftest
-        run: bun test services/runtime-fabric/src/exchange/exchange.test.ts
+      - name: Run OpenShell policy envelope assertions
+        run: bun services/runtime-fabric/src/providers/openshell/openshell.test.ts
+      - name: Run tmux session envelope assertions
+        run: bun services/runtime-fabric/src/providers/tmux/tmux.test.ts
+      - name: Run hybrid exchange assertions
+        run: bun services/runtime-fabric/src/exchange/exchange.test.ts
       - name: Type-check exact head
         run: bunx tsc --noEmit

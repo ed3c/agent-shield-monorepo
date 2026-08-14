@@ -1,5 +1,6 @@
 import type { EvidenceState } from "../../../../../packages/contracts/src/index.ts";
 import type { RuntimeRequest } from "../../../../../packages/contracts/src/runtime/index.ts";
+import type { RuntimeOperationContext } from "../../spi/index.ts";
 
 export const TMUX_SESSION_REQUEST_SCHEMA = "agent-shield/tmux-session-request/v1" as const;
 export const TMUX_SESSION_RECEIPT_SCHEMA = "agent-shield/tmux-session-receipt/v1" as const;
@@ -233,4 +234,44 @@ export interface TmuxSessionReceipt {
   cleanup: TmuxCleanupReceipt;
   exclusions: string[];
   detail: string;
+}
+
+// Fixed-workflow Runtime v2 provider types. These coexist with the older session/control
+// envelope types above and do not widen the provider into caller-selected shell execution.
+export interface TmuxWorkflowSpec {
+  id: string;
+  argv: readonly string[];
+  allowedExitCodes: readonly number[];
+  maxCaptureLines: number;
+}
+
+export interface TmuxProviderInput {
+  workflowId: string;
+  captureLines: number;
+}
+
+export interface TmuxMaterializationHandle {
+  sessionName: string;
+  workflowId: string;
+  captureLines: number;
+}
+
+export interface TmuxProbeResult {
+  state: "AVAILABLE" | "ABSENT" | "REFUSED_POLICY";
+  version: string | null;
+  detail: string;
+}
+
+export interface TmuxExitResult {
+  code: number;
+  signal: string | null;
+}
+
+export interface TmuxTransport {
+  probe(context: RuntimeOperationContext): Promise<TmuxProbeResult>;
+  createSession(sessionName: string, workflow: TmuxWorkflowSpec, context: RuntimeOperationContext): Promise<void>;
+  waitForExit(sessionName: string, context: RuntimeOperationContext): Promise<TmuxExitResult>;
+  capture(sessionName: string, maxLines: number, context: RuntimeOperationContext): Promise<string>;
+  killSession(sessionName: string, context: RuntimeOperationContext): Promise<void>;
+  sessionExists(sessionName: string, context: RuntimeOperationContext): Promise<boolean>;
 }
