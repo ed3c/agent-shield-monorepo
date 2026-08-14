@@ -9,11 +9,10 @@ export async function recoveryCleanup(
   request: RuntimeRequest,
   taskOutcome: Extract<RuntimeOutcomeState, "FAILED_MATERIALIZATION" | "CANCELLED" | "TIMED_OUT">,
   unsettledMaterialization: boolean,
-  now: () => number,
 ): Promise<RuntimeCleanupReceipt> {
   const result = await runBoundedStage(
     "cleanup", request.cleanup.maxDurationMs, request.limits.cancellationGraceMs, undefined,
-    (context) => provider.cleanupFailedMaterialization(request, taskOutcome, context), now,
+    (context) => provider.cleanupFailedMaterialization(request, taskOutcome, context),
   );
   let cleanup: RuntimeCleanupReceipt;
   if (result.kind === "RESOLVED") {
@@ -32,11 +31,10 @@ export async function materializedCleanup(
   request: RuntimeRequest,
   taskOutcome: RuntimeOutcomeState,
   unsettledTaskOperation: string | null,
-  now: () => number,
 ): Promise<RuntimeCleanupReceipt> {
   const result = await runBoundedStage(
     "cleanup", request.cleanup.maxDurationMs, request.limits.cancellationGraceMs, undefined,
-    (context) => provider.cleanup(materialization, request, taskOutcome, context), now,
+    (context) => provider.cleanup(materialization, request, taskOutcome, context),
   );
   let cleanup: RuntimeCleanupReceipt;
   if (result.kind === "RESOLVED") {

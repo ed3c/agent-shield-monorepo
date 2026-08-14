@@ -32,6 +32,9 @@ export function parseRequestBoundParts(request: Record<string, unknown>, input: 
     maxArtifactBytes: positiveInteger(limitsValue.maxArtifactBytes, "limits.maxArtifactBytes", MAX_RUNTIME_BYTES),
     maxTouchedPaths: positiveInteger(limitsValue.maxTouchedPaths, "limits.maxTouchedPaths", MAX_TOUCHED_PATHS),
   };
+  if (limits.cancellationGraceMs > limits.timeoutMs) {
+    fail("limits.cancellationGraceMs must not exceed limits.timeoutMs");
+  }
   if (new TextEncoder().encode(JSON.stringify(input)).byteLength > limits.maxInputBytes) fail("workload.input exceeds limits.maxInputBytes");
 
   const mutationValue = record(request.mutation, "mutation");
@@ -62,6 +65,16 @@ export function parseRequestBoundParts(request: Record<string, unknown>, input: 
 
   const cleanupValue = record(request.cleanup, "cleanup");
   exactKeys(cleanupValue, ["processCleanup", "workspaceCleanup", "sessionCleanup", "maxDurationMs"], "cleanup");
+  const cleanup: RuntimeRequest["cleanup"] = {
+    processCleanup: enumValue(cleanupValue.processCleanup, "cleanup.processCleanup", ["required"] as const),
+    workspaceCleanup: enumValue(cleanupValue.workspaceCleanup, "cleanup.workspaceCleanup", ["delete", "preserve-on-failure"] as const),
+    sessionCleanup: enumValue(cleanupValue.sessionCleanup, "cleanup.sessionCleanup", ["required"] as const),
+    maxDurationMs: positiveInteger(cleanupValue.maxDurationMs, "cleanup.maxDurationMs", 300_000),
+  };
+  if (limits.cancellationGraceMs > cleanup.maxDurationMs) {
+    fail("limits.cancellationGraceMs must not exceed cleanup.maxDurationMs");
+  }
+
   const exclusions = boundedStringArray(request.exclusions, "exclusions", 64, (entry, index) => {
     if (!SAFE_ID.test(entry)) fail(`exclusions[${index}] is invalid`);
   }).sort();
@@ -69,12 +82,7 @@ export function parseRequestBoundParts(request: Record<string, unknown>, input: 
     limits,
     mutation: { writableRoots, readOnlyRoots },
     artifacts,
-    cleanup: {
-      processCleanup: enumValue(cleanupValue.processCleanup, "cleanup.processCleanup", ["required"] as const),
-      workspaceCleanup: enumValue(cleanupValue.workspaceCleanup, "cleanup.workspaceCleanup", ["delete", "preserve-on-failure"] as const),
-      sessionCleanup: enumValue(cleanupValue.sessionCleanup, "cleanup.sessionCleanup", ["required"] as const),
-      maxDurationMs: positiveInteger(cleanupValue.maxDurationMs, "cleanup.maxDurationMs", 300_000),
-    },
+    cleanup,
     exclusions,
   };
 }

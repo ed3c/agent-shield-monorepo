@@ -50,6 +50,11 @@ export async function runtimeHardeningSelftest(
   valid: RuntimeRequest,
   positive: RuntimeReceipt,
 ): Promise<void> {
+  if (false) {
+    // @ts-expect-error RuntimeRunOptions intentionally excludes caller-controlled clocks.
+    await runRuntimeProvider(new FixtureProvider(), valid, { now: () => 0 });
+  }
+
   const missingRequest = validateRuntimeRequest({
     ...valid,
     providerId: "missing-provider",
@@ -82,6 +87,16 @@ export async function runtimeHardeningSelftest(
     }, missingRequest),
     "unresolved provider skipped registry resolution",
   );
+  red(
+    () => assertRuntimeReceiptMatchesRequest({
+      ...positive,
+      provider: {
+        ...positive.provider,
+        capabilities: [...positive.provider.capabilities, "unrequested.capability"].sort(),
+      },
+    }, valid),
+    "receipt capability overclaim",
+  );
 
   const aggregateJson = requestValue();
   const input: Record<string, unknown> = {};
@@ -97,6 +112,56 @@ export async function runtimeHardeningSelftest(
     () => validateRuntimeRequest(aggregateJson),
     "aggregate JSON node budget",
   );
+
+  const excessiveTaskGrace = requestValue();
+  excessiveTaskGrace.limits = {
+    ...(excessiveTaskGrace.limits as Record<string, unknown>),
+    timeoutMs: 10,
+    cancellationGraceMs: 11,
+  };
+  red(
+    () => validateRuntimeRequest(excessiveTaskGrace),
+    "cancellation grace larger than task timeout",
+  );
+
+  const excessiveCleanupGrace = requestValue();
+  excessiveCleanupGrace.limits = {
+    ...(excessiveCleanupGrace.limits as Record<string, unknown>),
+    timeoutMs: 100,
+    cancellationGraceMs: 20,
+  };
+  excessiveCleanupGrace.cleanup = {
+    ...(excessiveCleanupGrace.cleanup as Record<string, unknown>),
+    maxDurationMs: 10,
+  };
+  red(
+    () => validateRuntimeRequest(excessiveCleanupGrace),
+    "cancellation grace larger than cleanup timeout",
+  );
+
+  const publicNetwork = requestValue();
+  publicNetwork.network = { mode: "allowlist", allowlist: ["api.github.com:443"] };
+  ok(
+    validateRuntimeRequest(publicNetwork).network.allowlist[0] === "api.github.com:443",
+    "exact public egress target was rejected",
+  );
+  for (const target of [
+    "localhost:80",
+    "127.0.0.1:80",
+    "169.254.169.254:80",
+    "100.100.100.200:80",
+    "metadata.google.internal:80",
+    "host.docker.internal:443",
+    "kubernetes.default.svc:443",
+    "999.999.999.999:443",
+  ]) {
+    const networkRequest = requestValue();
+    networkRequest.network = { mode: "allowlist", allowlist: [target] };
+    red(
+      () => validateRuntimeRequest(networkRequest),
+      `unsafe egress target ${target}`,
+    );
+  }
 
   for (const sensitivePath of [
     "workspace/.env",

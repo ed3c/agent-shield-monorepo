@@ -11,7 +11,7 @@ agent-shield/runtime-receipt/v2
 
 A v2 request binds the provider ID/version, immutable provider binary/source/artifact subject, immutable runtime image/template/profile subject, local/cloud scope, required capabilities, immutable source, structured workload, environment-name allowlist, exact network policy, opaque secret references, timeout/cancellation and byte limits, mutation roots, artifact contracts, cleanup policy, and named exclusions.
 
-A receipt binds the exact same subjects plus lifecycle, `taskStage`, `terminalStage`, pre-cleanup `taskOutcome`, final `outcome`, output/artifacts, workspace disposition, preservation artifact, cleanup residue, and exclusions.
+A receipt binds the exact same subjects plus lifecycle, `taskStage`, `terminalStage`, pre-cleanup `taskOutcome`, final `outcome`, output/artifacts, workspace disposition, preservation artifact, cleanup residue, and exclusions. Its capability list is the exact exercised request set, not the provider's wider catalog.
 
 ## Legacy envelope boundary
 
@@ -39,9 +39,11 @@ UNRESOLVED → RESOLVED → ABSENT
 
 It cannot be used to claim `NOT_IMPLEMENTED`, `NOT_EXERCISED`, policy refusal, or any exercised provider stage.
 
-## Resource, path, and preservation bounds
+## Resource, timing, path, and preservation bounds
 
 Runtime workload validation applies both per-container limits and an aggregate JSON traversal budget. A branching payload cannot evade the bound by keeping every individual array or object below its local limit.
+
+Task stages share one host-owned monotonic deadline. `RuntimeRunOptions` exposes cancellation only; callers cannot inject or freeze the clock. Cancellation grace must not exceed either the task timeout or cleanup timeout, so an uncooperative operation cannot turn a short request into an arbitrarily long grace wait.
 
 Mutation roots and observed touched paths reject repository-control, credential, secret, browser/session, and private-key path classes, including `.git`, `.env*`, `.ssh`, `credentials`, `secrets`, browser profiles, keychains, and common private-key suffixes.
 
@@ -55,21 +57,27 @@ and preservationRef is content-addressed
 
 The rule applies even when another cleanup dimension fails. A failed cleanup cannot use preservation metadata to bypass the request policy.
 
+## Egress boundary
+
+An allowlist entry must be an exact host or host:port. The contract rejects obvious loopback, unspecified, link-local, metadata, container-host, Kubernetes-control, reserved, and malformed numeric targets. Examples include `localhost`, `127.0.0.1`, `169.254.169.254`, cloud metadata aliases, Docker host aliases, and invalid IPv4 literals.
+
+This parser cannot prevent DNS rebinding by itself. A live provider must resolve each admitted hostname and enforce the resulting IP set at the OS/network policy boundary; no live egress claim is made by these bytes.
+
 ## Data flow
 
 ```text
 untrusted value
   → own-key closed validation
-  → bounded JSON and path validation
+  → bounded JSON, timing, path, and egress validation
   → canonical normalization
   → executable-request gate
   → exact provider/environment subjects
-  → provider SPI
+  → provider SPI under a host-owned monotonic budget
   → stage-bound sealed receipt
 ```
 
-Unknown/inherited/prototype keys, generic command aliases, caller host paths, raw secret values, mutable refs, credential-bearing URLs, traversal, overlapping roots, undeclared secret delivery, unbounded JSON/output/artifacts, sensitive workspace paths, unauthorized preservation, and inconsistent cleanup claims fail closed.
+Unknown/inherited/prototype keys, generic command aliases, caller host paths or clocks, raw secret values, mutable refs, credential-bearing URLs, unsafe egress, traversal, overlapping roots, undeclared secret delivery, unbounded JSON/output/artifacts, sensitive workspace paths, unauthorized preservation, capability overclaim, and inconsistent cleanup claims fail closed.
 
 ## Evidence boundary
 
-These bytes prove deterministic contracts, transition legality, timeout/cancellation controls, legacy non-execution, unresolved-provider identity, bounded validation, sensitive-path refusal, preservation authorization, and receipt validation only. They do not prove Apple Container, E2B, OpenShell/tmux executables, network isolation, credentials, performance, real-host cleanup, or production availability.
+These bytes prove deterministic contracts, transition legality, timeout/cancellation controls, legacy non-execution, unresolved-provider identity, bounded validation, obvious egress-target refusal, sensitive-path refusal, preservation authorization, exact exercised-capability receipts, and receipt validation only. They do not prove Apple Container, E2B, OpenShell/tmux executables, DNS-resolved network isolation, credentials, performance, real-host cleanup, or production availability.

@@ -22,18 +22,16 @@ export async function executeAndCollect(
   materialization: RuntimeMaterialization,
   request: RuntimeRequest,
   lifecycle: RuntimeLifecycle,
-  taskDeadlineEpochMs: number,
+  taskDeadlineMonotonicMs: number,
   signal: AbortSignal | undefined,
-  now: () => number,
 ): Promise<TaskRunResult> {
   lifecycle.transition("RUNNING");
   const executionRun = await runBoundedStage(
     "execution",
-    taskBudget(taskDeadlineEpochMs, now),
+    taskBudget(taskDeadlineMonotonicMs),
     request.limits.cancellationGraceMs,
     signal,
     (context) => provider.execute(materialization, request, context),
-    now,
   );
   let execution: RuntimeExecutionResult;
   let taskOutcome: RuntimeOutcomeState;
@@ -66,11 +64,10 @@ export async function executeAndCollect(
     taskStage = "collection";
     const collectionRun = await runBoundedStage(
       "collection",
-      taskBudget(taskDeadlineEpochMs, now),
+      taskBudget(taskDeadlineMonotonicMs),
       request.limits.cancellationGraceMs,
       signal,
       (context) => provider.collect(materialization, request, execution, context),
-      now,
     );
     if (collectionRun.kind === "RESOLVED") {
       try {

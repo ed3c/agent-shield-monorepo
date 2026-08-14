@@ -21,14 +21,14 @@ export function observedProvider(descriptor: {
   id: string; version: string; subject: RuntimeObservedProvider["subject"];
   environment: NonNullable<RuntimeObservedProvider["environmentSubject"]>;
   scope: RuntimeObservedProvider["scope"]; capabilities: string[];
-}): RuntimeObservedProvider {
+}, request: RuntimeRequest): RuntimeObservedProvider {
   return {
     id: descriptor.id,
     version: descriptor.version,
     subject: descriptor.subject,
     environmentSubject: descriptor.environment,
     scope: descriptor.scope,
-    capabilities: [...descriptor.capabilities].sort(),
+    capabilities: [...request.requiredCapabilities],
   };
 }
 export function finalizeReceipt(request: RuntimeRequest, receipt: RuntimeReceipt): RuntimeReceipt {

@@ -24,10 +24,9 @@ export async function runRuntimeProvider(
 ): Promise<RuntimeReceipt> {
   const request = deepFreeze(validateRuntimeRequestV2(value));
   const descriptor = descriptorForRequest(provider, request);
-  const providerIdentity = observedProvider(descriptor);
+  const providerIdentity = observedProvider(descriptor, request);
   const lifecycle = new RuntimeLifecycle();
-  const now = options.now ?? Date.now;
-  const taskDeadlineEpochMs = now() + request.limits.timeoutMs;
+  const taskDeadlineMonotonicMs = globalThis.performance.now() + request.limits.timeoutMs;
   lifecycle.transition("RESOLVED");
 
   if (descriptor.implementation === "NOT_IMPLEMENTED") {
@@ -41,8 +40,8 @@ export async function runRuntimeProvider(
   }
 
   const admissionRun = await runBoundedStage(
-    "admission", taskBudget(taskDeadlineEpochMs, now), request.limits.cancellationGraceMs, options.signal,
-    (context) => provider.admit(request, context), now,
+    "admission", taskBudget(taskDeadlineMonotonicMs), request.limits.cancellationGraceMs, options.signal,
+    (context) => provider.admit(request, context),
   );
   lifecycle.transition("ADMISSION_CHECKED");
   if (admissionRun.kind !== "RESOLVED") {
@@ -65,8 +64,8 @@ export async function runRuntimeProvider(
 
   lifecycle.transition("MATERIALIZING");
   const materializationRun = await runBoundedStage(
-    "materialization", taskBudget(taskDeadlineEpochMs, now), request.limits.cancellationGraceMs, options.signal,
-    (context) => provider.materialize(request, context), now,
+    "materialization", taskBudget(taskDeadlineMonotonicMs), request.limits.cancellationGraceMs, options.signal,
+    (context) => provider.materialize(request, context),
   );
   let materialization: RuntimeMaterialization | null = null;
   let materializationTaskOutcome: Extract<RuntimeOutcomeState, "FAILED_MATERIALIZATION" | "CANCELLED" | "TIMED_OUT"> = "FAILED_MATERIALIZATION";
@@ -78,7 +77,7 @@ export async function runRuntimeProvider(
 
   if (materialization === null) {
     lifecycle.transition("CLEANING");
-    const cleanup = await recoveryCleanup(provider, request, materializationTaskOutcome, materializationRun.unsettled, now);
+    const cleanup = await recoveryCleanup(provider, request, materializationTaskOutcome, materializationRun.unsettled);
     const outcome: RuntimeOutcomeState = cleanup.state === "PASS" ? materializationTaskOutcome : "FAILED_CLEANUP";
     lifecycle.transition(outcome);
     validateRuntimeLifecycleTrace(lifecycle.trace);
@@ -110,9 +109,9 @@ export async function runRuntimeProvider(
   }
 
   lifecycle.transition("READY");
-  const task = await executeAndCollect(provider, materialization, request, lifecycle, taskDeadlineEpochMs, options.signal, now);
+  const task = await executeAndCollect(provider, materialization, request, lifecycle, taskDeadlineMonotonicMs, options.signal);
   lifecycle.transition("CLEANING");
-  const cleanup = await materializedCleanup(provider, materialization, request, task.taskOutcome, task.unsettledTaskOperation, now);
+  const cleanup = await materializedCleanup(provider, materialization, request, task.taskOutcome, task.unsettledTaskOperation);
   const outcome: RuntimeOutcomeState = cleanup.state === "PASS" ? task.taskOutcome : "FAILED_CLEANUP";
   lifecycle.transition(outcome);
   validateRuntimeLifecycleTrace(lifecycle.trace);

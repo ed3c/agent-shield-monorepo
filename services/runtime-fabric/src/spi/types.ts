@@ -70,5 +70,4 @@ export interface RuntimeProviderSpi {
 
 export interface RuntimeRunOptions {
   signal?: AbortSignal;
-  now?: () => number;
 }

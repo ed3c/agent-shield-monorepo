@@ -11,6 +11,50 @@ export interface RequestPolicyParts {
   secrets: RuntimeSecretRef[];
 }
 
+const BLOCKED_EGRESS_HOSTS = new Set([
+  "gateway.docker.internal",
+  "host.docker.internal",
+  "instance-data",
+  "instance-data.ec2.internal",
+  "kubernetes.default",
+  "kubernetes.default.svc",
+  "localhost",
+  "localhost.localdomain",
+  "metadata",
+  "metadata.google.internal",
+  "metadata.goog",
+]);
+
+function networkHost(entry: string): string {
+  const separator = entry.lastIndexOf(":");
+  if (separator > 0 && /^\d+$/.test(entry.slice(separator + 1))) return entry.slice(0, separator).toLowerCase();
+  return entry.toLowerCase();
+}
+
+function assertSafeEgressTarget(entry: string, index: number): void {
+  const host = networkHost(entry);
+  if (BLOCKED_EGRESS_HOSTS.has(host) || host.endsWith(".localhost")) {
+    fail(`network.allowlist[${index}] targets a local, control-plane, or metadata host`);
+  }
+
+  if (/^\d+(?:\.\d+){3}$/.test(host)) {
+    const octets = host.split(".").map(Number);
+    if (octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+      fail(`network.allowlist[${index}] contains an invalid IPv4 address`);
+    }
+    const [first, second] = octets;
+    if (
+      first === 0 ||
+      first === 127 ||
+      first >= 224 ||
+      (first === 169 && second === 254) ||
+      host === "100.100.100.200"
+    ) {
+      fail(`network.allowlist[${index}] targets a loopback, unspecified, link-local, metadata, or reserved address`);
+    }
+  }
+}
+
 export function parseRequestPolicyParts(request: Record<string, unknown>): RequestPolicyParts {
   const workload = record(request.workload, "workload");
   exactKeys(workload, ["id", "version", "input"], "workload");
@@ -31,6 +75,7 @@ export function parseRequestPolicyParts(request: Record<string, unknown>): Reque
     if (!SAFE_HOST.test(entry)) fail(`network.allowlist[${index}] must be an exact host or host:port`);
     const port = entry.includes(":") ? Number(entry.slice(entry.lastIndexOf(":") + 1)) : null;
     if (port !== null && port > 65535) fail(`network.allowlist[${index}] has an invalid port`);
+    assertSafeEgressTarget(entry, index);
   }).sort();
   if (mode === "deny-all" && allowlist.length > 0) fail("network.allowlist must be empty in deny-all mode");
   if (mode === "allowlist" && allowlist.length === 0) fail("network.allowlist is required in allowlist mode");

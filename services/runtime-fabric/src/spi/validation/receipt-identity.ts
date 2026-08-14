@@ -11,7 +11,8 @@ import {
 } from "../../../../../packages/contracts/src/runtime/index.ts";
 import { validateRuntimeLifecycleTrace } from "../../state-machine/index.ts";
 import {
-  OUTCOMES, RECEIPT_KEYS, canonical, enumValue, exactKeys, portableDetail, record, runtimeRequestDigest,
+  OUTCOMES, RECEIPT_KEYS, SAFE_LOGICAL_ID, canonical, enumValue, exactKeys, portableDetail, record,
+  runtimeRequestDigest,
 } from "./common.ts";
 import { validateWorkspaceIdentity } from "./basic.ts";
 
@@ -92,7 +93,11 @@ export function validateReceiptIdentity(receiptValue: RuntimeReceipt, request: R
   const provider = record(receipt.provider, "runtime receipt provider");
   exactKeys(provider, ["id", "version", "subject", "environmentSubject", "scope", "capabilities"], "runtime receipt provider");
   if (receipt.provider.id !== request.providerId || receipt.provider.scope !== request.scope) throw new Error("runtime receipt provider mismatch");
-  if (!Array.isArray(receipt.provider.capabilities) || new Set(receipt.provider.capabilities).size !== receipt.provider.capabilities.length) throw new Error("runtime receipt capabilities invalid");
+  if (
+    !Array.isArray(receipt.provider.capabilities) ||
+    receipt.provider.capabilities.some((capability) => typeof capability !== "string" || !SAFE_LOGICAL_ID.test(capability)) ||
+    new Set(receipt.provider.capabilities).size !== receipt.provider.capabilities.length
+  ) throw new Error("runtime receipt capabilities invalid");
   if (receipt.provider.capabilities.join("\u0000") !== [...receipt.provider.capabilities].sort().join("\u0000")) throw new Error("runtime receipt capabilities not canonical");
   const unresolvedProvider = receipt.provider.version === "unresolved";
   if (unresolvedProvider) {
@@ -101,7 +106,9 @@ export function validateReceiptIdentity(receiptValue: RuntimeReceipt, request: R
     if (receipt.provider.version !== request.providerVersion || receipt.provider.subject === null || receipt.provider.environmentSubject === null) throw new Error("runtime receipt exact provider identity missing");
     if (canonical(validateRuntimeProviderSubject(receipt.provider.subject)) !== canonical(request.providerSubject)) throw new Error("runtime receipt provider subject mismatch");
     if (canonical(validateRuntimeEnvironmentSubject(receipt.provider.environmentSubject)) !== canonical(request.environmentSubject)) throw new Error("runtime receipt environment subject mismatch");
-    for (const capability of request.requiredCapabilities) if (!receipt.provider.capabilities.includes(capability)) throw new Error(`runtime receipt lacks capability: ${capability}`);
+    if (receipt.provider.capabilities.join("\u0000") !== request.requiredCapabilities.join("\u0000")) {
+      throw new Error("runtime receipt capability set does not match the exercised request");
+    }
   }
   if (canonical(receipt.source) !== canonical(request.source)) throw new Error("runtime receipt source mismatch");
   if (receipt.workspaceIdentity !== null) validateWorkspaceIdentity(receipt.workspaceIdentity);

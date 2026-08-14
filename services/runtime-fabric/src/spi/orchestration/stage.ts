@@ -12,7 +12,6 @@ export async function runBoundedStage<T>(
   cancellationGraceMs: number,
   externalSignal: AbortSignal | undefined,
   invoke: (context: RuntimeOperationContext) => Promise<T>,
-  now: () => number,
 ): Promise<StageRun<T>> {
   if (externalSignal?.aborted) return { kind: "CANCELLED", unsettled: false };
   if (timeoutMs <= 0) return { kind: "TIMED_OUT", unsettled: false };
@@ -32,7 +31,7 @@ export async function runBoundedStage<T>(
   const context: RuntimeOperationContext = {
     stage,
     signal: controller.signal,
-    deadlineEpochMs: now() + timeoutMs,
+    deadlineEpochMs: Date.now() + timeoutMs,
     cancellationGraceMs,
   };
   const settled = Promise.resolve().then(() => invoke(context)).then(
@@ -51,6 +50,6 @@ export async function runBoundedStage<T>(
   return { kind: first.kind, unsettled: afterAbort === "GRACE_EXPIRED" };
 }
 
-export function taskBudget(deadlineEpochMs: number, now: () => number): number {
-  return Math.max(0, deadlineEpochMs - now());
+export function taskBudget(deadlineMonotonicMs: number): number {
+  return Math.max(0, Math.ceil(deadlineMonotonicMs - globalThis.performance.now()));
 }
