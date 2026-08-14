@@ -1,29 +1,35 @@
-# Runtime contract family
+# Runtime v2 contract family
 
-Issue [#38](https://github.com/ed3c/agent-shield-monorepo/issues/38) owns this host-neutral Bun + TypeScript foundation. Consumers use the public package subpath `@agent-shield/contracts/runtime`; provider implementations must not import one another's private source.
+Issue [#93](https://github.com/ed3c/agent-shield-monorepo/issues/93) owns this post-Phase-3 repair. External consumers use `@agent-shield/contracts/runtime`; provider implementations do not import one another's private source.
 
 ## Public schemas
 
-- `agent-shield/runtime-request/v1`
-- `agent-shield/runtime-receipt/v1`
+```text
+agent-shield/runtime-request/v2
+agent-shield/runtime-receipt/v2
+```
 
-A request closes provider identity, scope, required capabilities, immutable Git/artifact source, structured workload identity, environment-name allowlist, network allowlist, opaque secret references, timeout/cancellation and byte limits, mutation roots, artifact contracts, cleanup policy, and named exclusions.
+A v2 request binds the provider ID/version, immutable provider binary/source/artifact subject, immutable runtime image/template/profile subject, local/cloud scope, required capabilities, immutable source, structured workload, environment-name allowlist, exact network policy, opaque secret references, timeout/cancellation and byte limits, mutation roots, artifact contracts, cleanup policy, and named exclusions.
 
-A receipt binds the normalized request digest, exact provider/version/capabilities, immutable source, logical workspace identity, lifecycle trace, admission result, pre-cleanup task outcome, overall outcome, exit/output bounds, artifacts, touched paths, cleanup result, and exclusions.
+A receipt binds the exact same subjects plus lifecycle, `taskStage`, `terminalStage`, pre-cleanup `taskOutcome`, final `outcome`, output/artifacts, workspace disposition, preservation artifact, cleanup residue, and exclusions.
 
-## Contract lifecycle
+## Legacy envelope boundary
+
+`validateRuntimeRequestV2` is the strict provider-execution parser and rejects v1. `validateRuntimeRequest` preserves already-merged OpenShell/tmux policy/session envelope tests by mapping v1 into an explicit `legacy-v1-unbound` v2 subject. That subject cannot match an admitted provider descriptor and cannot produce provider/live PASS.
+
+## Data flow
 
 ```text
 untrusted value
-  → closed-key validation
+  → own-key closed validation
   → canonical normalization
-  → immutable request digest
+  → exact provider/environment subjects
   → provider SPI
-  → state-machine receipt
+  → stage-aware sealed receipt
 ```
 
-Set-like arrays are sorted during normalization so equivalent requests produce one digest. Generic shell controls, caller-selected `cwd`, raw environment values, host paths, mutable refs, credential-bearing URLs, path traversal, overlapping roots, undeclared secrets, and unbounded output/artifacts are rejected.
+Unknown/inherited/prototype keys, generic command aliases, caller host paths, raw secret values, mutable refs, credential-bearing URLs, traversal, overlapping roots, undeclared secret delivery, unbounded JSON/output/artifacts, and inconsistent cleanup claims fail closed.
 
 ## Evidence boundary
 
-These contracts and validators can prove only deterministic schema and transition behavior. They do not prove Apple Container, E2B, OpenShell, tmux/PTY, cloud networking, credentials, performance, cost, cleanup in a real environment, or production availability. Provider children #39–#43 own those lanes; convergence #44 owns the public registry, module/status/release updates, and aggregate evidence.
+These bytes prove deterministic contracts, transition legality, timeout/cancellation controls, and receipt validation only. They do not prove Apple Container, E2B, OpenShell/tmux executables, network isolation, credentials, performance, real-host cleanup, or production availability.

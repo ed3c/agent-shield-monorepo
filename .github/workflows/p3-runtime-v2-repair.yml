@@ -1,0 +1,58 @@
+name: Phase 3 runtime v2 repair
+
+on:
+  pull_request:
+    paths:
+      - "packages/contracts/src/runtime/**"
+      - "services/runtime-fabric/src/spi/**"
+      - "services/runtime-fabric/src/state-machine/**"
+      - "services/runtime-fabric/src/providers/openshell/**"
+      - "services/runtime-fabric/src/providers/tmux/**"
+      - "services/runtime-fabric/src/exchange/**"
+      - ".github/workflows/p3-runtime-v2-repair.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Enforce repair path boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden="$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD | grep -E '^(\.arena/modules/|data/status/|data/releases/|services/runtime-fabric/src/index\.ts$|scripts/release-manifest\.ts$)' || true)"
+          if [[ -n "$forbidden" ]]; then
+            printf 'Repair PR changed convergence-owned paths:\n%s\n' "$forbidden" >&2
+            exit 1
+          fi
+      - name: Compile v2 core and merged consumers
+        run: |
+          mkdir -p /tmp/runtime-v2-build
+          bun build \
+            packages/contracts/src/runtime/index.ts \
+            services/runtime-fabric/src/spi/index.ts \
+            services/runtime-fabric/src/state-machine/selftest.ts \
+            services/runtime-fabric/src/providers/tmux/selftest.ts \
+            services/runtime-fabric/src/exchange/selftest.ts \
+            --target=bun \
+            --outdir=/tmp/runtime-v2-build
+      - name: Run repository and runtime foundation selftests
+        run: bun scripts/selftest.ts
+      - name: Run fixed-workflow tmux provider selftest
+        run: bun services/runtime-fabric/src/providers/tmux/selftest.ts
+      - name: Run OpenShell and tmux envelope tests
+        run: bun test services/runtime-fabric/src/providers/openshell/openshell.test.ts services/runtime-fabric/src/providers/tmux/tmux.test.ts
+      - name: Run hybrid exchange selftest
+        run: bun services/runtime-fabric/src/exchange/selftest.ts
+      - name: Type-check exact head
+        run: bunx tsc --noEmit

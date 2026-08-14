@@ -3,7 +3,9 @@ export type {
   RuntimeCollectionResult,
   RuntimeExecutionResult,
   RuntimeMaterialization,
+  RuntimeOperationContext,
   RuntimeProviderSpi,
+  RuntimeRunOptions,
 } from "./types.ts";
 export { RuntimeProviderRegistry } from "./registry.ts";
 export { dispatchRuntimeRequest, runRuntimeProvider } from "./orchestrator.ts";

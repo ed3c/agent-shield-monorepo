@@ -1,5 +1,7 @@
 import type {
+  RuntimeArtifactRef,
   RuntimeCleanupReceipt,
+  RuntimeOutcomeState,
   RuntimeProviderDescriptor,
   RuntimeRequest,
 } from "../../../../packages/contracts/src/runtime/index.ts";
@@ -8,19 +10,28 @@ import type {
   RuntimeCollectionResult,
   RuntimeExecutionResult,
   RuntimeMaterialization,
+  RuntimeOperationContext,
   RuntimeProviderSpi,
 } from "../spi/index.ts";
 
 export class FixtureProvider implements RuntimeProviderSpi {
   readonly descriptor: RuntimeProviderDescriptor;
-  cleanupCalled = false;
+  admitCalled = 0;
+  materializeCalled = 0;
+  recoveryCleanupCalled = 0;
+  executeCalled = 0;
+  collectCalled = 0;
+  cleanupCalled = 0;
   executionState: RuntimeExecutionResult["state"] = "PASS";
   cleanupState: RuntimeCleanupReceipt["state"] = "PASS";
+  recoveryCleanupState: RuntimeCleanupReceipt["state"] = "PASS";
 
   constructor(overrides: Partial<RuntimeProviderDescriptor> = {}) {
     this.descriptor = {
       id: "fixture-provider",
       version: "1.0.0",
+      subject: { kind: "source", id: "fixture-provider", version: "1.0.0", sha256: "1".repeat(64) },
+      environment: { kind: "profile", id: "fixture-runtime-profile", version: "1.0.0", sha256: "2".repeat(64) },
       scope: "local",
       capabilities: ["fixture.echo"],
       credentialBoundary: "none",
@@ -31,15 +42,24 @@ export class FixtureProvider implements RuntimeProviderSpi {
     };
   }
 
-  async admit(_request: RuntimeRequest): Promise<RuntimeAdmissionResult> {
+  async admit(_request: RuntimeRequest, _context: RuntimeOperationContext): Promise<RuntimeAdmissionResult> {
+    this.admitCalled += 1;
     return { state: "PASS", detail: "fixture admitted" };
   }
-
-  async materialize(_request: RuntimeRequest): Promise<RuntimeMaterialization> {
+  async materialize(_request: RuntimeRequest, _context: RuntimeOperationContext): Promise<RuntimeMaterialization> {
+    this.materializeCalled += 1;
     return { workspaceIdentity: `fixture-workspace:sha256:${"c".repeat(64)}`, handle: {} };
   }
-
-  async execute(_materialization: RuntimeMaterialization, _request: RuntimeRequest): Promise<RuntimeExecutionResult> {
+  async cleanupFailedMaterialization(
+    _request: RuntimeRequest,
+    _taskOutcome: "FAILED_MATERIALIZATION" | "CANCELLED" | "TIMED_OUT",
+    _context: RuntimeOperationContext,
+  ): Promise<RuntimeCleanupReceipt> {
+    this.recoveryCleanupCalled += 1;
+    return this.cleanupReceipt(this.recoveryCleanupState, "ABSENT", null, "fixture recovery cleanup");
+  }
+  async execute(_materialization: RuntimeMaterialization, _request: RuntimeRequest, _context: RuntimeOperationContext): Promise<RuntimeExecutionResult> {
+    this.executeCalled += 1;
     return {
       state: this.executionState,
       exit: {
@@ -53,12 +73,8 @@ export class FixtureProvider implements RuntimeProviderSpi {
       detail: `fixture execution ${this.executionState}`,
     };
   }
-
-  async collect(
-    _materialization: RuntimeMaterialization,
-    _request: RuntimeRequest,
-    _execution: RuntimeExecutionResult,
-  ): Promise<RuntimeCollectionResult> {
+  async collect(_m: RuntimeMaterialization, _r: RuntimeRequest, _e: RuntimeExecutionResult, _c: RuntimeOperationContext): Promise<RuntimeCollectionResult> {
+    this.collectCalled += 1;
     return {
       state: "PASS",
       artifacts: [{ kind: "log", sha256: "d".repeat(64), bytes: 5, mediaType: "text/plain" }],
@@ -66,18 +82,31 @@ export class FixtureProvider implements RuntimeProviderSpi {
       detail: "fixture artifacts collected",
     };
   }
-
-  async cleanup(_materialization: RuntimeMaterialization, _request: RuntimeRequest): Promise<RuntimeCleanupReceipt> {
-    this.cleanupCalled = true;
-    const exercised = this.cleanupState !== "NOT_EXERCISED";
+  async cleanup(_m: RuntimeMaterialization, request: RuntimeRequest, taskOutcome: RuntimeOutcomeState, _c: RuntimeOperationContext): Promise<RuntimeCleanupReceipt> {
+    this.cleanupCalled += 1;
+    if (request.cleanup.workspaceCleanup === "preserve-on-failure" && taskOutcome !== "COMPLETED" && this.cleanupState === "PASS") {
+      const preservationRef: RuntimeArtifactRef = { kind: "workspace-snapshot", sha256: "e".repeat(64), bytes: 64, mediaType: "application/octet-stream" };
+      return this.cleanupReceipt("PASS", "PRESERVED_BY_POLICY", preservationRef, "fixture workspace preserved");
+    }
+    return this.cleanupReceipt(this.cleanupState, this.cleanupState === "PASS" ? "DELETED" : "UNKNOWN", null, `fixture cleanup ${this.cleanupState}`);
+  }
+  private cleanupReceipt(
+    state: RuntimeCleanupReceipt["state"],
+    workspaceDisposition: RuntimeCleanupReceipt["workspaceDisposition"],
+    preservationRef: RuntimeArtifactRef | null,
+    detail: string,
+  ): RuntimeCleanupReceipt {
+    const exercised = state !== "NOT_EXERCISED";
     return {
-      state: this.cleanupState,
+      state,
       durationMs: exercised ? 1 : 0,
       processesChecked: exercised,
       workspaceChecked: exercised,
       sessionsChecked: exercised,
-      residue: this.cleanupState === "FAIL" ? ["fixture-residue"] : [],
-      detail: `fixture cleanup ${this.cleanupState}`,
+      workspaceDisposition: exercised ? workspaceDisposition : "ABSENT",
+      preservationRef: exercised ? preservationRef : null,
+      residue: state === "FAIL" ? ["fixture-residue"] : [],
+      detail,
     };
   }
 }
