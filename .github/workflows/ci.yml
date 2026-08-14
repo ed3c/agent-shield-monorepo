@@ -37,6 +37,18 @@ jobs:
           bash scripts/git-town/selftest.sh
       - run: bun scripts/verify.ts
       - run: bun scripts/selftest.ts
+      - name: Run repository Bun tests when present
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find . -type f \
+            \( -name '*.test.ts' -o -name '*.spec.ts' -o -name '*_test_.ts' -o -name '*_spec_.ts' \) \
+            -not -path './node_modules/*' \
+            -print -quit | grep -q .; then
+            bun test
+          else
+            echo 'No Bun test files are present on this exact head.'
+          fi
       - run: bun scripts/verify-bettor-integration.ts
       - name: Rebuild immutable module release
         run: bun scripts/release-manifest.ts --output /tmp/agent-shield-module-set.json
