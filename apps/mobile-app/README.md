@@ -7,7 +7,8 @@
 - Future tooling: Bun + TypeScript
 - Shipped mobile runtime: Hermes or JavaScriptCore, not Bun
 - Expo/React Native contract: present
-- iOS/Android build/install/launch: `NOT_EXERCISED`
+- App lifecycle, accessibility catalog, action closure and lane aggregation: implemented (#48)
+- iOS/Android build/install/launch: `NOT_EXERCISED` — no toolchain or simulator runs in this repository
 - External Maestro: `NOT_EXERCISED`
 - In-App typed action bridge: `NOT_IMPLEMENTED`
 - cloud mobile provider: `NOT_IMPLEMENTED`
@@ -25,6 +26,8 @@ UNBUILT → TOOLCHAIN_CHECKED → CONFIG_VALIDATED → BUILDING → ARTIFACT_REA
 ```
 
 Blocked/terminal: `ABSENT_TOOLCHAIN`, `BUILD_FAILED`, `ARTIFACT_FAILED`, `SIMULATOR_ABSENT`, `INSTALL_FAILED`, `LAUNCH_FAILED`, `ACTION_DENIED`, `TEST_NOT_EXERCISED`, `FAILED_CLEANUP`.
+
+Issue #48 spells the last one `CLEANUP_FAILED`. This README and the `product.*` contract family both spell it `FAILED_CLEANUP`, and two of them agreeing outranks one, so the implementation follows the name already in the repository.
 
 ### In-App bridge lifecycle
 

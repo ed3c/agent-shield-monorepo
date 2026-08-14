@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - "services/runtime-fabric/src/providers/tmux/**"
+      - "services/runtime-fabric/src/providers/tmux-pty/**"
       - ".github/workflows/p3-tmux-pty.yml"
   push:
     branches: [main]
     paths:
       - "services/runtime-fabric/src/providers/tmux/**"
+      - "services/runtime-fabric/src/providers/tmux-pty/**"
       - ".github/workflows/p3-tmux-pty.yml"
 
 permissions:
@@ -30,5 +32,9 @@ jobs:
         run: bun build services/runtime-fabric/src/providers/tmux/selftest.ts --target=bun --outdir=/tmp/rt-tmux-build
       - name: Run tmux provider positive and disagreement controls
         run: bun services/runtime-fabric/src/providers/tmux/selftest.ts
+      - name: Compile tmux-PTY provider selftest
+        run: bun build services/runtime-fabric/src/providers/tmux-pty/selftest.ts --target=bun --outdir=/tmp/rt-tmux-pty-build
+      - name: Run tmux-PTY provider positive and disagreement controls
+        run: bun services/runtime-fabric/src/providers/tmux-pty/selftest.ts
       - name: Typecheck repository
         run: bunx tsc --noEmit
