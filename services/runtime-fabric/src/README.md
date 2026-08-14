@@ -2,18 +2,19 @@
 
 This directory inherits [`../README.md`](../README.md).
 
-## Current source planes
-
-- `index.ts` — the existing provider catalog/state projection and disposable local worktree subject; its registry and evidence states are unchanged by issue #38.
-- `spi/` — provider-neutral admission, materialization, execution, artifact, and cleanup boundary.
-- `state-machine/` — explicit lifecycle graph plus deterministic RT-FND controls.
+- `index.ts` remains the aggregate provider/status projection and is not changed by issue #93.
+- `spi/` owns the exact-subject Runtime v2 provider-neutral boundary.
+- `state-machine/` owns lifecycle legality and deterministic repair controls.
+- `providers/` and `exchange/` remain provider/convergence-owned; this repair changes no provider-private implementation.
 
 ```text
-closed immutable runtime request
-  → provider SPI and lifecycle
-  → bounded artifact and cleanup receipt
+closed v2 request
+  → exact provider and environment subjects
+  → bounded provider SPI
+  → content-addressed artifacts
+  → explicit cleanup/preservation receipt
 ```
 
-Future provider roots are owned by issues #39–#43. They use the SPI and runtime contract, keep local and cloud evidence independent, and avoid cross-provider implementation imports. `index.ts`, module manifests, `data/status/integration.json`, release bytes, and aggregate evidence remain convergence #44 ownership.
+The transitional v1 parser is available only for already-merged policy/session envelopes. `runRuntimeProvider` uses the strict v2 parser, so a legacy unbound envelope cannot execute or produce provider PASS.
 
-The issue #38 fixture runs in memory only and changes no live provider, performance, cost, or production evidence state.
+Module manifests, `data/status/integration.json`, immutable release bytes, and provider live evidence remain unchanged.
