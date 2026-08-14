@@ -13,7 +13,8 @@ Current source families:
 - `runtime/` — issue #38's closed runtime request/provider/receipt contracts, repaired by #93, exported as `@agent-shield/contracts/runtime`;
 - `exchange/` — issue #43's local/cloud exchange request/receipt contracts;
 - `product/` — issue #45's product action, accessibility, projection, automation and receipt contracts;
-- `security/` — issue #54's settlement intent, risk, challenge, hardware evidence, revocation and settlement receipt contracts.
+- `security/` — issue #54's settlement intent, risk, challenge, hardware evidence, revocation and settlement receipt contracts;
+- `integration/` — issue #65's release subject, consumer requirements, module closure, bindings, CLI/MCP surface, evidence ladder, lock and rollback contracts.
 
 This list is the family index, and an index fails one way only: a dead entry is caught the first time someone follows it, while a missing entry is invisible. `exchange/` was present in the tree without an entry here until #45 added one. Add the row in the same PR that adds the family.
 
