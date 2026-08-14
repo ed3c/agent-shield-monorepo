@@ -130,11 +130,11 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256": "a253e0900fc0a3df9b85f9b0e798701a8d8850ca4f49d99282ca41fd24a81041"
+      "sha256": "d6e91b6bbbd37d5e34e880ee537eb7cbbacc318c6271ceaf4f2a2a6f2e5c2f08"
     },
     {
       "path": "CLAUDE.md",
-      "sha256": "122fa57030175b4a53b0a8a2ba8f896a3cb87b0bedda2aa3bc553d8f905a303d"
+      "sha256": "cf81c57e347d9428abdcaa9dd966435d49f81b9fb24fc8eb31dbf680ed5c90a9"
     },
     {
       "path": "ARCHITECTURE.md",
@@ -143,5 +143,5 @@
   ],
   "live_state": "NOT_EXERCISED",
   "note": "The manifest binds portable module and contract bytes. Git commit/tree, origin reachability, bettor consumption, providers, devices, browsers, hardware, and settlement require separate receipts.",
-  "content_sha256": "acc5a1e2ff113b14b079a1672403b63c5a276baaeafe918a5bc879ac2d9c3bbd"
+  "content_sha256": "70782746ccb6b72d2f38ed95278c0bbfba7c5c91d1f74de0597801c7710cc1fb"
 }
