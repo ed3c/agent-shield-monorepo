@@ -1,5 +1,11 @@
 import type { ExchangeOutcome, ExchangeState } from "../../../../packages/contracts/src/exchange/index.ts";
+import type {
+  RuntimeExchangeLifecycleState,
+  RuntimeExchangeOutcome,
+} from "./types.ts";
 
+// Older protocol/session exchange state machine retained for the already-merged
+// exchange.test.ts contract. It is independent from the runtime repair planner below.
 const terminal = new Set<ExchangeOutcome>([
   "COMPLETED",
   "ABSENT_BASE",
@@ -81,8 +87,100 @@ export function validateExchangeLifecycle(trace: readonly ExchangeState[]): Exch
   return outcome;
 }
 
-// Compatibility names consumed by the already-merged planner, validator, and selftest.
-// They are aliases of the same implementation, not a second state machine.
-export { ExchangeLifecycle as RuntimeExchangeLifecycle };
-export const assertRuntimeExchangeTransition = assertExchangeTransition;
-export const validateRuntimeExchangeLifecycle = validateExchangeLifecycle;
+// Runtime exchange/repair state machine consumed by planner.ts, validation.ts,
+// and selftest.ts. This is not an alias of the older protocol machine because
+// the two contracts intentionally have different states and terminal outcomes.
+const runtimeTerminal = new Set<RuntimeExchangeOutcome>([
+  "READY_FOR_REVIEW",
+  "READY_FOR_APPLY",
+  "REFUSED_DATA_CLASS",
+  "REFUSED_STRATEGY",
+  "STALE_BASE",
+  "LEASE_EXPIRED",
+  "LEASE_MISMATCH",
+  "PATH_OUT_OF_SCOPE",
+  "INVALID_PAYLOAD",
+  "INVALID_REVIEW",
+  "INVALID_REQUEST",
+]);
+
+const runtimeTransitions: Readonly<
+  Record<RuntimeExchangeLifecycleState, readonly RuntimeExchangeLifecycleState[]>
+> = {
+  REQUESTED: ["CLASSIFIED"],
+  CLASSIFIED: ["SUBJECT_VERIFIED", "REFUSED_DATA_CLASS", "REFUSED_STRATEGY", "INVALID_REQUEST"],
+  SUBJECT_VERIFIED: ["LEASE_VERIFIED", "STALE_BASE"],
+  LEASE_VERIFIED: [
+    "STRATEGY_VERIFIED",
+    "LEASE_EXPIRED",
+    "LEASE_MISMATCH",
+    "PATH_OUT_OF_SCOPE",
+    "INVALID_PAYLOAD",
+  ],
+  STRATEGY_VERIFIED: ["PAYLOAD_VERIFIED"],
+  PAYLOAD_VERIFIED: ["REVIEW_PENDING", "READY_FOR_APPLY", "INVALID_REVIEW"],
+  REVIEW_PENDING: ["READY_FOR_REVIEW"],
+  READY_FOR_APPLY: [],
+  RECEIPTED: [],
+  READY_FOR_REVIEW: [],
+  REFUSED_DATA_CLASS: [],
+  REFUSED_STRATEGY: [],
+  STALE_BASE: [],
+  LEASE_EXPIRED: [],
+  LEASE_MISMATCH: [],
+  PATH_OUT_OF_SCOPE: [],
+  INVALID_PAYLOAD: [],
+  INVALID_REVIEW: [],
+  INVALID_REQUEST: [],
+};
+
+export function isRuntimeExchangeOutcome(
+  value: RuntimeExchangeLifecycleState,
+): value is RuntimeExchangeOutcome {
+  return runtimeTerminal.has(value as RuntimeExchangeOutcome);
+}
+
+export function assertRuntimeExchangeTransition(
+  from: RuntimeExchangeLifecycleState,
+  to: RuntimeExchangeLifecycleState,
+): void {
+  if (!runtimeTransitions[from].includes(to)) {
+    throw new Error(`illegal runtime exchange transition: ${from} -> ${to}`);
+  }
+}
+
+export class RuntimeExchangeLifecycle {
+  readonly trace: RuntimeExchangeLifecycleState[] = ["REQUESTED"];
+
+  get current(): RuntimeExchangeLifecycleState {
+    return this.trace[this.trace.length - 1];
+  }
+
+  transition(next: RuntimeExchangeLifecycleState): void {
+    assertRuntimeExchangeTransition(this.current, next);
+    this.trace.push(next);
+  }
+
+  outcome(): RuntimeExchangeOutcome {
+    if (!isRuntimeExchangeOutcome(this.current)) {
+      throw new Error(`runtime exchange lifecycle is not terminal: ${this.current}`);
+    }
+    return this.current;
+  }
+}
+
+export function validateRuntimeExchangeLifecycle(
+  trace: readonly RuntimeExchangeLifecycleState[],
+): RuntimeExchangeOutcome {
+  if (trace.length < 2 || trace[0] !== "REQUESTED") {
+    throw new Error("runtime exchange lifecycle must start at REQUESTED");
+  }
+  for (let index = 1; index < trace.length; index += 1) {
+    assertRuntimeExchangeTransition(trace[index - 1], trace[index]);
+  }
+  const outcome = trace[trace.length - 1];
+  if (!isRuntimeExchangeOutcome(outcome)) {
+    throw new Error(`runtime exchange lifecycle is not terminal: ${outcome}`);
+  }
+  return outcome;
+}
