@@ -3,6 +3,7 @@ export { CONTEXT_DIGEST, FakeCarrier, PLANTED_OUTPUT, SKILL_DIGEST, TREE_DIGEST 
 export { assertCanaryTransition, isCanaryOutcome, validateCanaryLifecycle } from "./state-machine.ts";
 export {
   REQUIRED_CONTEXT_FILES,
+  requiredContextFilesFor,
   canaryReceiptRefusal,
   claudeCanaryState,
   contextRefusal,
