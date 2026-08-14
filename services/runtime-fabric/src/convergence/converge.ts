@@ -1,4 +1,14 @@
-import { createHash } from "node:crypto";
+import {
+  aggregateDigest,
+  aggregateRefusal,
+  childIdentityRefusal,
+  claimUniquenessRefusal,
+  invalidatedBy as sharedInvalidatedBy,
+  type ChildEvidence,
+  type ExpectedChild as SharedExpectedChild,
+  type ModuleNode as SharedModuleNode,
+  type ProposedAggregate,
+} from "../../../../packages/contracts/src/convergence/index.ts";
 import { validateConvergenceLifecycle } from "./state-machine.ts";
 import {
   CONVERGENCE_RECEIPT_SCHEMA,
@@ -19,129 +29,71 @@ export function fail(message: string): never {
   throw new Error(`invalid convergence contract: ${message}`);
 }
 
-// RT-CONV-008. Which modules a change to one module invalidates.
+// The five rules below are the shared convergence contract, not Phase 3 logic. #44, #53, #64 and
+// #75 state them in their own vocabulary and mean the same thing, so they live in
+// `packages/contracts/src/convergence/` and this leaf supplies only the Phase 3 subjects and the
+// Phase 3 terminal mapping.
 //
-// Computed from the `requires`/`provides` capability strings the manifests already carry, so
-// the answer follows the declared graph rather than a hand-maintained list that goes stale the
-// first time somebody adds a dependency.
-//
-// The control the eval names is restamping an unrelated module *solely because HEAD changed*.
-// A commit touches the whole tree; evidence staleness follows the capability graph, and those
-// are different things.
-export function invalidatedBy(changed: string, modules: readonly ModuleNode[]): string[] {
-  const byId = new Map(modules.map((module) => [module.id, module]));
-  if (!byId.has(changed)) fail(`module ${changed} is not in the graph`);
+// What stays here: the state machine, which is genuinely per-phase -- #44 has three route
+// failures, #53 has platform lanes, #75 has rollback states.
 
-  const stale = new Set<string>([changed]);
-  // Fixed point rather than one hop: a dependent's dependents are stale too, and stopping at
-  // depth one is the bug that looks correct on a two-module graph.
-  for (let changedThisPass = true; changedThisPass; ) {
-    changedThisPass = false;
-    const provided = new Set([...stale].flatMap((id) => byId.get(id)?.provides ?? []));
-    for (const module of modules) {
-      if (stale.has(module.id)) continue;
-      if (module.requires.some((capability) => provided.has(capability))) {
-        stale.add(module.id);
-        changedThisPass = true;
-      }
-    }
-  }
-  return [...stale].sort();
+function toEvidence(receipt: ChildReceipt): ChildEvidence {
+  return {
+    issue: receipt.issue,
+    ownerId: receipt.providerId,
+    interfaceVersion: receipt.interfaceVersion,
+    subjectSha256: receipt.providerSubjectSha256,
+    claims: receipt.capabilities,
+    lane: receipt.route,
+    state: receipt.state,
+    cleanupCleared: receipt.cleanupCleared,
+  };
 }
 
-// RT-CONV-001. Every included receipt names the expected interface and immutable child subject.
+function toExpected(child: ExpectedChild): SharedExpectedChild {
+  return {
+    issue: child.issue,
+    ownerId: child.providerId,
+    interfaceVersion: child.interfaceVersion,
+    subjectSha256: child.providerSubjectSha256,
+  };
+}
+
+function toProposal(status: ProposedStatus): ProposedAggregate {
+  return { lanes: { ...status.routes }, invalidatedModules: status.invalidatedModules };
+}
+
+export function invalidatedBy(changed: string, modules: readonly ModuleNode[]): string[] {
+  return sharedInvalidatedBy(changed, modules as readonly SharedModuleNode[]);
+}
+
+// RT-CONV-001. The shared rule reports `absent` or `mismatch`; Phase 3 maps those to its own
+// two terminals, which is the part that does not generalise.
 export function childRefusal(
   receipts: readonly ChildReceipt[],
   expected: readonly ExpectedChild[],
 ): { refusal: string; state: ConvergenceState } | null {
-  for (const child of expected) {
-    const receipt = receipts.find((candidate) => candidate.issue === child.issue);
-    if (receipt === undefined) {
-      return { refusal: `no receipt was supplied for child #${child.issue}`, state: "CHILD_ABSENT" };
-    }
-    if (receipt.providerId !== child.providerId) {
-      return { refusal: `child #${child.issue} reported provider ${receipt.providerId}`, state: "SUBJECT_MISMATCH" };
-    }
-    if (receipt.interfaceVersion !== child.interfaceVersion) {
-      return { refusal: `child #${child.issue} reported interface ${receipt.interfaceVersion}`, state: "SUBJECT_MISMATCH" };
-    }
-    // A stale receipt is one whose subject is not the one this convergence pinned. It is
-    // otherwise indistinguishable from a current one, which is why the digest is compared and
-    // not merely required to be present.
-    if (receipt.providerSubjectSha256 !== child.providerSubjectSha256) {
-      return { refusal: `child #${child.issue} pinned another provider subject`, state: "SUBJECT_MISMATCH" };
-    }
-    if (!SHA_256.test(receipt.providerSubjectSha256)) {
-      return { refusal: `child #${child.issue} has an unaddressed provider subject`, state: "SUBJECT_MISMATCH" };
-    }
-  }
-  // A receipt for a child this convergence does not expect is not a bonus: it is evidence from
-  // a subject nobody pinned.
-  for (const receipt of receipts) {
-    if (!expected.some((child) => child.issue === receipt.issue)) {
-      return { refusal: `a receipt was supplied for unexpected child #${receipt.issue}`, state: "SUBJECT_MISMATCH" };
-    }
-  }
-  return null;
+  const refusal = childIdentityRefusal(receipts.map(toEvidence), expected.map(toExpected));
+  if (refusal === null) return null;
+  return { refusal: refusal.detail, state: refusal.kind === "absent" ? "CHILD_ABSENT" : "SUBJECT_MISMATCH" };
 }
 
-// RT-CONV-002. One provider owns each selected capability, and the conflict is detected before
-// anything executes -- a matrix run that starts with two owners has already wasted the run.
+// RT-CONV-002.
 export function capabilityRefusal(receipts: readonly ChildReceipt[]): string | null {
-  const owner = new Map<string, string>();
-  for (const receipt of receipts) {
-    if (receipt.capabilities.length === 0) return `child #${receipt.issue} selects no capability`;
-    for (const capability of receipt.capabilities) {
-      const existing = owner.get(capability);
-      if (existing !== undefined && existing !== receipt.providerId) {
-        return `capability ${capability} is claimed by ${existing} and ${receipt.providerId}`;
-      }
-      owner.set(capability, receipt.providerId);
-    }
-  }
-  return null;
+  return claimUniquenessRefusal(receipts.map(toEvidence));
 }
 
-// RT-CONV-009. The release is a function of the receipts and of nothing else.
+// RT-CONV-009.
 export function releaseDigest(receipts: readonly ChildReceipt[], status: ProposedStatus): string {
-  const canonical = [...receipts]
-    .map((r) => [r.issue, r.providerId, r.interfaceVersion, r.providerSubjectSha256, r.route, r.state].join("\u0000"))
-    .sort();
-  const routes = ROUTES.map((route) => `${route}=${status.routes[route]}`);
-  return createHash("sha256").update([...canonical, ...routes, ...[...status.invalidatedModules].sort()].join("")).digest("hex");
+  return aggregateDigest(receipts.map(toEvidence), toProposal(status));
 }
 
-// RT-CONV-009's control, stated as a rule: a route may be claimed `PASS` only when a child
-// receipt for that route says `PASS`. Everything else is the proposal asserting a result no
-// evidence supports.
 export function statusRefusal(
   receipts: readonly ChildReceipt[],
   status: ProposedStatus,
   modules: readonly ModuleNode[],
 ): string | null {
-  for (const route of ROUTES) {
-    const claimed = status.routes[route];
-    const supporting = receipts.filter((receipt) => receipt.route === route);
-    if (claimed === "PASS") {
-      if (supporting.length === 0) return `the proposal claims ${route} PASS with no child receipt for that route`;
-      const dissent = supporting.find((receipt) => receipt.state !== "PASS");
-      if (dissent !== undefined) {
-        return `the proposal claims ${route} PASS while child #${dissent.issue} reports ${dissent.state}`;
-      }
-    }
-    if (claimed === "FAIL" && supporting.every((receipt) => receipt.state !== "FAIL")) {
-      return `the proposal claims ${route} FAIL with no child receipt reporting a failure`;
-    }
-  }
-
-  // RT-CONV-008. The proposal's invalidation set must be exactly the computed one. Too small
-  // leaves stale evidence admissible; too large is the "restamp because HEAD moved" control.
-  const computed = invalidatedBy("runtime-fabric", modules);
-  const proposed = [...status.invalidatedModules].sort();
-  if (JSON.stringify(proposed) !== JSON.stringify(computed)) {
-    return `the proposal invalidates ${proposed.join(", ") || "nothing"} and the graph requires ${computed.join(", ")}`;
-  }
-  return null;
+  return aggregateRefusal(receipts.map(toEvidence), toProposal(status), modules as readonly SharedModuleNode[], "runtime-fabric");
 }
 
 export interface ConvergenceRequest {
