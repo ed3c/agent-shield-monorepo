@@ -1,3 +1,4 @@
+import type { EvidenceState } from "../../../../../packages/contracts/src/index.ts";
 import { validateRuntimeRequest } from "../../../../../packages/contracts/src/runtime/index.ts";
 import {
   TMUX_SESSION_REQUEST_SCHEMA,
