@@ -1,0 +1,70 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "agent-shield-monorepo",
+    },
+    "apps/mobile-app": {
+      "name": "@agent-shield/mobile-app",
+    },
+    "apps/web-dashboard": {
+      "name": "@agent-shield/web-dashboard",
+      "version": "0.1.0",
+    },
+    "packages/agent-shield-sdk": {
+      "name": "@agent-shield/sdk",
+      "version": "0.1.0",
+      "dependencies": {
+        "@agent-shield/contracts": "workspace:*",
+      },
+    },
+    "packages/contracts": {
+      "name": "@agent-shield/contracts",
+      "version": "0.1.0",
+    },
+    "services/document-ingest": {
+      "name": "@agent-shield/document-ingest",
+      "version": "0.1.0",
+      "dependencies": {
+        "@agent-shield/contracts": "workspace:*",
+      },
+    },
+    "services/intent-ledger": {
+      "name": "@agent-shield/intent-ledger",
+    },
+    "services/mobile-automation": {
+      "name": "@agent-shield/mobile-automation",
+    },
+    "services/research-orchestrator": {
+      "name": "@agent-shield/research-orchestrator",
+    },
+    "services/runtime-fabric": {
+      "name": "@agent-shield/runtime-fabric",
+    },
+    "services/security-boundaries": {
+      "name": "@agent-shield/security-boundaries",
+    },
+  },
+  "packages": {
+    "@agent-shield/contracts": ["@agent-shield/contracts@workspace:packages/contracts"],
+
+    "@agent-shield/document-ingest": ["@agent-shield/document-ingest@workspace:services/document-ingest"],
+
+    "@agent-shield/intent-ledger": ["@agent-shield/intent-ledger@workspace:services/intent-ledger"],
+
+    "@agent-shield/mobile-app": ["@agent-shield/mobile-app@workspace:apps/mobile-app"],
+
+    "@agent-shield/mobile-automation": ["@agent-shield/mobile-automation@workspace:services/mobile-automation"],
+
+    "@agent-shield/research-orchestrator": ["@agent-shield/research-orchestrator@workspace:services/research-orchestrator"],
+
+    "@agent-shield/runtime-fabric": ["@agent-shield/runtime-fabric@workspace:services/runtime-fabric"],
+
+    "@agent-shield/sdk": ["@agent-shield/sdk@workspace:packages/agent-shield-sdk"],
+
+    "@agent-shield/security-boundaries": ["@agent-shield/security-boundaries@workspace:services/security-boundaries"],
+
+    "@agent-shield/web-dashboard": ["@agent-shield/web-dashboard@workspace:apps/web-dashboard"],
+  }
+}
