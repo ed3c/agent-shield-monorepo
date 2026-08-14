@@ -28,7 +28,7 @@ GitHub's recorded PR head and landed commit are both retained because stacked re
 | #22 | [#30](https://github.com/ed3c/agent-shield-monorepo/pull/30) | `docs/50-harness-evals` | `0fc37b16149a73988206f09f9e1bec223ab8d19c` | `60fbe036f5ff544c3a9a557f10c67cfddfec0e21` |
 | #31 Phase A | [#33](https://github.com/ed3c/agent-shield-monorepo/pull/33) | `fix/31-git-town-artifact-admission` | `edaee5ab0ab249487f35c7d5ee9c5da63d15f659` | `533583eff9b647006a001b69f57db3895dc5e8b1` |
 
-All seven PRs are merged and had successful exact-head checks recorded by GitHub. PR #33's landed tree equals its reviewed-head tree. Issue #31 remains open because GT-LIVE-002 through GT-LIVE-006 are a separate post-#23 phase.
+All seven PRs are merged and had successful exact-head checks recorded by GitHub. PR #33's landed tree equals its reviewed-head tree. Issue #31 remains open after its Phase B canaries ran: the Linux part of GT-LIVE-006, release-attestation verification, and Worker-image promotion are still outstanding.
 
 ## Canonical authority map
 
@@ -68,7 +68,9 @@ No provider, browser, device, hardware, wallet, chain, bettor, production, organ
 | State | Remaining subject |
 |---|---|
 | `NOT_IMPLEMENTED` | PDF provider, cloud runtime, security/settlement providers, binary distribution, Worker-image promotion, and other exact subjects in `data/status/integration.json` |
-| `NOT_EXERCISED` | private bettor initialization; Claude/Codex/Forgejo/signed-in-browser live lanes; Git Town release attestation; GT-LIVE-002 through GT-LIVE-006; Agent cold-start canary |
+| `NOT_EXERCISED` | private bettor initialization; Claude/Codex/Forgejo/signed-in-browser live lanes; Git Town release attestation; Agent cold-start canary |
+| `PASS` on the admitted macOS arm64 host artifact | GT-LIVE-002 through GT-LIVE-005 and the macOS part of GT-LIVE-006, as recorded by `docs/git/GIT_TOWN_ADMISSION.md` |
+| `ABSENT` | the Linux part of GT-LIVE-006; no Linux runtime claim is made |
 | Human-owned | expanded legal/distribution approval, production promotion, credentials/sessions, merge, keys, custody, device/hardware, and chain authority |
 
 ## Next admitted work
@@ -76,7 +78,7 @@ No provider, browser, device, hardware, wallet, chain, bettor, production, organ
 After the issue #23 convergence PR merges, the next work is not a blanket implementation authorization:
 
 1. [#32](https://github.com/ed3c/agent-shield-monorepo/issues/32) may implement the Bun + TypeScript mechanical documentation/eval/README/stack validator against these frozen contracts.
-2. [#31](https://github.com/ed3c/agent-shield-monorepo/issues/31) Phase B may run GT-LIVE-002 through GT-LIVE-006 without expanding the v24 host-only artifact boundary.
+2. [#31](https://github.com/ed3c/agent-shield-monorepo/issues/31) Phase B ran GT-LIVE-002 through GT-LIVE-006 without expanding the v24 host-only artifact boundary; what remains is Human-owned Worker-image promotion.
 3. Blocked epics [#3](https://github.com/ed3c/agent-shield-monorepo/issues/3) through [#6](https://github.com/ed3c/agent-shield-monorepo/issues/6) must first be decomposed into molecular eval-first children with exact dependencies, path owners, evidence boundaries, and Human gates. Their epic descriptions alone do not admit implementation.
 
 #32 and #31 Phase B can be reconsidered as path-disjoint siblings only after their task packets prove non-overlap. Product/provider work remains blocked until its own child issue is admitted.
