@@ -10,6 +10,8 @@
   },
   "include": [
     "apps/**/*.ts",
+    "contracts/analysis/**/*.ts",
+    "contracts/analysis/**/*.d.ts",
     "services/**/*.ts",
     "packages/**/*.ts",
     "scripts/**/*.ts",
