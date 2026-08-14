@@ -14,6 +14,7 @@ import {
 const SHA = /^[a-f0-9]{64}$/;
 const ID = /^[a-z0-9][a-z0-9._/-]{0,127}$/;
 const NAME = /^[a-z0-9][a-z0-9-]{0,31}$/;
+const PANE = /^(?:%[0-9]+|[a-z0-9][a-z0-9._-]{0,127})$/;
 const SIGNAL = /^SIG[A-Z0-9_]{1,28}$/;
 const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 const actions = ["attach", "capture", "detach", "stop"] as const satisfies readonly TmuxControlAction[];
@@ -136,7 +137,7 @@ export function validateTmuxSessionIdentity(value: unknown): TmuxSessionIdentity
   return {
     socketName: text(object.socketName, "sessionIdentity.socketName", NAME, 32),
     sessionName: text(object.sessionName, "sessionIdentity.sessionName", NAME, 32),
-    paneId: text(object.paneId, "sessionIdentity.paneId", /^[a-z0-9][a-z0-9._%-]{0,127}$/, 128),
+    paneId: text(object.paneId, "sessionIdentity.paneId", PANE, 128),
     workspace: logicalRef(object.workspace, "sessionIdentity.workspace"),
     process: { groupId: text(process.groupId, "sessionIdentity.process.groupId", ID, 128), generationToken: text(process.generationToken, "sessionIdentity.process.generationToken", SHA, 64) },
   };
