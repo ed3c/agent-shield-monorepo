@@ -1,0 +1,34 @@
+name: Phase 3 E2B provider contracts
+
+on:
+  pull_request:
+    paths:
+      - "services/runtime-fabric/src/providers/e2b/**"
+      - ".github/workflows/p3-e2b-runtime.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/runtime-fabric/src/providers/e2b/**"
+      - ".github/workflows/p3-e2b-runtime.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Compile E2B provider selftest
+        run: bun build services/runtime-fabric/src/providers/e2b/selftest.ts --target=bun --outdir=/tmp/rt-e2b-build
+      - name: Run E2B positive and disagreement controls
+        run: bun services/runtime-fabric/src/providers/e2b/selftest.ts
+      - name: Typecheck repository
+        run: bunx tsc --noEmit
