@@ -1,0 +1,45 @@
+export { SealedAttestation, REDACTED } from "./sealed-attestation.ts";
+export { FakeSecureEnclaveBridge, PLANTED_SECRET } from "./fake-bridge.ts";
+export {
+  assertSecureEnclaveTransition,
+  isSecureEnclaveOutcome,
+  validateSecureEnclaveLifecycle,
+} from "./state-machine.ts";
+export {
+  KeyRegistry,
+  assertAccessControlPolicy,
+  assertPlatformSubject,
+  challengeRefusal,
+  fail,
+  policyDigest,
+  runProvisioning,
+  runRevocation,
+  runRotation,
+  runSigning,
+  secureEnclaveProviderState,
+  verifyHardwareEvidence,
+  type LifecycleRequest,
+  type ProvisioningRequest,
+  type SigningRequest,
+} from "./provider.ts";
+export type {
+  AccessControlPolicy,
+  BiometryPolicy,
+  CreatedKey,
+  EnclaveChallenge,
+  EnclaveEnvironment,
+  EnclaveKeyRecord,
+  EnclaveSignature,
+  HardwareEvidence,
+  KeyAccessibility,
+  KeyBacking,
+  PlatformSubject,
+  PresenceMethod,
+  PresenceResult,
+  SecureEnclaveBridge,
+  SecureEnclaveKeyReceipt,
+  SecureEnclaveLifecycleReceipt,
+  SecureEnclaveOutcome,
+  SecureEnclaveSigningReceipt,
+  SecureEnclaveState,
+} from "./types.ts";
