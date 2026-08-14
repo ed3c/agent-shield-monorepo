@@ -1,0 +1,147 @@
+name: Bun lockfile promotion
+
+# Issue #7 asks for the promoted `bun.lock` to be *observed* under native Bun 1.3.14 rather than
+# asserted from a developer host. So the observation happens here, on the exact required version,
+# and the committed lockfile is only as good as this workflow's verdict.
+#
+# A separate file rather than a step in ci.yml on purpose: ci.yml is under concurrent edit by
+# other open PRs, and a lockfile gate has no reason to conflict with them.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Assert the exact Bun version
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected=1.3.14
+          actual="$(bun --version)"
+          # #7 says "install Bun 1.3.14 exactly". A newer patch silently satisfying the gate is
+          # the failure this guards: the lockfile's producer is part of the claim.
+          [[ "$actual" == "$expected" ]] || {
+            printf 'Bun version is %s, not the admitted %s.\n' "$actual" "$expected" >&2
+            exit 1
+          }
+          printf 'Bun %s\n' "$actual"
+
+      - name: Install from the promoted lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -f bun.lock ]] || { echo 'bun.lock is absent; nothing was promoted.' >&2; exit 1; }
+          bun install --frozen-lockfile --ignore-scripts
+          # --frozen-lockfile fails when package.json and bun.lock disagree, so reaching here means
+          # 1.3.14 accepts the committed lockfile as complete for this exact tree.
+          echo 'Bun 1.3.14 accepted the promoted lockfile.'
+
+      - name: Require zero diff when regenerated
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(sha256sum bun.lock | cut -d' ' -f1)"
+          bun install --save-text-lockfile --lockfile-only
+          after="$(sha256sum bun.lock | cut -d' ' -f1)"
+          if [[ "$before" != "$after" ]]; then
+            printf 'Regenerating bun.lock under 1.3.14 changed it.\n' >&2
+            git --no-pager diff -- bun.lock >&2 || true
+            exit 1
+          fi
+          printf 'bun.lock is reproducible: sha256=%s\n' "$after"
+
+      - name: Refuse any registry resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Every package.json in this repo declares only `workspace:*`. A lockfile entry that
+          # resolves anywhere else means an external dependency entered without review, which no
+          # other check in this repo would notice.
+          # Match the FIRST element of each package array. An earlier version anchored on a
+          # closing bracket, which a real registry entry never has there --
+          # ["left-pad@1.3.0", "", {}, "sha512-..."] -- so it matched nothing and read as clean.
+          registry="$(grep -oE '\["[^"]+@[^"]*"' bun.lock | grep -v '@workspace:' || true)"
+          if [[ -n "$registry" ]]; then
+            printf 'bun.lock resolves packages outside the workspace:\n%s\n' "$registry" >&2
+            exit 1
+          fi
+          echo 'Every lockfile entry is a workspace link.'
+
+      - name: Reject a tampered lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Proves the frozen-lockfile gate above can actually go red. Runs in a copy so the
+          # checkout is never left dirty.
+          control="$RUNNER_TEMP/tampered"
+          rm -rf "$control"
+          cp -R . "$control"
+          rm -rf "$control/node_modules"
+          python3 - "$control/package.json" <<'PY'
+          import json, sys
+          path = sys.argv[1]
+          value = json.load(open(path))
+          # A dependency the lockfile has never seen; --frozen-lockfile must refuse to add it.
+          value["dependencies"] = {"left-pad": "1.3.0"}
+          json.dump(value, open(path, "w"), indent=2)
+          PY
+          if (cd "$control" && bun install --frozen-lockfile --ignore-scripts >/dev/null 2>&1); then
+            echo 'Tampered-lockfile control stayed green; the gate proves nothing.' >&2
+            exit 1
+          fi
+          echo 'Tampered lockfile was refused, so the gate is live.'
+
+      - name: Prove a fresh clone follows the same path
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Catches anything the gate depends on that is untracked -- a lockfile that only installs
+          # because the working copy already carries state is not promoted, it is local.
+          fresh="$RUNNER_TEMP/fresh"
+          rm -rf "$fresh"
+          git clone --quiet --no-local . "$fresh"
+          cd "$fresh"
+          bun install --frozen-lockfile --ignore-scripts
+          bun run check
+          bun run selftest
+          echo 'A fresh clone installs and verifies from the promoted lockfile alone.'
+
+      - name: Emit the promotion receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          # #7 requires the exact branch/commit, Bun version, TypeScript version and digests. No
+          # host path, token, or session value is included, per the repository evidence boundary.
+          {
+            printf 'schema: agent-shield/bun-lockfile-promotion/v1\n'
+            printf 'commit: %s\n' "$GITHUB_SHA"
+            printf 'ref: %s\n' "$GITHUB_REF"
+            printf 'runner: %s\n' "$RUNNER_OS"
+            printf 'bun: %s\n' "$(bun --version)"
+            printf 'typescript: %s\n' "$(bunx tsc --version | sed -E 's/^Version //')"
+            printf 'bun_lock_sha256: %s\n' "$(sha256sum bun.lock | cut -d' ' -f1)"
+            printf 'package_json_sha256: %s\n' "$(sha256sum package.json | cut -d' ' -f1)"
+            printf 'workspaces: %s\n' "$(grep -c '@workspace:' bun.lock)"
+          } | tee "$RUNNER_TEMP/bun-lockfile-receipt.txt"
+
+      - name: Upload the promotion receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: bun-lockfile-promotion-receipt
+          path: ${{ runner.temp }}/bun-lockfile-receipt.txt
+          if-no-files-found: error
+          retention-days: 7
