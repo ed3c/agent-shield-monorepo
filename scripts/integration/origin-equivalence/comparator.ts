@@ -1,0 +1,238 @@
+import { createHash } from "node:crypto";
+import type { ReleaseModule } from "../../../packages/contracts/src/integration/index.ts";
+import { AUTHORING_RECEIPT_SCHEMA, type AuthoringOriginReceipt } from "../forgejo-origin/index.ts";
+import { ORIGIN_RECEIPT_SCHEMA, type OriginReceipt } from "../github-origin/index.ts";
+import { validateEquivalenceLifecycle } from "./state-machine.ts";
+import {
+  EQUIVALENCE_LEVELS,
+  EQUIVALENCE_RECEIPT_SCHEMA,
+  type EquivalenceLevel,
+  type EquivalenceReceipt,
+  type EquivalenceRequest,
+  type EquivalenceState,
+} from "./types.ts";
+
+export function fail(message: string): never {
+  throw new Error(`invalid equivalence contract: ${message}`);
+}
+
+// INT-EQ-005. The closure, as one digest over a canonical ordering.
+//
+// Sorting first is what makes this a comparison of *contents* rather than of the order two
+// verifiers happened to enumerate modules in. Every field that distinguishes one module release
+// from another is included; anything omitted here is a difference this comparison would call
+// equivalence.
+export function closureDigest(modules: readonly ReleaseModule[]): string {
+  const canonical = [...modules]
+    .map((module) => [
+      module.id,
+      module.interfaceVersion,
+      module.manifestSha256,
+      [...module.roots].sort().join(","),
+      [...module.provides].sort().join(","),
+      [...module.requires].sort().join(","),
+      String(module.externalExposed),
+      // A separator that cannot occur inside any field, written as an escape so the source
+      // stays ASCII. A space would let `roots: ["a b"]` and `roots: ["a", "b"]` collide, which
+      // is a difference this digest exists to see. The same idiom is used by
+      // `services/runtime-fabric/src/state-machine/hardening-selftest.ts`.
+    ].join("\u0000"))
+    .sort();
+  return createHash("sha256").update(canonical.join("")).digest("hex");
+}
+
+// INT-EQ-001. Independent arrivals.
+//
+// The control is "duplicate one receipt with the origin label changed". The answer is structural
+// rather than a heuristic: the two verifiers emit different schemas and different field sets, so
+// a relabelled copy is missing the fields its claimed origin would have produced. A GitHub
+// receipt carries `refKind` and `freshClone`; a Forgejo receipt carries `credentialSource` and
+// `readOnly`. Neither has the other's.
+function githubArrivalRefusal(receipt: OriginReceipt): string | null {
+  if (receipt.schema !== ORIGIN_RECEIPT_SCHEMA) return "the GitHub receipt carries another schema";
+  if (receipt.origin !== "github") return "the GitHub receipt does not claim the GitHub origin";
+  // A relabelled Forgejo receipt would not have these.
+  if (typeof receipt.freshClone !== "boolean") return "the GitHub receipt has no fresh-clone fact";
+  if (receipt.refKind === null || receipt.refKind === undefined) return "the GitHub receipt has no resolved ref kind";
+  return null;
+}
+
+function forgejoArrivalRefusal(receipt: AuthoringOriginReceipt): string | null {
+  if (receipt.schema !== AUTHORING_RECEIPT_SCHEMA) return "the Forgejo receipt carries another schema";
+  if (receipt.origin !== "forgejo") return "the Forgejo receipt does not claim the Forgejo origin";
+  // A relabelled GitHub receipt would not have these.
+  if (typeof receipt.readOnly !== "boolean") return "the Forgejo receipt has no read-only fact";
+  if (receipt.credentialSource === null || receipt.credentialSource === undefined) {
+    return "the Forgejo receipt has no authorization source";
+  }
+  return null;
+}
+
+function receipt(
+  request: EquivalenceRequest,
+  lifecycle: EquivalenceState[],
+  detail: string,
+  achievedLevel: EquivalenceLevel | null,
+): EquivalenceReceipt {
+  const subject = request.github?.receipt.subject ?? request.forgejo?.receipt.subject ?? null;
+  return {
+    schema: EQUIVALENCE_RECEIPT_SCHEMA,
+    repositoryFullName: subject?.repository ?? "",
+    releaseId: subject?.releaseId ?? "",
+    lifecycle,
+    outcome: validateEquivalenceLifecycle(lifecycle),
+    achievedLevel,
+    requestedLevel: request.requestedLevel,
+    moduleCount: request.githubClosure.length,
+    detail,
+  };
+}
+
+// UNRESOLVED → GITHUB_RECEIPT_VERIFIED → FORGEJO_RECEIPT_VERIFIED → LOGICAL_RELEASE_MATCHED
+//           → EQUIVALENCE_LEVEL_SELECTED → COMPARING → EQUIVALENT → RECEIPT_EMITTED
+export function compareOrigins(request: EquivalenceRequest): { receipt: EquivalenceReceipt } {
+  if (!Number.isSafeInteger(request.maxReceiptAgeMs) || request.maxReceiptAgeMs <= 0) {
+    fail("the maximum receipt age must be a positive whole number of milliseconds");
+  }
+
+  const lifecycle: EquivalenceState[] = ["UNRESOLVED"];
+  const done = (detail: string, level: EquivalenceLevel | null = null): { receipt: EquivalenceReceipt } =>
+    ({ receipt: receipt(request, lifecycle, detail, level) });
+
+  // UNSUPPORTED_LEVEL reports rather than throws, so it has exactly one producer and a caller
+  // receives it the same way as every other refusal. Throwing here instead would leave the
+  // state in #74's terminal list with nothing in production able to emit it -- a state only a
+  // test could construct, which is a state that does not exist.
+  if (!EQUIVALENCE_LEVELS.includes(request.requestedLevel)) {
+    lifecycle.push("UNSUPPORTED_LEVEL");
+    return done(`equivalence level ${request.requestedLevel} is not admitted`);
+  }
+
+  // INT-EQ-006. Absence blocks. There is no fallback to mutable main and no fallback to the
+  // other origin -- a comparison with one side missing is not a weaker comparison, it is none.
+  if (request.github === null) {
+    lifecycle.push("GITHUB_ABSENT");
+    return done("no GitHub distribution-origin receipt was supplied");
+  }
+  // A relabelled copy is a receipt that did not come from the origin it claims, so it is that
+  // origin being absent rather than the two disagreeing. Checked in this origin's own stage:
+  // running both arrival checks up front would make FORGEJO_ABSENT reachable before the GitHub
+  // receipt had been looked at, and the state machine says otherwise.
+  const githubArrival = githubArrivalRefusal(request.github.receipt);
+  if (githubArrival !== null) {
+    lifecycle.push("GITHUB_ABSENT");
+    return done(githubArrival);
+  }
+  const githubAge = request.nowEpochMs - request.github.observedAtEpochMs;
+  if (githubAge < 0 || githubAge > request.maxReceiptAgeMs) {
+    lifecycle.push("RECEIPT_STALE");
+    return done(githubAge < 0 ? "the GitHub receipt was observed in the future" : "the GitHub receipt is older than the admitted window");
+  }
+  lifecycle.push("GITHUB_RECEIPT_VERIFIED");
+
+  if (request.forgejo === null) {
+    lifecycle.push("FORGEJO_ABSENT");
+    return done("no Forgejo authoring-origin receipt was supplied");
+  }
+  const forgejoArrival = forgejoArrivalRefusal(request.forgejo.receipt);
+  if (forgejoArrival !== null) {
+    lifecycle.push("FORGEJO_ABSENT");
+    return done(forgejoArrival);
+  }
+  const forgejoAge = request.nowEpochMs - request.forgejo.observedAtEpochMs;
+  if (forgejoAge < 0 || forgejoAge > request.maxReceiptAgeMs) {
+    lifecycle.push("RECEIPT_STALE");
+    return done(forgejoAge < 0 ? "the Forgejo receipt was observed in the future" : "the Forgejo receipt is older than the admitted window");
+  }
+  lifecycle.push("FORGEJO_RECEIPT_VERIFIED");
+
+  // INT-EQ-002. The same logical subject. Two receipts about different releases are not evidence
+  // of anything, however well their digests happen to line up.
+  const gh = request.github.receipt;
+  const fj = request.forgejo.receipt;
+  if (gh.repositoryFullName !== fj.repositoryFullName) {
+    lifecycle.push("SUBJECT_MISMATCH");
+    return done("the receipts name different repositories");
+  }
+  if (gh.subject.repository !== fj.subject.repository) {
+    lifecycle.push("SUBJECT_MISMATCH");
+    return done("the release subjects name different repositories");
+  }
+  if (gh.subject.releaseId !== fj.subject.releaseId) {
+    lifecycle.push("SUBJECT_MISMATCH");
+    return done("the receipts describe different releases");
+  }
+  lifecycle.push("LOGICAL_RELEASE_MATCHED");
+
+  // INT-EQ-005. The closure, before any level is selected: a matching top-level manifest label
+  // with a different module set is the control, and it would otherwise pass every digest
+  // comparison the levels perform.
+  if (request.githubClosure.length === 0 || request.forgejoClosure.length === 0) {
+    lifecycle.push("CLOSURE_MISMATCH");
+    return done("one origin reported an empty module closure");
+  }
+  if (closureDigest(request.githubClosure) !== closureDigest(request.forgejoClosure)) {
+    lifecycle.push("CLOSURE_MISMATCH");
+    return done("the two origins report different module closures");
+  }
+
+  // INT-EQ-008 boundary. A level that needs an attestation this repository has no lane for is
+  // refused rather than silently downgraded: downgrading would answer a question nobody asked.
+  if (request.attestationRequiredFor.includes(request.requestedLevel) && !request.attestationPresent) {
+    lifecycle.push("ATTESTATION_ABSENT");
+    return done(`level ${request.requestedLevel} requires an attestation and none is present`);
+  }
+
+  // INT-EQ-007. The strongest level the evidence actually supports, computed from the receipts
+  // rather than taken from the request. This is the whole mechanism: `achievedLevel` is never
+  // assigned from `requestedLevel`, so "upgrade same-tree to exact-commit" is not expressible.
+  const sameCommit = gh.subject.commit === fj.subject.commit;
+  const sameTree = gh.subject.tree === fj.subject.tree;
+  const sameManifest = gh.subject.releaseDigest === fj.subject.releaseDigest;
+
+  const achieved: EquivalenceLevel | null =
+    sameCommit && sameTree && sameManifest ? "exact-commit"
+    : sameTree && sameManifest ? "same-tree"
+    : sameManifest ? "same-release-manifest"
+    : null;
+
+  if (achieved === null) {
+    lifecycle.push("EQUIVALENCE_LEVEL_SELECTED", "COMPARING", "NOT_EQUIVALENT");
+    return done("the origins share neither commit, tree nor release manifest");
+  }
+
+  // A request for a stronger level than the evidence supports is refused rather than answered
+  // with the weaker one. The caller asked a specific question; the honest reply to "are these
+  // the same commit" is not "they have the same tree".
+  if (EQUIVALENCE_LEVELS.indexOf(achieved) > EQUIVALENCE_LEVELS.indexOf(request.requestedLevel)) {
+    lifecycle.push("EQUIVALENCE_LEVEL_SELECTED", "COMPARING", "NOT_EQUIVALENT");
+    return done(`the evidence supports ${achieved}, which is weaker than the requested ${request.requestedLevel}`, achieved);
+  }
+  lifecycle.push("EQUIVALENCE_LEVEL_SELECTED", "COMPARING", "EQUIVALENT", "RECEIPT_EMITTED");
+  return done(`the origins are equivalent at ${achieved}`, achieved);
+}
+
+// A verdict is checkable by a party that did not compute it.
+export function equivalenceReceiptRefusal(
+  value: EquivalenceReceipt,
+  expected: { repository: string; releaseId: string; level: EquivalenceLevel },
+): string | null {
+  if (value.schema !== EQUIVALENCE_RECEIPT_SCHEMA) return "the receipt carries another schema";
+  if (value.repositoryFullName !== expected.repository) return "the receipt names another repository";
+  if (value.releaseId !== expected.releaseId) return "the receipt names another release";
+  if (value.outcome !== "RECEIPT_EMITTED") return `the receipt reports ${value.outcome}`;
+  if (value.achievedLevel === null) return "the receipt reports no achieved level";
+  // The achieved level must be at least as strong as the one being relied on.
+  if (EQUIVALENCE_LEVELS.indexOf(value.achievedLevel) > EQUIVALENCE_LEVELS.indexOf(expected.level)) {
+    return `the receipt achieved ${value.achievedLevel}, which is weaker than ${expected.level}`;
+  }
+  if (value.moduleCount === 0) return "the receipt compared an empty closure";
+  return null;
+}
+
+export const originEquivalenceState = {
+  independentArrivals: "NOT_EXERCISED",
+  liveEquivalence: "NOT_EXERCISED",
+  signedAttestation: "NOT_IMPLEMENTED",
+  releasePromotion: "NOT_IMPLEMENTED",
+} as const;

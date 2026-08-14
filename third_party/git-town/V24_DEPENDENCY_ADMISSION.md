@@ -53,14 +53,15 @@ This classification is a bounded dependency review, not a promise of zero legal 
 
 | Exact subject | State | Evidence boundary |
 |---|---|---|
-| release/tag/tree identity | `PASS` | GitHub release/tag data and exact Git object identity were inspected |
+| GT-LIVE-001 release/tag/tree identity | `PASS` | GitHub release/tag data and exact Git object identity were inspected |
 | archive digest against release metadata and `checksums.txt` | `PASS` | exact `git-town_macos_arm_64.tar.gz` bytes were hashed |
 | executable version/build identity | `PASS` | exact extracted executable ran and `go version -m` was inspected |
 | active dependency inventory and license classification | `PASS` | 51 modules from that executable were classified |
 | direct upstream/vendored LICENSE byte identity | `PASS` | exact SHA-256 is enforced by `require_git_town_license` and `selftest.sh` |
 | wrong-digest and wrong-version negative controls | `PASS` | planted digest and `24.0.1` expectations both exited nonzero |
 | GitHub release-attestation verification | `NOT_EXERCISED` | three verification attempts did not yield a valid attestation; no fourth attempt was made |
-| Git Town sync/background/conflict/portability canaries | `NOT_EXERCISED` | owned by GT-LIVE-002 through GT-LIVE-006 after issue #23 |
+| Git Town sync/background/conflict/portability canaries | `PASS` on the admitted macOS arm64 host artifact | GT-LIVE-002 through GT-LIVE-005 and the macOS part of GT-LIVE-006 ran under issue #31 Phase B; states are owned by `docs/git/GIT_TOWN_ADMISSION.md` |
+| Linux Worker artifact and execution environment | `ABSENT` | GT-LIVE-006 makes no Linux runtime claim |
 | binary commit/distribution or Worker-image promotion | `NOT_IMPLEMENTED` | explicitly outside this admission |
 
 The pre-admission finding and Human Admit are preserved in [issue #31](https://github.com/ed3c/agent-shield-monorepo/issues/31). Candidate downloads and executable bytes are host-owned temporary evidence and must not enter Git.
