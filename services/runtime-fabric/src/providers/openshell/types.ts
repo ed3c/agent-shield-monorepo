@@ -1,5 +1,10 @@
 import type { EvidenceState } from "../../../../../packages/contracts/src/index.ts";
-import type { RuntimeRequest } from "../../../../../packages/contracts/src/runtime/index.ts";
+import type {
+  RuntimeNetworkPolicy,
+  RuntimeRequest,
+  RuntimeSourceRef,
+} from "../../../../../packages/contracts/src/runtime/index.ts";
+import type { RuntimeOperationContext } from "../../spi/index.ts";
 
 export const OPENSHELL_POLICY_REQUEST_SCHEMA = "agent-shield/openshell-policy-request/v1" as const;
 export const OPENSHELL_POLICY_ENVELOPE_SCHEMA = "agent-shield/openshell-policy-envelope/v1" as const;
@@ -134,4 +139,100 @@ export interface OpenShellPolicyEnvelope {
   document: OpenShellPolicyDocument | null;
   exclusions: string[];
   detail: string;
+}
+
+// Fixed-workflow Runtime v2 provider types. These coexist with the policy compiler
+// envelope types above and do not widen the provider into caller-selected shell
+// execution: the caller selects a workflow ID and nothing else.
+
+export interface OpenShellPolicySubject {
+  id: string;
+  version: string;
+  sha256: string;
+}
+
+export interface OpenShellWorkflowSpec {
+  id: string;
+  executableId: string;
+  argv: readonly string[];
+  policy: OpenShellPolicySubject;
+  allowedExitCodes: readonly number[];
+  network: RuntimeNetworkPolicy["mode"];
+  allowedHosts: readonly string[];
+  writableRoots: readonly string[];
+  auditMaxBytes: number;
+}
+
+export interface OpenShellProviderInput {
+  workflowId: string;
+}
+
+export interface OpenShellSessionHandle {
+  name: string;
+  id: string;
+}
+
+export interface OpenShellMaterializationHandle extends OpenShellSessionHandle {
+  workflowId: string;
+}
+
+export interface OpenShellProbeResult {
+  state: "AVAILABLE" | "ABSENT" | "REFUSED_POLICY";
+  adapterVersion: string | null;
+  detail: string;
+}
+
+export interface OpenShellPolicyDecision {
+  state: "ALLOW" | "DENY";
+  policy: OpenShellPolicySubject;
+  reasonCodes: readonly string[];
+  detail: string;
+}
+
+export interface OpenShellSessionCreateSpec {
+  name: string;
+  workflowId: string;
+  executableId: string;
+  argv: readonly string[];
+  policy: OpenShellPolicySubject;
+  source: RuntimeSourceRef;
+  network: RuntimeNetworkPolicy["mode"];
+  allowedHosts: readonly string[];
+  writableRoots: readonly string[];
+}
+
+export interface OpenShellWorkflowExit {
+  code: number;
+  signal: string | null;
+}
+
+export interface OpenShellAuditPayload {
+  bytes: Uint8Array;
+  mediaType: string;
+  policy: OpenShellPolicySubject;
+  touchedPaths: readonly string[];
+}
+
+export interface OpenShellTransport {
+  probe(context: RuntimeOperationContext): Promise<OpenShellProbeResult>;
+  evaluatePolicy(
+    workflow: OpenShellWorkflowSpec,
+    source: RuntimeSourceRef,
+    context: RuntimeOperationContext,
+  ): Promise<OpenShellPolicyDecision>;
+  createSession(spec: OpenShellSessionCreateSpec, context: RuntimeOperationContext): Promise<OpenShellSessionHandle>;
+  runWorkflow(
+    handle: OpenShellSessionHandle,
+    workflow: OpenShellWorkflowSpec,
+    context: RuntimeOperationContext,
+  ): Promise<OpenShellWorkflowExit>;
+  collectAudit(
+    handle: OpenShellSessionHandle,
+    workflow: OpenShellWorkflowSpec,
+    maxBytes: number,
+    context: RuntimeOperationContext,
+  ): Promise<OpenShellAuditPayload>;
+  terminateSession(handle: OpenShellSessionHandle, context: RuntimeOperationContext): Promise<void>;
+  sessionExists(name: string, context: RuntimeOperationContext): Promise<boolean>;
+  terminateByName(name: string, context: RuntimeOperationContext): Promise<void>;
 }
