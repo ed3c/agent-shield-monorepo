@@ -1,0 +1,526 @@
+{
+  "schema": "agent-shield/solidity-build/v1",
+  "solcLongVersion": "0.8.28+commit.7893614a.Emscripten.clang",
+  "settingsSha256": "56d44a339cf7418abea8b107adab7505bbe5bd9954d2cdf64114d02c608693e8",
+  "sourcesSha256": {
+    "src/IAccount.sol": "4e826e4689efc837ecaffd372e16c7a9563e20fcba1b763fcc5771982a750a66",
+    "src/SessionAccount.sol": "d75dcb75550786ee1edb03080227fb8bf61335584812957e7dc82eb41753b2e3"
+  },
+  "contracts": {
+    "src/SessionAccount.sol:SessionAccount": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "entryPoint_",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "owner_",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "feeRecipient_",
+              "type": "address"
+            },
+            {
+              "internalType": "uint16",
+              "name": "feeBasisPoints_",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint256",
+              "name": "feeCapWei_",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "name": "CallReverted",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "EvidenceStale",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "FeeRecipientRequired",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "FeeTooHigh",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "NotEntryPoint",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "NotSelf",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "SessionExhausted",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "SessionExpired",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "SessionSelectorRefused",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "SessionTargetRefused",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "SessionUnknown",
+          "type": "error"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "FeePaid",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint48",
+              "name": "epoch",
+              "type": "uint48"
+            }
+          ],
+          "name": "PolicyEpochAdvanced",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "bytes32",
+              "name": "sessionId",
+              "type": "bytes32"
+            }
+          ],
+          "name": "SessionClosed",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "bytes32",
+              "name": "sessionId",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            }
+          ],
+          "name": "SessionOpened",
+          "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "MAX_FEE_BASIS_POINTS",
+          "outputs": [
+            {
+              "internalType": "uint16",
+              "name": "",
+              "type": "uint16"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "advancePolicyEpoch",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "sessionId",
+              "type": "bytes32"
+            }
+          ],
+          "name": "closeSession",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "entryPoint",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "name": "execute",
+          "outputs": [
+            {
+              "internalType": "bytes",
+              "name": "result",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "feeBasisPoints",
+          "outputs": [
+            {
+              "internalType": "uint16",
+              "name": "",
+              "type": "uint16"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "feeCapWei",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "feeRecipient",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            },
+            {
+              "internalType": "uint128",
+              "name": "maxValueWei",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint48",
+              "name": "validAfter",
+              "type": "uint48"
+            },
+            {
+              "internalType": "uint48",
+              "name": "validUntil",
+              "type": "uint48"
+            },
+            {
+              "internalType": "uint32",
+              "name": "maxCalls",
+              "type": "uint32"
+            }
+          ],
+          "name": "openSession",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "sessionId",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "policyEpoch",
+          "outputs": [
+            {
+              "internalType": "uint48",
+              "name": "",
+              "type": "uint48"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "sessionId",
+              "type": "bytes32"
+            }
+          ],
+          "name": "sessions",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            },
+            {
+              "internalType": "uint128",
+              "name": "maxValueWei",
+              "type": "uint128"
+            },
+            {
+              "internalType": "uint48",
+              "name": "validAfter",
+              "type": "uint48"
+            },
+            {
+              "internalType": "uint48",
+              "name": "validUntil",
+              "type": "uint48"
+            },
+            {
+              "internalType": "uint32",
+              "name": "maxCalls",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "usedCalls",
+              "type": "uint32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "sender",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "nonce",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "initCode",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "callData",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "accountGasLimits",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "preVerificationGas",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "gasFees",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "paymasterAndData",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct PackedUserOperation",
+              "name": "userOp",
+              "type": "tuple"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "userOpHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "missingAccountFunds",
+              "type": "uint256"
+            }
+          ],
+          "name": "validateUserOp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "validationData",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "stateMutability": "payable",
+          "type": "receive"
+        }
+      ],
+      "creationBytecodeSha256": "5a28fe2869929c1341484028aeb6531d9da11be429341bdce0a30f82b1e76ed1",
+      "deployedBytecodeSha256": "24e32918c059ef1e537c1f4e6b5054b36faee7e8b9e908da00bd283e5a6be61d",
+      "deployedBytecodeBytes": 5360,
+      "methodIdentifiers": {
+        "MAX_FEE_BASIS_POINTS()": "4befe2ca",
+        "advancePolicyEpoch()": "4d64d557",
+        "closeSession(bytes32)": "3ade240b",
+        "entryPoint()": "b0d691fe",
+        "execute(address,uint256,bytes)": "b61d27f6",
+        "feeBasisPoints()": "b8606eef",
+        "feeCapWei()": "242f4be5",
+        "feeRecipient()": "46904840",
+        "openSession(address,bytes4,uint128,uint48,uint48,uint32)": "02be37b0",
+        "owner()": "8da5cb5b",
+        "policyEpoch()": "a921d322",
+        "sessions(bytes32)": "7dbd2832",
+        "validateUserOp((address,uint256,bytes,bytes,bytes32,uint256,bytes32,bytes,bytes),bytes32,uint256)": "19822f7c"
+      },
+      "storageLayout": [
+        {
+          "astId": 105,
+          "contract": "src/SessionAccount.sol:SessionAccount",
+          "label": "sessions",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_mapping(t_bytes32,t_struct(Session)99_storage)"
+        },
+        {
+          "astId": 108,
+          "contract": "src/SessionAccount.sol:SessionAccount",
+          "label": "policyEpoch",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_uint48"
+        }
+      ],
+      "opcodes": [
+        "CALL",
+        "SLOAD",
+        "SSTORE",
+        "STATICCALL"
+      ]
+    }
+  }
+}
