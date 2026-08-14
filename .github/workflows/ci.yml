@@ -37,6 +37,7 @@ jobs:
           bash scripts/git-town/selftest.sh
       - run: bun scripts/verify.ts
       - run: bun scripts/selftest.ts
+      - run: bun test
       - run: bun scripts/verify-bettor-integration.ts
       - name: Rebuild immutable module release
         run: bun scripts/release-manifest.ts --output /tmp/agent-shield-module-set.json
