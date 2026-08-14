@@ -1,0 +1,233 @@
+import { createHash } from "node:crypto";
+import { validateConvergenceLifecycle } from "./state-machine.ts";
+import {
+  CONVERGENCE_RECEIPT_SCHEMA,
+  type ChildReceipt,
+  type ConvergenceReceipt,
+  type ConvergenceState,
+  type ExpectedChild,
+  type ModuleNode,
+  type ProposedStatus,
+  type RouteState,
+  type RuntimeRoute,
+} from "./types.ts";
+
+const SHA_256 = /^[a-f0-9]{64}$/;
+const ROUTES: readonly RuntimeRoute[] = ["local", "cloud", "hybrid"];
+
+export function fail(message: string): never {
+  throw new Error(`invalid convergence contract: ${message}`);
+}
+
+// RT-CONV-008. Which modules a change to one module invalidates.
+//
+// Computed from the `requires`/`provides` capability strings the manifests already carry, so
+// the answer follows the declared graph rather than a hand-maintained list that goes stale the
+// first time somebody adds a dependency.
+//
+// The control the eval names is restamping an unrelated module *solely because HEAD changed*.
+// A commit touches the whole tree; evidence staleness follows the capability graph, and those
+// are different things.
+export function invalidatedBy(changed: string, modules: readonly ModuleNode[]): string[] {
+  const byId = new Map(modules.map((module) => [module.id, module]));
+  if (!byId.has(changed)) fail(`module ${changed} is not in the graph`);
+
+  const stale = new Set<string>([changed]);
+  // Fixed point rather than one hop: a dependent's dependents are stale too, and stopping at
+  // depth one is the bug that looks correct on a two-module graph.
+  for (let changedThisPass = true; changedThisPass; ) {
+    changedThisPass = false;
+    const provided = new Set([...stale].flatMap((id) => byId.get(id)?.provides ?? []));
+    for (const module of modules) {
+      if (stale.has(module.id)) continue;
+      if (module.requires.some((capability) => provided.has(capability))) {
+        stale.add(module.id);
+        changedThisPass = true;
+      }
+    }
+  }
+  return [...stale].sort();
+}
+
+// RT-CONV-001. Every included receipt names the expected interface and immutable child subject.
+export function childRefusal(
+  receipts: readonly ChildReceipt[],
+  expected: readonly ExpectedChild[],
+): { refusal: string; state: ConvergenceState } | null {
+  for (const child of expected) {
+    const receipt = receipts.find((candidate) => candidate.issue === child.issue);
+    if (receipt === undefined) {
+      return { refusal: `no receipt was supplied for child #${child.issue}`, state: "CHILD_ABSENT" };
+    }
+    if (receipt.providerId !== child.providerId) {
+      return { refusal: `child #${child.issue} reported provider ${receipt.providerId}`, state: "SUBJECT_MISMATCH" };
+    }
+    if (receipt.interfaceVersion !== child.interfaceVersion) {
+      return { refusal: `child #${child.issue} reported interface ${receipt.interfaceVersion}`, state: "SUBJECT_MISMATCH" };
+    }
+    // A stale receipt is one whose subject is not the one this convergence pinned. It is
+    // otherwise indistinguishable from a current one, which is why the digest is compared and
+    // not merely required to be present.
+    if (receipt.providerSubjectSha256 !== child.providerSubjectSha256) {
+      return { refusal: `child #${child.issue} pinned another provider subject`, state: "SUBJECT_MISMATCH" };
+    }
+    if (!SHA_256.test(receipt.providerSubjectSha256)) {
+      return { refusal: `child #${child.issue} has an unaddressed provider subject`, state: "SUBJECT_MISMATCH" };
+    }
+  }
+  // A receipt for a child this convergence does not expect is not a bonus: it is evidence from
+  // a subject nobody pinned.
+  for (const receipt of receipts) {
+    if (!expected.some((child) => child.issue === receipt.issue)) {
+      return { refusal: `a receipt was supplied for unexpected child #${receipt.issue}`, state: "SUBJECT_MISMATCH" };
+    }
+  }
+  return null;
+}
+
+// RT-CONV-002. One provider owns each selected capability, and the conflict is detected before
+// anything executes -- a matrix run that starts with two owners has already wasted the run.
+export function capabilityRefusal(receipts: readonly ChildReceipt[]): string | null {
+  const owner = new Map<string, string>();
+  for (const receipt of receipts) {
+    if (receipt.capabilities.length === 0) return `child #${receipt.issue} selects no capability`;
+    for (const capability of receipt.capabilities) {
+      const existing = owner.get(capability);
+      if (existing !== undefined && existing !== receipt.providerId) {
+        return `capability ${capability} is claimed by ${existing} and ${receipt.providerId}`;
+      }
+      owner.set(capability, receipt.providerId);
+    }
+  }
+  return null;
+}
+
+// RT-CONV-009. The release is a function of the receipts and of nothing else.
+export function releaseDigest(receipts: readonly ChildReceipt[], status: ProposedStatus): string {
+  const canonical = [...receipts]
+    .map((r) => [r.issue, r.providerId, r.interfaceVersion, r.providerSubjectSha256, r.route, r.state].join("\u0000"))
+    .sort();
+  const routes = ROUTES.map((route) => `${route}=${status.routes[route]}`);
+  return createHash("sha256").update([...canonical, ...routes, ...[...status.invalidatedModules].sort()].join("")).digest("hex");
+}
+
+// RT-CONV-009's control, stated as a rule: a route may be claimed `PASS` only when a child
+// receipt for that route says `PASS`. Everything else is the proposal asserting a result no
+// evidence supports.
+export function statusRefusal(
+  receipts: readonly ChildReceipt[],
+  status: ProposedStatus,
+  modules: readonly ModuleNode[],
+): string | null {
+  for (const route of ROUTES) {
+    const claimed = status.routes[route];
+    const supporting = receipts.filter((receipt) => receipt.route === route);
+    if (claimed === "PASS") {
+      if (supporting.length === 0) return `the proposal claims ${route} PASS with no child receipt for that route`;
+      const dissent = supporting.find((receipt) => receipt.state !== "PASS");
+      if (dissent !== undefined) {
+        return `the proposal claims ${route} PASS while child #${dissent.issue} reports ${dissent.state}`;
+      }
+    }
+    if (claimed === "FAIL" && supporting.every((receipt) => receipt.state !== "FAIL")) {
+      return `the proposal claims ${route} FAIL with no child receipt reporting a failure`;
+    }
+  }
+
+  // RT-CONV-008. The proposal's invalidation set must be exactly the computed one. Too small
+  // leaves stale evidence admissible; too large is the "restamp because HEAD moved" control.
+  const computed = invalidatedBy("runtime-fabric", modules);
+  const proposed = [...status.invalidatedModules].sort();
+  if (JSON.stringify(proposed) !== JSON.stringify(computed)) {
+    return `the proposal invalidates ${proposed.join(", ") || "nothing"} and the graph requires ${computed.join(", ")}`;
+  }
+  return null;
+}
+
+export interface ConvergenceRequest {
+  receipts: readonly ChildReceipt[];
+  expected: readonly ExpectedChild[];
+  modules: readonly ModuleNode[];
+  status: ProposedStatus;
+}
+
+// CHILDREN_PENDING → SUBJECTS_PINNED → REGISTRY_RESOLVED → MATRIX_RUNNING
+//                 → CONTROLS_RUNNING → CLEANUP_CHECKED → RELEASE_RENDERED → HUMAN_REVIEW
+//
+// The run ends at HUMAN_REVIEW by construction. #44 owns promotion and promotion is Human
+// Admit, so there is no path from a deterministic run to ADMITTED.
+export function converge(request: ConvergenceRequest): { receipt: ConvergenceReceipt } {
+  const { receipts, expected, modules, status } = request;
+  if (expected.length === 0) fail("no expected children were pinned");
+  if (modules.length === 0) fail("the module graph is empty");
+
+  const lifecycle: ConvergenceState[] = ["CHILDREN_PENDING"];
+  const done = (detail: string, digest: string | null = null): { receipt: ConvergenceReceipt } => ({
+    receipt: {
+      schema: CONVERGENCE_RECEIPT_SCHEMA,
+      lifecycle,
+      outcome: validateConvergenceLifecycle(lifecycle),
+      childCount: receipts.length,
+      routes: { ...status.routes },
+      invalidatedModules: [...status.invalidatedModules].sort(),
+      releaseDigest: digest,
+      detail,
+    },
+  });
+
+  const childRefused = childRefusal(receipts, expected);
+  if (childRefused !== null) {
+    lifecycle.push(childRefused.state);
+    return done(childRefused.refusal);
+  }
+  lifecycle.push("SUBJECTS_PINNED");
+
+  const capabilityRefused = capabilityRefusal(receipts);
+  if (capabilityRefused !== null) {
+    lifecycle.push("CAPABILITY_CONFLICT");
+    return done(capabilityRefused);
+  }
+  lifecycle.push("REGISTRY_RESOLVED", "MATRIX_RUNNING");
+
+  // A route whose own children report a failure fails here, before any aggregate is rendered.
+  // The three route failures are distinct states because the phase's rollback subject differs:
+  // a cloud failure and a hybrid failure are not the same investigation.
+  for (const route of ROUTES) {
+    const failed = receipts.find((receipt) => receipt.route === route && receipt.state === "FAIL");
+    if (failed !== undefined) {
+      lifecycle.push(route === "local" ? "LOCAL_FAIL" : route === "cloud" ? "CLOUD_FAIL" : "HYBRID_FAIL");
+      return done(`child #${failed.issue} reports a ${route} failure`);
+    }
+  }
+  lifecycle.push("CONTROLS_RUNNING");
+
+  const uncleaned = receipts.find((receipt) => !receipt.cleanupCleared);
+  if (uncleaned !== undefined) {
+    lifecycle.push("CLEANUP_FAIL");
+    return done(`child #${uncleaned.issue} reports uncleared residue`);
+  }
+  lifecycle.push("CLEANUP_CHECKED", "RELEASE_RENDERED");
+
+  const statusRefused = statusRefusal(receipts, status, modules);
+  if (statusRefused !== null) {
+    lifecycle.push("RELEASE_DRIFT");
+    return done(statusRefused);
+  }
+  lifecycle.push("HUMAN_REVIEW");
+  return done("the aggregate is supported by its child receipts and awaits Human Admit", releaseDigest(receipts, status));
+}
+
+// What this leaf may claim. The four deterministic evals are exercised; the five that need the
+// merged provider leaves are not, and the eval suite pins the type so widening any of them to
+// PASS fails to compile.
+export const runtimeConvergenceState = {
+  childIdentity: "NOT_EXERCISED",
+  capabilityUniqueness: "NOT_EXERCISED",
+  transitiveInvalidation: "NOT_EXERCISED",
+  deterministicRelease: "NOT_EXERCISED",
+  localIndependence: "NOT_IMPLEMENTED",
+  cloudIndependence: "NOT_IMPLEMENTED",
+  hybridProtocol: "NOT_IMPLEMENTED",
+  policyPtyComposition: "NOT_IMPLEMENTED",
+  crossProviderCleanup: "NOT_IMPLEMENTED",
+} as const;
