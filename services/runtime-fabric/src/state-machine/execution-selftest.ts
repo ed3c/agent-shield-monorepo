@@ -1,15 +1,16 @@
 import type { RuntimeRequest } from "../../../../packages/contracts/src/runtime/index.ts";
-import { runRuntimeProvider } from "../spi/index.ts";
+import { assertRuntimeReceiptMatchesRequest, runRuntimeProvider } from "../spi/index.ts";
 import { FixtureProvider } from "./provider-fixture.ts";
-import { ok } from "./test-support.ts";
+import { ok, red } from "./test-support.ts";
 
 export async function runtimeExecutionSelftest(valid: RuntimeRequest): Promise<void> {
   const executionFailure = new FixtureProvider();
   executionFailure.executionState = "FAIL";
   const execution = await runRuntimeProvider(executionFailure, valid);
   ok(
-    executionFailure.cleanupCalled && execution.taskOutcome === "FAILED_EXECUTION" &&
-    execution.outcome === "FAILED_EXECUTION" && execution.cleanup.state === "PASS",
+    executionFailure.cleanupCalled === 1 && execution.taskStage === "execution" &&
+    execution.taskOutcome === "FAILED_EXECUTION" && execution.outcome === "FAILED_EXECUTION" &&
+    execution.cleanup.state === "PASS",
     "execution and cleanup lanes collapsed",
   );
 
@@ -21,7 +22,7 @@ export async function runtimeExecutionSelftest(valid: RuntimeRequest): Promise<v
     detail: "escaped write",
   });
   const escaped = await runRuntimeProvider(escapedWrite, valid);
-  ok(escaped.taskOutcome === "FAILED_ARTIFACT" && escaped.cleanup.state === "PASS", "mutation scope escaped");
+  ok(escaped.taskStage === "collection" && escaped.taskOutcome === "FAILED_ARTIFACT" && escaped.cleanup.state === "PASS", "mutation scope escaped");
 
   const missingArtifact = new FixtureProvider();
   missingArtifact.collect = async () => ({ state: "PASS", artifacts: [], touchedPaths: [], detail: "missing" });
@@ -47,4 +48,18 @@ export async function runtimeExecutionSelftest(valid: RuntimeRequest): Promise<v
     detail: "invalid timeout",
   });
   ok((await runRuntimeProvider(invalidTimeout, valid)).taskOutcome === "FAILED_EXECUTION", "timeout evidence mismatch passed");
+
+  const completed = await runRuntimeProvider(new FixtureProvider(), valid);
+  red(() => assertRuntimeReceiptMatchesRequest({
+    ...completed,
+    taskOutcome: "TIMED_OUT",
+    outcome: "TIMED_OUT",
+    state: "FAIL",
+    taskStage: "collection",
+    terminalStage: "collection",
+    lifecycle: [...completed.lifecycle.slice(0, -1), "TIMED_OUT"],
+    exit: { code: 0, signal: null, timedOut: true, cancelled: false },
+    artifacts: [],
+    touchedPaths: [],
+  }, valid), "collection timeout falsified execution timeout");
 }

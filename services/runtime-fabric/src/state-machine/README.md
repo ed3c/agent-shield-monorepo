@@ -1,20 +1,11 @@
-# Runtime lifecycle state machine
-
-Issue [#38](https://github.com/ed3c/agent-shield-monorepo/issues/38) owns the shared lifecycle and deterministic disagreement controls.
+# Runtime v2 lifecycle and deterministic controls
 
 ```text
-UNRESOLVED
-  → RESOLVED
-  → ADMISSION_CHECKED
-  → MATERIALIZING
-  → READY
-  → RUNNING
-  → COLLECTING
-  → CLEANING
-  → COMPLETED
+UNRESOLVED → RESOLVED → ADMISSION_CHECKED → MATERIALIZING → READY
+  → RUNNING → COLLECTING → CLEANING → COMPLETED
 ```
 
-Named terminal states:
+Named terminals remain distinct:
 
 ```text
 ABSENT
@@ -30,17 +21,8 @@ CANCELLED
 TIMED_OUT
 ```
 
-Execution that does not collect artifacts still enters `CLEANING`; a successful task cannot skip collection or cleanup. Materialization failure is terminal only when no owned workspace was transferred to the orchestrator.
+Materialization failure, timeout, or cancellation enters recovery cleanup. Execution timeout marks execution exit evidence. Collection timeout preserves the successful execution exit. Cleanup failure preserves the earlier `taskOutcome` and changes only the overall `outcome`.
 
-## Deterministic controls
+The deterministic suite covers strict v2 execution, non-executable v1 envelope migration, exact provider/environment subjects, closed/prototype controls, mutable request/receipt refusal, output/artifact/mutation limits, cooperative and uncooperative interruption, recovery cleanup, workspace preservation, false cleanup PASS, stale receipts, and independent task/cleanup outcomes.
 
-`selftest.ts` drives the same public contracts/SPI and proves:
-
-- illegal transition skips turn red;
-- missing limits and nested generic shell controls are rejected;
-- unavailable states do not become `PASS`;
-- request bytes are frozen and request digests are canonical;
-- stale receipts, missing capabilities, undeclared secret references, non-portable workspace identities, out-of-scope writes, missing artifacts, oversized output, inconsistent timeout evidence, and false cleanup success turn red;
-- task failure and cleanup failure remain separate receipt lanes.
-
-The root `scripts/selftest.ts` invokes this suite in exact-head CI. It uses no selected provider, network, device, cloud runtime, or external executable.
+The suite performs no provider allocation, process spawn, network call, device operation, credential access, or live evidence promotion.

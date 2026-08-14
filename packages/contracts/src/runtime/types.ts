@@ -1,7 +1,7 @@
 import type { EvidenceState } from "../index.ts";
 
-export const RUNTIME_REQUEST_SCHEMA = "agent-shield/runtime-request/v1" as const;
-export const RUNTIME_RECEIPT_SCHEMA = "agent-shield/runtime-receipt/v1" as const;
+export const RUNTIME_REQUEST_SCHEMA = "agent-shield/runtime-request/v2" as const;
+export const RUNTIME_RECEIPT_SCHEMA = "agent-shield/runtime-receipt/v2" as const;
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -12,6 +12,7 @@ export type RuntimeCredentialBoundary = "none" | "host-only" | "broker-only";
 export type RuntimeImplementationState = "IMPLEMENTED" | "NOT_IMPLEMENTED";
 export type RuntimeAvailabilityState = "AVAILABLE" | "ABSENT" | "REFUSED_POLICY";
 export type RuntimeExerciseState = "PASS" | "FAIL" | "NOT_EXERCISED";
+export type RuntimeStage = "admission" | "materialization" | "execution" | "collection" | "cleanup";
 
 export type RuntimePhaseState =
   | "UNRESOLVED"
@@ -53,6 +54,18 @@ export interface RuntimeArtifactSourceRef {
 }
 
 export type RuntimeSourceRef = RuntimeGitSourceRef | RuntimeArtifactSourceRef;
+export type RuntimeProviderSubjectKind = "source" | "artifact" | "binary";
+export type RuntimeEnvironmentSubjectKind = "image" | "template" | "profile";
+
+export interface RuntimeImmutableSubject<K extends string = string> {
+  kind: K;
+  id: string;
+  version: string;
+  sha256: string;
+}
+
+export type RuntimeProviderSubject = RuntimeImmutableSubject<RuntimeProviderSubjectKind>;
+export type RuntimeEnvironmentSubject = RuntimeImmutableSubject<RuntimeEnvironmentSubjectKind>;
 
 export interface RuntimeWorkload {
   id: string;
@@ -108,6 +121,9 @@ export interface RuntimeRequest {
   schema: typeof RUNTIME_REQUEST_SCHEMA;
   requestId: string;
   providerId: string;
+  providerVersion: string;
+  providerSubject: RuntimeProviderSubject;
+  environmentSubject: RuntimeEnvironmentSubject;
   scope: RuntimeScope;
   requiredCapabilities: string[];
   source: RuntimeSourceRef;
@@ -125,6 +141,8 @@ export interface RuntimeRequest {
 export interface RuntimeProviderDescriptor {
   id: string;
   version: string;
+  subject: RuntimeProviderSubject;
+  environment: RuntimeEnvironmentSubject;
   scope: RuntimeScope;
   capabilities: string[];
   credentialBoundary: RuntimeCredentialBoundary;
@@ -157,24 +175,39 @@ export interface RuntimeArtifactRef {
   mediaType: string;
 }
 
+export type RuntimeWorkspaceDisposition = "DELETED" | "PRESERVED_BY_POLICY" | "ABSENT" | "UNKNOWN";
+
 export interface RuntimeCleanupReceipt {
   state: "PASS" | "FAIL" | "NOT_EXERCISED";
   durationMs: number;
   processesChecked: boolean;
   workspaceChecked: boolean;
   sessionsChecked: boolean;
+  workspaceDisposition: RuntimeWorkspaceDisposition;
+  preservationRef: RuntimeArtifactRef | null;
   residue: string[];
   detail: string;
+}
+
+export interface RuntimeObservedProvider {
+  id: string;
+  version: string;
+  subject: RuntimeProviderSubject | null;
+  environmentSubject: RuntimeEnvironmentSubject | null;
+  scope: RuntimeScope;
+  capabilities: string[];
 }
 
 export interface RuntimeReceipt {
   schema: typeof RUNTIME_RECEIPT_SCHEMA;
   requestId: string;
   requestDigest: string;
-  provider: Pick<RuntimeProviderDescriptor, "id" | "version" | "scope"> & { capabilities: string[] };
+  provider: RuntimeObservedProvider;
   source: RuntimeSourceRef;
   workspaceIdentity: string | null;
   lifecycle: RuntimeLifecycleState[];
+  taskStage: Exclude<RuntimeStage, "cleanup"> | null;
+  terminalStage: RuntimeStage | null;
   admission: RuntimeAdmissionReceipt;
   taskOutcome: RuntimeOutcomeState;
   outcome: RuntimeOutcomeState;
