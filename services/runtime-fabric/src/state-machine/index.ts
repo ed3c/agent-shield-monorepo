@@ -3,30 +3,21 @@ import type { RuntimeLifecycleState, RuntimeOutcomeState } from "../../../../pac
 const transitions: Readonly<Record<RuntimeLifecycleState, readonly RuntimeLifecycleState[]>> = {
   UNRESOLVED: ["RESOLVED", "ABSENT", "NOT_IMPLEMENTED", "NOT_EXERCISED", "REFUSED_POLICY"],
   RESOLVED: ["ADMISSION_CHECKED", "ABSENT", "NOT_IMPLEMENTED", "NOT_EXERCISED", "REFUSED_POLICY"],
-  ADMISSION_CHECKED: ["MATERIALIZING", "FAILED_ADMISSION", "REFUSED_POLICY"],
-  MATERIALIZING: ["READY", "FAILED_MATERIALIZATION", "CANCELLED", "TIMED_OUT"],
-  READY: ["RUNNING", "CANCELLED", "TIMED_OUT"],
+  ADMISSION_CHECKED: ["MATERIALIZING", "FAILED_ADMISSION", "REFUSED_POLICY", "CANCELLED", "TIMED_OUT"],
+  MATERIALIZING: ["READY", "CLEANING"],
+  READY: ["RUNNING"],
   RUNNING: ["COLLECTING", "CLEANING"],
   COLLECTING: ["CLEANING"],
-  CLEANING: ["COMPLETED", "FAILED_EXECUTION", "FAILED_ARTIFACT", "FAILED_CLEANUP", "CANCELLED", "TIMED_OUT"],
-  COMPLETED: [],
-  ABSENT: [],
-  NOT_IMPLEMENTED: [],
-  NOT_EXERCISED: [],
-  REFUSED_POLICY: [],
-  FAILED_ADMISSION: [],
-  FAILED_MATERIALIZATION: [],
-  FAILED_EXECUTION: [],
-  FAILED_ARTIFACT: [],
-  FAILED_CLEANUP: [],
-  CANCELLED: [],
-  TIMED_OUT: [],
+  CLEANING: ["COMPLETED", "FAILED_MATERIALIZATION", "FAILED_EXECUTION", "FAILED_ARTIFACT", "FAILED_CLEANUP", "CANCELLED", "TIMED_OUT"],
+  COMPLETED: [], ABSENT: [], NOT_IMPLEMENTED: [], NOT_EXERCISED: [], REFUSED_POLICY: [],
+  FAILED_ADMISSION: [], FAILED_MATERIALIZATION: [], FAILED_EXECUTION: [], FAILED_ARTIFACT: [], FAILED_CLEANUP: [],
+  CANCELLED: [], TIMED_OUT: [],
 };
 
 const outcomeStates = new Set<RuntimeOutcomeState>([
   "COMPLETED", "ABSENT", "NOT_IMPLEMENTED", "NOT_EXERCISED", "REFUSED_POLICY",
-  "FAILED_ADMISSION", "FAILED_MATERIALIZATION", "FAILED_EXECUTION", "FAILED_ARTIFACT",
-  "FAILED_CLEANUP", "CANCELLED", "TIMED_OUT",
+  "FAILED_ADMISSION", "FAILED_MATERIALIZATION", "FAILED_EXECUTION", "FAILED_ARTIFACT", "FAILED_CLEANUP",
+  "CANCELLED", "TIMED_OUT",
 ]);
 
 export function isRuntimeOutcomeState(state: RuntimeLifecycleState): state is RuntimeOutcomeState {
@@ -39,16 +30,8 @@ export function assertRuntimeTransition(from: RuntimeLifecycleState, to: Runtime
 
 export class RuntimeLifecycle {
   readonly trace: RuntimeLifecycleState[] = ["UNRESOLVED"];
-
-  get current(): RuntimeLifecycleState {
-    return this.trace[this.trace.length - 1];
-  }
-
-  transition(to: RuntimeLifecycleState): void {
-    assertRuntimeTransition(this.current, to);
-    this.trace.push(to);
-  }
-
+  get current(): RuntimeLifecycleState { return this.trace[this.trace.length - 1]; }
+  transition(to: RuntimeLifecycleState): void { assertRuntimeTransition(this.current, to); this.trace.push(to); }
   terminal(): RuntimeOutcomeState {
     if (!isRuntimeOutcomeState(this.current)) throw new Error(`runtime lifecycle is not terminal: ${this.current}`);
     return this.current;

@@ -19,6 +19,7 @@ export class RuntimeProviderRegistry {
       execute: provider.execute.bind(provider),
       collect: provider.collect.bind(provider),
       cleanup: provider.cleanup.bind(provider),
+      cleanupFailedMaterialization: provider.cleanupFailedMaterialization.bind(provider),
     };
     this.#providers.set(descriptor.id, bound);
   }
@@ -31,7 +32,7 @@ export class RuntimeProviderRegistry {
 
   descriptors(): RuntimeProviderDescriptor[] {
     return [...this.#providers.values()]
-      .map((provider) => ({ ...provider.descriptor, capabilities: [...provider.descriptor.capabilities] }))
+      .map((provider) => structuredClone(provider.descriptor))
       .sort((left, right) => left.id.localeCompare(right.id));
   }
 }

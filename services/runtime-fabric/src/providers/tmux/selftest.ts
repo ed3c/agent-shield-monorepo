@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   validateRuntimeRequest,
   type RuntimeEnvironmentSubject,
+  type RuntimeReceipt,
   type RuntimeRequest,
 } from "../../../../../packages/contracts/src/runtime/index.ts";
 import {
@@ -298,13 +299,13 @@ export async function tmuxProviderSelftest(): Promise<void> {
   );
 
   red(
-    () => assertRuntimeReceiptMatchesRequest({ ...positive, unexpected: true }, positiveRequest),
+    () => assertRuntimeReceiptMatchesRequest({ ...positive, unexpected: true } as unknown as RuntimeReceipt, positiveRequest),
     "open tmux receipt",
   );
   red(
     () => assertRuntimeReceiptMatchesRequest({
       ...positive,
-      provider: { ...positive.provider, subject: { ...positive.provider.subject, sha256: "0".repeat(64) } },
+      provider: { ...positive.provider, subject: { ...positive.provider.subject!, sha256: "0".repeat(64) } },
     }, positiveRequest),
     "tampered tmux binary subject",
   );
