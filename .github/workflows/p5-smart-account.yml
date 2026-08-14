@@ -1,0 +1,82 @@
+name: Phase 5 smart-account contracts
+
+on:
+  pull_request:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/p5-smart-account.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+
+      # SEC-AA-001. The compiler is acquired transiently and is never written into package.json.
+      # solc is GPL-3.0, and a declared dependency on it would be exactly the unreviewed copyleft
+      # term SEC-AA-001 refuses -- while a build-time compiler, like Bun itself, produces output
+      # that is not a derivative work. `--no-save` is what keeps that distinction true in the
+      # tree rather than only in this comment: the offline eval suite asserts that no
+      # dependencies/devDependencies/peerDependencies field exists.
+      - name: Acquire the exact compiler without declaring it
+        run: bun add --no-save --exact solc@0.8.28
+
+      # SEC-AA-002. The reproducibility gate. Recompiles from source and diffs every field of
+      # the committed artifact: compiler long version, settings digest, source digests, ABI,
+      # creation and deployed bytecode digests, method identifiers, storage layout and opcodes.
+      - name: Reproduce the pinned build
+        run: bun contracts/analysis/compile.ts --check
+
+      # A gate whose red path was never observed is the defect it exists to prevent, one level
+      # up. Three plants, each a different way the build can stop being the pinned one, and the
+      # source is restored from git rather than by re-editing so a restore bug cannot hide a
+      # failure.
+      - name: Prove the reproducibility gate can fail
+        shell: bash
+        run: |
+          set -uo pipefail
+
+          # No heredoc: a heredoc terminator inside an indented YAML block scalar is one of
+          # those things that looks right and silently swallows the rest of the script.
+          plant() {
+            local label="$1" file="$2" find="$3" replace="$4"
+            python3 -c 'import sys; path, find, replace = sys.argv[1:4]; text = open(path).read(); assert text.count(find) == 1, "anchor is not unique"; open(path, "w").write(text.replace(find, replace))' "$file" "$find" "$replace"
+            if bun contracts/analysis/compile.ts --check >/dev/null 2>&1; then
+              git checkout -- "$file"
+              echo "Negative control stayed green: $label" >&2
+              exit 1
+            fi
+            git checkout -- "$file"
+            echo "red: $label"
+          }
+
+          plant "a changed contract source" contracts/src/SessionAccount.sol "receive() external payable {}" "receive() external payable { }"
+          plant "a changed optimizer setting" contracts/analysis/compile.ts "runs: 200" "runs: 201"
+          plant "a changed EVM version" contracts/analysis/compile.ts 'evmVersion: "cancun"' 'evmVersion: "shanghai"'
+
+          # The positive control: after every restore the gate must still pass, or the three
+          # reds above prove only that the working tree was broken.
+          bun contracts/analysis/compile.ts --check
+
+      # The offline half. Also run by the repository-wide `bun test`, but run here too so that
+      # a contracts-only change gets its own named result.
+      - name: Static surface
+        run: bun test contracts/analysis/contracts.test.ts
+
+      - name: Record the evidence boundary
+        run: |
+          echo "reproducibleCompile          exercised by this job"
+          echo "staticSurface                exercised by this job"
+          echo "sessionEnforcementAtRuntime  NOT_IMPLEMENTED - no EVM is present"
+          echo "adversarialExecution         NOT_IMPLEMENTED - no EVM is present"
+          echo "independentAudit             NOT_IMPLEMENTED"
+          echo "deployment                   NOT_IMPLEMENTED"
