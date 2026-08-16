@@ -1,8 +1,7 @@
-import { isIP } from "node:net";
-
 const SHA256 = /^[a-f0-9]{64}$/;
 const LABEL = /^(?!-)[a-z0-9-]{1,63}(?<!-)$/;
 const PROXY_ENV = /^(?:http|https|all|no)_proxy$/i;
+const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 
 export function isSha256(value: string): boolean {
   return SHA256.test(value);
@@ -12,11 +11,14 @@ export function canonicalHost(host: string): string {
   return host.trim().toLowerCase().replace(/\.$/, "");
 }
 
+function looksLikeIp(host: string): boolean {
+  const value = canonicalHost(host);
+  return IPV4.test(value) || value.includes(":");
+}
+
 export function isValidHostname(host: string): boolean {
   const value = canonicalHost(host);
-  if (!value || value.length > 253 || isIP(value) !== 0 || value.includes("@") || value.includes("://")) {
-    return false;
-  }
+  if (!value || value.length > 253 || looksLikeIp(value) || value.includes("@") || value.includes("://")) return false;
   const labels = value.split(".");
   return labels.length >= 2 && labels.every((label) => LABEL.test(label));
 }
@@ -47,15 +49,15 @@ function forbiddenIpv6(address: string): boolean {
   if (value.startsWith("2001:db8:")) return true;
   if (value.startsWith("::ffff:")) {
     const tail = value.slice("::ffff:".length);
-    return isIP(tail) !== 4 || forbiddenIpv4(tail);
+    return !IPV4.test(tail) || forbiddenIpv4(tail);
   }
   return false;
 }
 
 export function isForbiddenResolvedAddress(address: string): boolean {
-  const family = isIP(address);
-  if (family === 4) return forbiddenIpv4(address);
-  if (family === 6) return forbiddenIpv6(address);
+  const value = address.trim().toLowerCase();
+  if (IPV4.test(value)) return forbiddenIpv4(value);
+  if (value.includes(":")) return forbiddenIpv6(value);
   return true;
 }
 

@@ -1,8 +1,11 @@
-import { describe, expect, test } from "bun:test";
 import { preflightLiveNetwork } from "./preflight.ts";
 import { validateLiveNetworkObservation } from "./evidence.ts";
 import { isForbiddenResolvedAddress } from "./policy.ts";
 import type { LiveNetworkObservation, LiveNetworkPolicy, LiveNetworkPreflightInput } from "./types.ts";
+
+function ok(condition: unknown, message: string): asserts condition {
+  if (!condition) throw new Error(message);
+}
 
 const D = "a".repeat(64);
 const policy: LiveNetworkPolicy = {
@@ -52,84 +55,71 @@ function observation(): LiveNetworkObservation {
   };
 }
 
-describe("LIVE-NET preflight", () => {
-  test("only reaches READY_FOR_LIVE_EXECUTION; it never emits a live PASS", () => {
-    const result = preflightLiveNetwork(input());
-    expect(result.state).toBe("READY_FOR_LIVE_EXECUTION");
-    expect("LIVE_PASS" in result).toBe(false);
-  });
+const ready = preflightLiveNetwork(input());
+ok(ready.state === "READY_FOR_LIVE_EXECUTION", "valid exact subject should be ready for live execution");
+ok(!("LIVE_PASS" in ready), "preflight must never manufacture LIVE_PASS");
 
-  test("refuses direct IP, alternate port and hidden proxy widening", () => {
-    const direct = input();
-    direct.requested.host = "93.184.216.34";
-    expect(preflightLiveNetwork(direct).state).toBe("REFUSED_PRECONDITION");
+const direct = input();
+direct.requested.host = "93.184.216.34";
+ok(preflightLiveNetwork(direct).state === "REFUSED_PRECONDITION", "direct IP must be refused");
 
-    const port = input();
-    port.requested.port = 80;
-    expect(preflightLiveNetwork(port).reasons).toContain("destination-not-admitted");
+const alternatePort = input();
+alternatePort.requested.port = 80;
+ok(preflightLiveNetwork(alternatePort).reasons.includes("destination-not-admitted"), "alternate port must be denied");
 
-    const proxy = input();
-    proxy.environment.HTTPS_PROXY = "http://127.0.0.1:8080";
-    expect(preflightLiveNetwork(proxy).reasons.some((value) => value.startsWith("proxy-environment-active:"))).toBe(true);
-  });
+const proxy = input();
+proxy.environment.HTTPS_PROXY = "http://127.0.0.1:8080";
+ok(
+  preflightLiveNetwork(proxy).reasons.some((value) => value.startsWith("proxy-environment-active:")),
+  "proxy environment widening must be refused",
+);
 
-  test("refuses missing subject identity and malformed digests", () => {
-    const value = input();
-    value.subject.providerVersion = "";
-    value.subject.policyDigest = "not-a-digest";
-    const result = preflightLiveNetwork(value);
-    expect(result.reasons).toContain("provider-version-absent");
-    expect(result.reasons).toContain("subject-digest-invalid");
-  });
-});
+const malformed = input();
+malformed.subject.providerVersion = "";
+malformed.subject.policyDigest = "not-a-digest";
+const malformedResult = preflightLiveNetwork(malformed);
+ok(malformedResult.reasons.includes("provider-version-absent"), "provider version must be bound");
+ok(malformedResult.reasons.includes("subject-digest-invalid"), "all immutable subjects must use sha256 digests");
 
-describe("LIVE-NET DNS and cleanup evidence validator", () => {
-  test("classifies private, metadata, documentation and multicast ranges as forbidden", () => {
-    for (const address of [
-      "127.0.0.1",
-      "10.0.0.1",
-      "169.254.169.254",
-      "172.16.0.1",
-      "192.168.1.1",
-      "192.0.2.1",
-      "198.51.100.1",
-      "203.0.113.1",
-      "224.0.0.1",
-      "::1",
-      "fc00::1",
-      "fe80::1",
-      "ff02::1",
-      "2001:db8::1",
-    ]) {
-      expect(isForbiddenResolvedAddress(address)).toBe(true);
-    }
-    expect(isForbiddenResolvedAddress("93.184.216.34")).toBe(false);
-    expect(isForbiddenResolvedAddress("2606:4700:4700::1111")).toBe(false);
-  });
+for (const address of [
+  "127.0.0.1",
+  "10.0.0.1",
+  "169.254.169.254",
+  "172.16.0.1",
+  "192.168.1.1",
+  "192.0.2.1",
+  "198.51.100.1",
+  "203.0.113.1",
+  "224.0.0.1",
+  "::1",
+  "fc00::1",
+  "fe80::1",
+  "ff02::1",
+  "2001:db8::1",
+]) {
+  ok(isForbiddenResolvedAddress(address), `forbidden address escaped: ${address}`);
+}
+ok(!isForbiddenResolvedAddress("93.184.216.34"), "public IPv4 should not be classified as forbidden");
+ok(!isForbiddenResolvedAddress("2606:4700:4700::1111"), "public IPv6 should not be classified as forbidden");
 
-  test("rejects a forbidden resolved answer and stale policy epoch", () => {
-    const value = observation();
-    value.dns.resolvedAddresses = ["93.184.216.34", "169.254.169.254"];
-    value.dns.policyEpoch = "policy-6";
-    const result = validateLiveNetworkObservation(value, policy);
-    expect(result.valid).toBe(false);
-    expect(result.reasons).toContain("forbidden-resolved-address:169.254.169.254");
-    expect(result.reasons).toContain("policy-epoch-mismatch");
-  });
+const rebound = observation();
+rebound.dns.resolvedAddresses = ["93.184.216.34", "169.254.169.254"];
+rebound.dns.policyEpoch = "policy-6";
+const reboundResult = validateLiveNetworkObservation(rebound, policy);
+ok(!reboundResult.valid, "forbidden answer or stale epoch must invalidate evidence");
+ok(reboundResult.reasons.includes("forbidden-resolved-address:169.254.169.254"), "metadata address must be named");
+ok(reboundResult.reasons.includes("policy-epoch-mismatch"), "stale policy must be named");
 
-  test("cleanup residue is independently fatal", () => {
-    const value = observation();
-    value.cleanup.networkResidue = true;
-    const result = validateLiveNetworkObservation(value, policy);
-    expect(result.cleanupState).toBe("FAILED_CLEANUP");
-    expect(result.valid).toBe(false);
-  });
+const residue = observation();
+residue.cleanup.networkResidue = true;
+const residueResult = validateLiveNetworkObservation(residue, policy);
+ok(residueResult.cleanupState === "FAILED_CLEANUP", "network residue must fail cleanup");
+ok(!residueResult.valid, "failed cleanup cannot validate evidence");
 
-  test("validates a structurally complete provider observation without claiming production availability", () => {
-    const result = validateLiveNetworkObservation(observation(), policy);
-    expect(result.valid).toBe(true);
-    expect(result.cleanupState).toBe("PASS");
-    expect(result.resolvedAddressDigest).toHaveLength(64);
-    expect(result.evidenceDigest).toHaveLength(64);
-  });
-});
+const valid = validateLiveNetworkObservation(observation(), policy);
+ok(valid.valid, "structurally complete provider observation should validate");
+ok(valid.cleanupState === "PASS", "clean observation should retain PASS cleanup state");
+ok(valid.resolvedAddressDigest.length === 64, "resolved address digest must be sha256-shaped");
+ok(valid.evidenceDigest.length === 64, "evidence digest must be sha256-shaped");
+
+console.log("LIVE-NET GREEN: exact subject/destination preflight, proxy refusal, DNS/IP controls, cleanup and evidence honesty");
