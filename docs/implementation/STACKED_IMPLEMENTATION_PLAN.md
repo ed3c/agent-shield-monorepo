@@ -1,23 +1,21 @@
 # Molecular implementation and Git Town Stack PR plan
 
-This document maps open implementation issues to intended branch ancestry, path ownership, parallel groups, eval families, and convergence owners. The issue body remains the task contract; Git commit/tree and PR base remain execution truth.
+This document maps implementation and live-evidence issues to intended branch ancestry, path ownership, parallel groups, eval families, and convergence owners. Issue bodies remain task contracts; Git commit/tree, exact environment subject and PR base remain execution truth.
 
 ## Common Worker protocol
 
 ```text
 issue + exact parent + path lease + eval/control set
-  → isolated linked worktree and writer lease
-  → foundation/leaf/convergence branch
-  → dry-run Git Town sync
-  → implementation within owned paths
-  → positive and disagreement evals
-  → local no-push sync
-  → optional two-guard publication
-  → PR with exact parent
-  → Human review/merge
+  -> isolated linked worktree and writer lease
+  -> foundation/leaf/convergence branch
+  -> dry-run Git Town sync
+  -> implementation/execution within owned paths
+  -> positive and disagreement evals
+  -> local no-push sync
+  -> optional two-guard publication
+  -> PR with exact parent
+  -> Human review/merge
 ```
-
-Default commands:
 
 ```bash
 bash scripts/git-town/doctor.sh
@@ -26,137 +24,171 @@ bash scripts/git-town/sync-stack.sh
 ALLOW_GIT_TOWN_PUSH=1 bash scripts/git-town/sync-stack.sh --publish
 ```
 
-A semantic conflict stops the Worker. No automated `continue`, `skip`, `undo`, `ship`, merge, or semantic edit.
+A semantic conflict stops the Worker. No automated `continue`, `skip`, `undo`, `ship`, merge, promotion, or semantic edit.
 
-## Phase 3 — Runtime fabric
+## Deterministic Phase 3–6 history
+
+```text
+Phase 3 runtime
+main -> #38
+      -> #39 Apple | #40 E2B | #41 OpenShell | #42 tmux | #43 exchange
+      -> #44 runtime convergence
+
+Phase 4 product
+main -> #45
+      -> #46 dashboard | #47 terminal | #48 Expo -> #49 In-App
+      -> #50 Maestro | #51 WDA | #52 scrcpy
+      -> #53 product convergence
+
+Phase 5 security
+main -> #54
+      -> #55 OPA | #56 workflow | #57 broker | #58 ledger
+      -> #59 Secure Enclave | #60 CoreNFC | #61 MPC/TSS
+      -> #62 smart account -> #63 testnet
+      -> #64 security convergence
+
+Phase 6 consumer
+main -> #65 -> #66 -> #67 Skills / #68 runtime -> #69 CLI/MCP
+      -> #70 Claude | #71 Codex | #72 GitHub | #73 Forgejo
+      -> #74 equivalence -> #75 release convergence
+```
+
+These chains are deterministic implementation history. Their merged state does not prove real provider/device/browser/hardware/carrier execution.
+
+## Post-deterministic / live-convergence stacks
+
+Shadow Architect issue #135 identified the remaining real-world work. These stacks are environment-owned and must not be collapsed back into deterministic leaves.
+
+### Runtime live network — #95 -> #44
 
 ```text
 main
-└── feat/p3-runtime-spi                         #38 RT-FND
-    ├── feat/p3-apple-container                 #39 RT-APPLE
-    ├── feat/p3-e2b-runtime                     #40 RT-E2B
-    ├── feat/p3-openshell-policy                #41 RT-OS
-    ├── feat/p3-tmux-pty                        #42 RT-TMUX
-    └── feat/p3-hybrid-exchange                 #43 RT-XCHG
-
-main after #38–#43
-└── feat/p3-runtime-convergence                 #44 RT-CONV
+└── live/runtime-egress                         #95 umbrella
+    ├── live/runtime-local-provider             exact admitted local provider
+    └── live/runtime-cloud-provider             exact admitted cloud provider
+        └── convergence/runtime                 #44 Human Admit
 ```
 
-| Issue | Owner paths | Parallel after | Aggregate owner |
-|---|---|---|---|
-| #38 | runtime contracts/SPI/state machine | documentation #37 | #44 |
-| #39 | Apple Container provider private root | #40–#43 | #44 |
-| #40 | E2B provider private root | #39/#41–#43 | #44 |
-| #41 | OpenShell policy provider | #39/#40/#42/#43 | #44 |
-| #42 | tmux/PTY provider | #39–#41/#43 | #44 |
-| #43 | exchange/repair contracts and private engine | #39–#42 | #44 |
-| #44 | public runtime registry, module/status/release, aggregate tests | none | Human Admit |
+Each leaf owns provider-private canary/receipt paths only. It binds provider/version/image/policy/workload/network subject, DNS/IP enforcement, proxy/default-deny, timeout/cancellation, and independent cleanup.
 
-## Phase 4 — Product and mobile automation
+### Product/mobile live matrix — #136 -> #53
 
 ```text
 main
-└── feat/p4-product-contracts                   #45 UX-FND
-    ├── feat/p4-dashboard-genui                 #46 UX-WEB
-    ├── feat/p4-terminal-projection             #47 UX-TERM
-    ├── feat/p4-expo-mobile                     #48 UX-EXPO
-    │   └── feat/p4-in-app-action-bridge        #49 UX-BRIDGE
-    ├── feat/p4-maestro-mcp                     #50 QA-MAESTRO
-    ├── feat/p4-wda-ios-projection              #51 QA-WDA
-    └── feat/p4-scrcpy-android-projection       #52 QA-SCRCPY
-
-main after #45–#52
-└── feat/p4-product-convergence                 #53 UX-CONV
+└── live/ux                                     #136 umbrella
+    ├── live/ux-expo-device
+    ├── live/ux-maestro
+    ├── live/ux-wda-ios
+    ├── live/ux-scrcpy-android
+    └── live/ux-in-app-bridge
+        └── convergence/product                 #53 Human Admit
 ```
 
-`#49` is a real child of `#48` because it changes the shipped app runtime surface. Dashboard, terminal, Maestro, WDA, and scrcpy are siblings; they may consume one another only through public target/action contracts. `#53` owns the product module/index/status/release aggregation.
+Simulator, physical device, iOS and Android are separate evidence lanes. No leaf owns shared status/release projection.
 
-## Phase 5 — Security, hardware, and testnet settlement
+### Security/hardware/testnet live matrix — #137 -> #64
 
 ```text
 main
-└── feat/p5-security-contracts                  #54 SEC-FND
-    ├── feat/p5-opa-policy                      #55 SEC-OPA
-    ├── feat/p5-durable-workflow                #56 SEC-WF
-    ├── feat/p5-openbao-broker                  #57 SEC-BAO
-    ├── feat/p5-verified-ledger                 #58 SEC-LEDGER
-    ├── feat/p5-secure-enclave                  #59 SEC-SE
-    ├── feat/p5-corenfc-challenge               #60 SEC-NFC
-    ├── feat/p5-mpc-tss-provider                #61 SEC-TSS
-    └── feat/p5-smart-account-contracts         #62 SEC-AA
-        └── feat/p5-testnet-submission          #63 SEC-CHAIN
-
-main after #54–#63
-└── feat/p5-security-convergence                #64 SEC-CONV
+└── live/security                               #137 umbrella
+    ├── live/sec-secure-enclave
+    ├── live/sec-corenfc
+    ├── live/sec-mpc-tss
+    ├── live/sec-smart-account
+    └── live/sec-testnet-settlement
+        └── convergence/security                #64 Human Admit
 ```
 
-Provider leaves are intentionally separate because policy, durable workflow, secret brokerage, ledger recovery, device hardware, card protocol, threshold cryptography, contract bytecode, and chain submission require independent evidence and reviewers. `#63` depends on exact contract artifacts from `#62`. `#64` owns the end-to-end reference/testnet adversarial package, shared status/release, residual-risk dossier, and Human Admit.
+Hardware-backed key evidence, NFC possession, threshold quorum/custody, deployed contract execution and chain submission/inclusion/confirmation are independent receipts. Testnet never proxies mainnet.
 
-## Phase 6 — bettor-arena reference consumer
+### External consumer/origin live matrix — #138 -> #75
 
 ```text
 main
-└── feat/p6-consumer-contracts                  #65 INT-FND
-    └── feat/p6-module-closure                  #66 INT-CLOSURE
-        ├── feat/p6-skills-binding              #67 INT-SKILL
-        └── feat/p6-runtime-binding             #68 INT-RUNTIME
-
-serialized admitted #66–#68 integration subject
-└── feat/p6-cli-mcp-parity                      #69 INT-MCP
-    ├── feat/p6-claude-canary                   #70 INT-CLAUDE
-    ├── feat/p6-codex-canary                    #71 INT-CODEX
-    ├── feat/p6-github-origin                   #72 INT-GH
-    └── feat/p6-forgejo-origin                  #73 INT-FJ
-
-main after #72+#73
-└── feat/p6-origin-equivalence                  #74 INT-EQ
-
-main after #65–#74
-└── feat/p6-reference-composition-release       #75 INT-REL
+└── live/integration                            #138 umbrella
+    ├── live/int-claude-code
+    ├── live/int-codex-cli
+    ├── live/int-github-origin
+    ├── live/int-forgejo-origin
+    └── live/int-bettor-bootstrap
+        └── convergence/release                 #75 Human Admit / rollback
 ```
 
-`#67` and `#68` are parallel after the selected module closure is immutable. `#69` serializes their lock fragments into one CLI/MCP subject. Claude, Codex, GitHub, and Forgejo canaries are independent sibling arrivals. `#74` requires both origin receipts. `#75` is the sole promotion/rollback owner.
+Model carriers and origins are sibling arrivals. A Claude receipt cannot proxy Codex; GitHub cannot proxy Forgejo; local editable checkout cannot proxy immutable release identity.
 
-## Cross-phase dependency rule
-
-Phases are independently decomposed but a leaf may pin a public interface from an earlier admitted phase. It must never import an unmerged sibling's private source or treat an issue number as an immutable dependency. Pin the exact interface/release subject in the task packet.
-
-Examples:
-
-- product/provider canaries may consume the public runtime SPI/receipts from Phase 3;
-- security UI actions consume the product action contract, not product private code;
-- Phase 6 may integrate current modules even while optional providers remain named gaps, but cannot promote a capability lacking its required receipt.
-
-## Shared-path serialization
-
-The following paths are normally convergence-owned:
+### Source closure outside Phase 3–6 — #139
 
 ```text
-public provider/action registry index
+main
+└── live/source-closure                         #139
+    ├── live/doc-pdf-local
+    ├── live/doc-cloud-provider
+    ├── live/research-signed-in-browser
+    └── live/research-gcr-cloud
+```
+
+These close real source-ledger gaps that were not owned by the Phase 3–6 convergence tree.
+
+### Repository merge gate — #140
+
+```text
+main
+└── governance/required-merge-gate              #140
+```
+
+This proves exact-head checks are enforced, not merely configured to run. It changes governance evidence only, never product/provider PASS.
+
+## Branch and path-lease law
+
+For every molecular live leaf:
+
+```text
+one issue
++ one exact parent
++ one provider-private writable path lease
++ one immutable environment/provider/device/carrier/origin subject
++ one positive/negative eval family
++ one cleanup/residue receipt
+= one Worker branch
+```
+
+Do not combine local+cloud, iOS+Android, simulator+physical device, Claude+Codex, GitHub+Forgejo, hardware+chain, or provider-private+shared-status writes unless the issue proves a real data dependency and grants the shared lease.
+
+## Convergence ownership
+
+Only the convergence issue may normally mutate:
+
+```text
+public provider/action registry
 module manifest/interface version
-shared package public export index
-consumer composition lock/projections
+shared public export index
+consumer lock/projections
 data/status/integration.json
 data/releases/agent-shield-module-set.json
 aggregate README/trace indexes
+Human dossier
 promotion/rollback receipts
 ```
 
-A leaf needing one of these paths must either defer it to convergence or obtain an explicit exclusive slice and restate sibling impact.
+A convergence branch begins only after selected child receipts are present on the exact admitted base. It may aggregate `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, or `NOT_EXERCISED`; it may never manufacture a stronger child state.
+
+## Cross-phase dependency rule
+
+A live leaf may pin a public interface from an earlier deterministic/admitted subject. It must never import an unmerged sibling's private source or use an issue number as release identity. Pin exact interface/release/receipt subjects.
 
 ## Required PR body
 
-Every implementation PR includes:
+Every implementation/live PR includes:
 
 ```text
-issue/epic and Stack graph
+issue/epic/convergence and Stack graph
 base/parent/head and exact subjects
-path lease and named exclusions
+provider/device/browser/carrier/origin subject when live
+path lease and exclusions
 state-machine transitions exercised
-data-flow inputs/outputs/artifacts/receipts
-evals and disagreement controls designed before code
-exact-head results and cleanup
+inputs/outputs/artifacts/receipts
+evals and disagreement controls
+exact-head results and independent cleanup
 current and changed evidence states
 remaining gaps and residual risks
 rollback subject and Human-owned next action
@@ -164,4 +196,4 @@ rollback subject and Human-owned next action
 
 ## Completion rule
 
-A phase is not complete because all PRs exist. The convergence issue must prove compatible same-subject receipts, cross-leaf negative controls, cleanup, deterministic status/release rendering, rollback, and explicit Human Admit.
+A phase is not complete because all PRs exist or deterministic convergence is merged. The convergence issue must prove compatible same-subject live receipts where required, cross-leaf negative controls, cleanup, deterministic status/release rendering, rollback, and explicit Human Admit. Source-level claims requiring real execution remain open until their live issue reaches that rung.
