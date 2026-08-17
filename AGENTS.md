@@ -2,58 +2,71 @@
 
 ## Mission
 
-Preserve project intent, source provenance, module ownership, transition legality, data-flow boundaries, and evidence honesty while the repository implements its Phase 3–6 roadmap through eval-first molecular Stacked PRs. Bun + TypeScript are the primary implementation stack; Bash remains limited to the admitted Git Town/process Harness.
+Preserve project intent, source provenance, module ownership, transition legality, data-flow boundaries, and evidence honesty while Agent Shield moves from deterministic Phase 3–6 implementation into real-provider/device/hardware/carrier convergence.
 
-`agent-shield-monorepo` is the **Domain Product / Reference Consumer Plane** in the four-repository system. It consumes portable procedures from `skills-shared`, secret-free runtime contracts from `runtime-env`, and immutable integration surfaces from `bettor-arena`; it owns product modules, provider adapters, product state machines, and domain canaries.
+`agent-shield-monorepo` is the Domain Product / Reference Consumer Plane in the four-repository system. It consumes portable procedures from `skills-shared`, secret-free runtime contracts from `runtime-env`, and immutable integration surfaces from `bettor-arena`; it owns product modules, provider adapters, product state machines, and domain canaries.
 
-## Mandatory multi-hop read order
+## Mandatory read order
 
 1. [`README.md`](README.md)
-2. [`CONTEXT.md`](CONTEXT.md)
-3. [`ARCHITECTURE.md`](ARCHITECTURE.md)
-4. [`docs/INDEX.md`](docs/INDEX.md)
-5. [`docs/architecture/DOCUMENT_ROUTING.md`](docs/architecture/DOCUMENT_ROUTING.md)
-6. [`docs/intent/PROJECT_INTENT.md`](docs/intent/PROJECT_INTENT.md)
-7. [`docs/sources/SOURCE_LEDGER.md`](docs/sources/SOURCE_LEDGER.md)
-8. [`docs/state-machines/README.md`](docs/state-machines/README.md) through the standard route [`docs/architecture/STATE_MACHINES.md`](docs/architecture/STATE_MACHINES.md)
-9. [`docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md)
-10. [`docs/traceability/STATE_MACHINE_INDEX.md`](docs/traceability/STATE_MACHINE_INDEX.md) through [`docs/traceability/TRACEABILITY_INDEX.md`](docs/traceability/TRACEABILITY_INDEX.md)
-11. [`docs/integration/CROSS_REPO_INTEGRATION.md`](docs/integration/CROSS_REPO_INTEGRATION.md)
-12. [`docs/harness/README.md`](docs/harness/README.md) and [`docs/evals/README.md`](docs/evals/README.md)
-13. the nearest `README.md` for every path you may change
-14. the selected `.arena/modules/<id>/module.json`
-15. `data/status/integration.json`, the assigned issue, current PR base/head, and exact task packet
-16. for Git work: [`docs/git/README.md`](docs/git/README.md) and [`scripts/git-town/README.md`](scripts/git-town/README.md)
+2. [`docs/architecture/SHADOW_ARCHITECT_MONITOR.md`](docs/architecture/SHADOW_ARCHITECT_MONITOR.md)
+3. [`CONTEXT.md`](CONTEXT.md)
+4. [`ARCHITECTURE.md`](ARCHITECTURE.md)
+5. [`docs/INDEX.md`](docs/INDEX.md)
+6. [`docs/sources/SOURCE_LEDGER.md`](docs/sources/SOURCE_LEDGER.md)
+7. [`data/status/integration.json`](data/status/integration.json)
+8. [`data/releases/agent-shield-module-set.json`](data/releases/agent-shield-module-set.json)
+9. [`docs/state-machines/README.md`](docs/state-machines/README.md)
+10. [`docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md)
+11. [`docs/traceability/STATE_MACHINE_INDEX.md`](docs/traceability/STATE_MACHINE_INDEX.md)
+12. [`docs/integration/CROSS_REPO_INTEGRATION.md`](docs/integration/CROSS_REPO_INTEGRATION.md)
+13. [`docs/harness/README.md`](docs/harness/README.md) and [`docs/evals/README.md`](docs/evals/README.md)
+14. nearest governed-directory `README.md`
+15. selected `.arena/modules/<id>/module.json`
+16. assigned issue, current PR base/head and exact task packet
+17. for Git work, [`docs/git/README.md`](docs/git/README.md) and [`scripts/git-town/README.md`](scripts/git-town/README.md)
 
-Stop if a required route, authority, issue, parent, path owner, state transition, eval, or immutable subject is missing. Do not infer the gap.
+Stop if a required authority, issue, parent, path owner, state transition, eval, immutable subject or environment receipt is missing. Do not infer the gap.
 
-## Shared document-route interface
+## Freshness law
 
-This repository implements the common route names used by `skills-shared`, `runtime-env`, and `bettor-arena`:
+Documentation snapshots are navigation aids, not state authorities. Before mutation:
 
 ```text
-README.md
-AGENTS.md
-CLAUDE.md
-CONTEXT.md
-ARCHITECTURE.md
-docs/INDEX.md
-docs/architecture/DOCUMENT_ROUTING.md
-docs/architecture/STATE_MACHINES.md
-docs/integration/CROSS_REPO_INTEGRATION.md
-docs/traceability/TRACEABILITY_INDEX.md
-<governed-directory>/README.md
+current remote main
++ data/status/integration.json
++ release manifest/lock
++ open issue/PR graph
++ exact provider/device/carrier/origin receipt
 ```
 
-A standard route may forward to an existing canonical document, but it must leave a local summary and name the direct owner. README files never replace manifests, TypeScript contracts, status ledgers, scripts, verifiers, receipts, or Git history.
+must be rebound. If `main` is newer than a documented snapshot, classify that prose as `STALE_SNAPSHOT` until reconciled.
+
+## Closure ladder
+
+```text
+SOURCE_PROPOSAL
+-> REPOSITORY_DECISION
+-> ISSUE_ADMITTED
+-> CONTRACT_IMPLEMENTED
+-> DETERMINISTIC_EVAL_PASS
+-> LIVE_SUBJECT_PINNED
+-> LIVE_CANARY_PASS
+-> CLEANUP/ROLLBACK_PASS
+-> CONVERGENCE_HUMAN_REVIEW
+-> HUMAN_ADMITTED
+-> RELEASE_PROMOTED
+```
+
+A merged PR or closed leaf may prove an implementation rung. It cannot silently promote a later rung.
 
 ## Task admission packet
 
 Before editing, record:
 
 ```text
-issue and parent epic
-parent branch / parent PR / exact parent commit
+issue and parent epic/convergence
+exact parent commit / branch / PR
 head branch and Stack class
 allowed and excluded paths
 module IDs / interface versions / public capabilities
@@ -62,38 +75,26 @@ allowed transitions and terminal/blocked states
 input/output/artifact/receipt data-flow edges
 dependencies and parallel-safe siblings
 required eval IDs and disagreement controls
+exact provider/device/browser/carrier/environment subject when live
+cleanup/residue and rollback subjects
 evidence states allowed to change
-cleanup and rollback subjects
 Human-owned operations
 ```
 
-A task without this packet is `ABSENT`. A task that combines unrelated provider leaves, overlaps an active path lease, skips its foundation, or has no convergence owner is `BLOCKED_POLICY`.
+A task without this packet is `ABSENT`. A task combining unrelated providers, overlapping an active path lease, skipping its foundation, or lacking a convergence owner is `BLOCKED_POLICY`.
 
-## State-machine rules
+## State and evidence rules
 
-- Current states come from exact code, manifests, status, and receipts—not architecture prose.
-- An issue may implement only transitions named in its issue contract.
-- A provider-specific issue owns its private adapter path and receipt. Shared registries, public index exports, module versions, `data/status/integration.json`, release manifests, and aggregate indexes belong to the phase convergence issue.
-- Invalid transition skipping, stale subject reuse, unsupported fallback, and cleanup failure must turn red.
-- `WAITING_FOR_HUMAN`, `WAITING_FOR_HARDWARE`, `DENIED`, disconnect/detach, submission, inclusion, confirmation, and completion are distinct states.
+- Current states come from exact code, manifests, status and receipts, not architecture prose.
+- `PASS`, `FAIL`, `ABSENT`, `NOT_IMPLEMENTED`, `NOT_EXERCISED`, `SKIPPED_BY_POLICY`, Human review and release promotion are distinct.
 - A state may leave `NOT_IMPLEMENTED` only after implementation evidence; it may leave `NOT_EXERCISED` only after the exact live canary runs.
-
-## Evidence vocabulary
-
-```text
-PASS
-FAIL
-ABSENT
-NOT_IMPLEMENTED
-NOT_EXERCISED
-SKIPPED_BY_POLICY
-```
-
-Package presence, prose, diagrams, source claims, hashes, optional skips, another platform, or another provider cannot produce `PASS`. A job that never received a runner is `NOT_EXERCISED`; a deliberately unrequested job is `SKIPPED_BY_POLICY`.
+- Package/source presence, diagrams, hashes, compile success, deterministic fixtures, simulator evidence or another platform/provider cannot produce live `PASS`.
+- `WAITING_FOR_HUMAN`, `WAITING_FOR_HARDWARE`, `DENIED`, disconnect/detach, submission, inclusion, confirmation and completion remain distinct states.
+- Cleanup must be independently observed where the issue claims cleanup; provider self-report alone is insufficient.
 
 ## Source handling
 
-Use the source ledger before reusing a claim. Preserve source terminology and classify repository treatment separately:
+Use [`docs/sources/SOURCE_LEDGER.md`](docs/sources/SOURCE_LEDGER.md) before reusing any external claim. Preserve this classification:
 
 ```text
 SOURCE_PROPOSAL
@@ -102,80 +103,98 @@ INFERENCE
 LIVE_EVIDENCE
 ```
 
-Source `S-001` proposes local/cloud/hybrid runtimes, E2B, OpenShell/tmux, mobile projection/testing, hardware brakes, MPC/TSS, smart accounts, ledgers, and settlement. It also proposes timestamp-based file conflict resolution. The repository preserves that proposal but rejects `newest`, `prefer-cloud`, and `prefer-beta` as source-code authorities; use one writer, Git ancestry, immutable bases, content-bound patches, review, and rebase.
+Source S-001 proposes local/cloud runtimes, E2B, OpenShell/tmux, mobile automation, hardware brakes, MPC/TSS, smart accounts and settlement. It does not prove current versions, licenses, cost, performance, security, store compliance, provider availability, devices, chain execution or PASS. Timestamp/newest-wins source repair remains rejected; use one writer, immutable bases, Git ancestry and content identity.
 
-Do not silently correct, merge, or promote source claims. Exact current provider/license/performance/cost/security facts require their own admission and live receipts.
+## Directory boundary contract
 
-## Module and directory boundaries
+The nearest directory `README.md` must name:
 
-- A module may read its own private implementation.
-- Cross-module calls use public typed contracts, packets, capabilities, artifact references, or receipts.
-- The nearest directory `README.md` defines owner, local state machine, inputs, outputs, data-flow edges, prohibited coupling, current evidence, and terminal implementation issues.
-- Leaf `src/` READMEs inherit their parent state machine and must not create a second public interface.
-- New public/control/provider directories require the nearest README and an eval-first issue in the same PR.
-- Planned directories remain documentation only until an issue admits their paths.
-- No provider may silently borrow a sibling live checkout, process, `node_modules`, venv, browser/device session, secret, or owner temp state.
+```text
+owner
+state machine
+current evidence authority
+inputs / outputs / artifacts / receipts
+DAG parents, sibling leaves and convergence owner
+prohibited coupling
+current open terminal/live issues
+cleanup and rollback boundary
+```
+
+Cross-module calls use public typed contracts, packets, capabilities, artifact references or receipts. Provider-private roots may not borrow sibling checkouts, processes, `node_modules`, venvs, browser/device sessions, secrets or temp state.
 
 ## Four-repository boundary
 
 ```text
 skills-shared immutable procedural Skill release
-→ runtime-env secret-free binding/workload/policy
-→ bettor-arena composition/proof/stateless MCP/bootstrap
-→ Agent Shield product adapter/provider canary
-→ bettor external-release acceptance
-→ Human promotion
+-> runtime-env secret-free binding/workload/policy
+-> bettor-arena composition/proof/stateless MCP/bootstrap
+-> Agent Shield product adapter/provider canary
+-> bettor external-release acceptance
+-> Human promotion
 ```
 
-A local symlink or editable checkout is a development channel, not release identity. Read [`docs/integration/CROSS_REPO_INTEGRATION.md`](docs/integration/CROSS_REPO_INTEGRATION.md).
+A local symlink/editable checkout is a development channel, not release identity.
 
 ## Molecular Stack-PR protocol
 
-Read the canonical DAG in [`docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md).
+Read [`docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](docs/implementation/STACKED_IMPLEMENTATION_PLAN.md) and [`scripts/git-town/README.md`](scripts/git-town/README.md).
 
-- A foundation PR serializes shared contracts and state-machine vocabulary.
-- Independent provider/product/platform/origin adapters are sibling PRs with disjoint writable paths.
-- A real data/interface dependency may create a child PR; lexical names alone do not.
-- One convergence PR owns shared registries, module/interface promotion, aggregate status/release bytes, cross-provider controls, and Human dossier.
-- One Worker Agent owns one branch lease in one isolated linked worktree.
-- Parent PRs merge before descendants; descendants are retargeted, synchronized, and re-evaluated after parent merge.
-- An unattended semantic conflict fails closed and preserves the worktree/receipt. Never auto-run conflict edits, `git town continue`, `skip`, `undo`, `ship`, merge, or promotion.
-- Default synchronization is dry-run then local no-push. Publication requires the explicit CLI guard, environment guard, exact allowed remote, passing exact-head evals, and post-push ancestry verification.
+- Foundation PRs serialize shared contracts/state vocabulary.
+- Independent provider/device/platform/carrier/origin leaves are sibling PRs with disjoint writable paths.
+- One Worker Agent owns one issue, branch lease and isolated linked worktree.
+- One convergence PR owns shared registries, public exports, module/interface promotion, aggregate status/release bytes, cross-provider controls, Human dossier and rollback subject.
+- Parent PRs merge before descendants; descendants rebase/retarget and re-evaluate after parent merge.
+- Semantic conflict fails closed. Never auto-run conflict edits, `git town continue`, `skip`, `undo`, `ship`, merge or promotion.
+- Publication requires explicit guard, exact allowed remote, passing exact-head evals and post-push ancestry verification.
 
-Git Town manages branch movement only. Its exit `0` is not implementation, review, release, or production evidence. Documentation issue `#77` is an independent terminal leaf based on current `main`; it does not consume unmerged Phase 3–6 product bytes.
+### Current post-deterministic leaves
 
-## Security, privacy, and licensing boundaries
+```text
+#95  runtime live network/provider evidence -> #44
+#136 product/device/automation live evidence -> #53
+#137 native security/crypto/account/testnet evidence -> #64
+#138 Claude/Codex/origin/bettor live evidence -> #75
+#139 PDF/cloud-document/signed-in research source closure
+#140 required exact-head main merge gate
+#135 Shadow Architect documentation/control-plane reconciliation
+```
 
-- Secrets, cookies, OAuth sessions, browser/device profiles, `.env`, private keys/shards, NFC material, attestation tokens, host secret paths, and mutable sibling checkouts never enter Git, bundles, MCP payloads, logs, or portable receipts.
-- External dependencies are deny-by-default until exact source/version/artifact/checksum, direct/transitive licenses, SBOM, notices, distribution/service terms, and required Human/legal state are recorded.
-- A permissive direct license lowers risk; no document may promise zero legal risk.
-- Generic shell-over-MCP is forbidden.
-- No document may claim absolute security, immunity, or unmeasured resistance percentage.
-- Simulator/testnet/reference evidence never proxies physical-device/mainnet/production evidence.
+Do not re-open deterministic work merely because a live lane is missing. Create/consume the smallest environment-owned leaf that supplies the missing receipt.
 
 ## Current implementation boundary
 
-The current code baseline supports deterministic contracts, local text ingest, raw-primary research routing, disposable local worktree runtime, intent canonicalization/reference threshold, and immutable subject validation. Git Town macOS wrapper canaries are merged. The Phase 3–6 provider/product/security/integration issues `#38–#75` remain in their exact `NOT_IMPLEMENTED`, `NOT_EXERCISED`, `ABSENT`, or blocked states until evidence lands.
+At the #135 audit baseline, Phase 3–6 deterministic leaf implementations and deterministic convergence verifiers are merged. The repository is **post-deterministic / pre-live-convergence**.
+
+Machine status remains authoritative. Local text ingest, external-verify research routing and local disposable runtime are PASS. Most Apple/OpenShell/E2B/cloud, Expo/Maestro/WDA/scrcpy/In-App, native hardware/MPC/account/testnet, Claude/Codex/origin/bettor and signed-in/PDF/cloud lanes remain `NOT_EXERCISED` or `NOT_IMPLEMENTED`. The portable module release remains `live_state: NOT_EXERCISED`.
+
+A deterministic convergence verifier at `HUMAN_REVIEW` is implementation-complete for that verifier, not phase-admitted and not release-promoted.
+
+## Security, privacy and licensing
+
+- Secrets, cookies, OAuth sessions, browser/device profiles, `.env`, private keys/shards, NFC material, attestation tokens, host secret paths and mutable sibling checkouts never enter Git, bundles, MCP payloads, logs or portable receipts.
+- External dependencies are deny-by-default until exact source/version/checksum, direct/transitive licenses, SBOM/notices, distribution/service terms and required Human/legal state are recorded.
+- Generic shell-over-MCP is forbidden.
+- No absolute security/immunity claim or unmeasured resistance percentage may be promoted.
+- Simulator/testnet/reference evidence never proxies physical-device/mainnet/production evidence.
 
 ## Completion report
 
 ```text
-issue / parent epic / PR
-parent branch+PR / exact head+tree / Stack position
-changed paths / modules / interfaces / public surfaces
-state machine before / transitions exercised / final state
-input-output-artifact-receipt data-flow edges
-affected transitive dependents and path conflicts
-eval and disagreement-control results
-provider/platform/carrier/origin results separately
-cleanup/residue and revocation state
+issue / parent epic / convergence / PR
+exact base/head/tree / Stack position
+changed paths / modules / interfaces
+state before / transitions / final state
+inputs / outputs / artifacts / receipts
+provider/device/platform/carrier/origin subject
+positive and disagreement-control results
+cleanup/residue/revocation state
 status/release/lock changes and digests
-remaining ABSENT / NOT_IMPLEMENTED / NOT_EXERCISED / SKIPPED_BY_POLICY / blocked states
+remaining ABSENT / NOT_IMPLEMENTED / NOT_EXERCISED / blocked states
 rollback subject
 Human Admit and next merge order
 ```
 
-Do not claim integration or phase completion when any applicable item is missing, stale, failed, blocked, not implemented, or not exercised.
+Do not claim integration, phase completion or source-problem closure while any required rung is absent, stale, failed, blocked, not implemented or not exercised.
 
 <!-- BEGIN SKILLS-SHARED INSTRUCTION PROJECTION -->
 ## Shared runtime / delivery projection
