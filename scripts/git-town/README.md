@@ -60,7 +60,66 @@ Static checks or macOS success cannot proxy missing lanes. Sync exit `0` cannot 
 
 ## Molecular implementation use
 
-Use [`../../docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](../../docs/implementation/STACKED_IMPLEMENTATION_PLAN.md). Each Worker gets one issue/branch/worktree/path lease. Foundations serialize shared contracts; independent leaves are siblings; convergence starts from exact merged `main` and owns shared registry/status/release.
+Use [`../../docs/implementation/STACKED_IMPLEMENTATION_PLAN.md`](../../docs/implementation/STACKED_IMPLEMENTATION_PLAN.md) and [`../../docs/architecture/SHADOW_ARCHITECT_MONITOR.md`](../../docs/architecture/SHADOW_ARCHITECT_MONITOR.md). Each Worker gets one issue/branch/worktree/path lease. Foundations serialize shared contracts; independent leaves are siblings; convergence starts from exact merged `main` and owns shared registry/status/release.
+
+## Post-convergence molecular Stack PR index
+
+The original Phase 3–6 deterministic stacks are largely merged. Remaining work must be decomposed by **real environment/provider subject**, not by re-opening deterministic leaves.
+
+```text
+main
+├── live/runtime-egress                         #95
+│   ├── live/runtime-local-provider            sibling
+│   └── live/runtime-cloud-provider            sibling
+│       └── convergence/runtime                #44
+├── live/ux                                     #136 umbrella
+│   ├── live/ux-expo-device
+│   ├── live/ux-maestro
+│   ├── live/ux-wda-ios
+│   ├── live/ux-scrcpy-android
+│   └── live/ux-in-app-bridge
+│       └── convergence/product                #53
+├── live/security                               #137 umbrella
+│   ├── live/sec-secure-enclave
+│   ├── live/sec-corenfc
+│   ├── live/sec-mpc-tss
+│   ├── live/sec-smart-account
+│   └── live/sec-testnet-settlement
+│       └── convergence/security               #64
+├── live/integration                            #138 umbrella
+│   ├── live/int-claude-code
+│   ├── live/int-codex-cli
+│   ├── live/int-github-origin
+│   ├── live/int-forgejo-origin
+│   └── live/int-bettor-bootstrap
+│       └── convergence/release                #75
+├── live/source-closure                         #139
+│   ├── live/doc-pdf-local
+│   ├── live/doc-cloud-provider
+│   ├── live/research-signed-in-browser
+│   └── live/research-gcr-cloud
+└── governance/required-merge-gate              #140
+```
+
+### Worker branch law
+
+For every molecular leaf:
+
+```text
+one issue
++ one exact parent
++ one provider-private path lease
++ one immutable environment/provider/device/carrier subject
++ one eval/control family
++ one cleanup receipt
+= one Worker branch
+```
+
+Do not combine iOS+Android, Claude+Codex, GitHub+Forgejo, local+cloud, simulator+physical device, hardware+chain, or provider-private+shared-status work in one leaf PR unless an explicit issue proves the data dependency and grants the shared lease.
+
+### Convergence branch law
+
+A convergence branch may begin only after every selected child receipt is on the exact admitted base. It owns shared public registries, module/interface promotion, `data/status/integration.json`, release restamps, aggregate indexes, Human dossier and rollback subject. It must not manufacture a PASS for a child that remains `ABSENT`, `NOT_IMPLEMENTED`, or `NOT_EXERCISED`.
 
 ## Failure/Human rule
 
