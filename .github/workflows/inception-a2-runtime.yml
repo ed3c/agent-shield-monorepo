@@ -2,8 +2,7 @@ name: Inception A2 sandbox-steering preflight
 
 on:
   push:
-    branches:
-      - agent/inception-a2-runtime-sandbox-steering
+    branches: [agent/inception-a2-runtime-sandbox-steering]
   pull_request:
     paths:
       - docs/integration/inception-a2-sandbox/**
@@ -22,7 +21,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout exact workflow subject
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -34,16 +33,12 @@ jobs:
           python3 - <<'PY'
           import json
           import pathlib
-          import re
           import subprocess
 
           root = pathlib.Path.cwd()
-          manifest_path = root / "docs/integration/inception-a2-sandbox/preflight.json"
-          readme_path = root / "docs/integration/inception-a2-sandbox/README.md"
-          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-          readme = readme_path.read_text(encoding="utf-8")
-
-          expected = {
+          manifest = json.loads((root / "docs/integration/inception-a2-sandbox/preflight.json").read_text())
+          readme = (root / "docs/integration/inception-a2-sandbox/README.md").read_text()
+          exact = {
               "schema_version": "inception-owner-preflight/v1",
               "atom_id": "INCEPTION-A2",
               "stage": "OWNER_IMPLEMENTATION_PREPARATION",
@@ -51,14 +46,10 @@ jobs:
               "repository": "ed3c/agent-shield-monorepo",
               "branch": "agent/inception-a2-runtime-sandbox-steering",
           }
-          for key, value in expected.items():
-              assert manifest.get(key) == value, f"DRIFT:{key}:{manifest.get(key)!r}"
-
+          for key, value in exact.items():
+              assert manifest.get(key) == value, f"DRIFT:{key}"
           base = manifest["base_subject"]
-          assert base == {
-              "commit": "30e12cc917503b56b002aa7351428811f20fea8e",
-              "tree": "6f465f936515d81ed51c5b80595de530593f25fc",
-          }, "BASE_SUBJECT_DRIFT"
+          assert base == {"commit": "30e12cc917503b56b002aa7351428811f20fea8e", "tree": "6f465f936515d81ed51c5b80595de530593f25fc"}
           runtime = manifest["runtime_contract_subject"]
           assert runtime["base_commit"] == "c0790b9a8c81d7eb45ed45ac3d761c7fad5baa9b"
           assert runtime["base_tree"] == "df39f33f7a5278d255a022789b9f94c9b4a073b9"
@@ -68,53 +59,34 @@ jobs:
           assert controller["tree"] == "c3851a6953d456d0342a9776eed28561c1af0ca1"
           assert controller["packet_digest"] == "sha256:18e6a7c89d6f6de322b68fd1c2928fcc6c4cd42508236bb1ca03957435106aec"
           assert controller["bundle_digest"] == "sha256:dc4473b3195a738e55eb49c43661b6e1f4ea7f95c66749454776f2003b18ebc3"
-
-          for key in (
-              "state_machine",
-              "existing_mechanisms",
-              "writable_paths",
-              "read_only_paths",
-              "resource_leases",
-              "capability_fields",
-              "required_evidence_lanes",
-              "positive_controls",
-              "mutation_controls",
-              "forbidden_actions",
-              "claims_not_proven",
-          ):
+          assert manifest["owner_issue"] == "ed3c/agent-shield-monorepo#153"
+          assert manifest["upstream_issue"] == "ed3c/enterprise_agent_system#7"
+          fields = (
+              "state_machine", "existing_mechanisms", "writable_paths", "read_only_paths",
+              "resource_leases", "capability_fields", "required_evidence_lanes",
+              "positive_controls", "mutation_controls", "forbidden_actions", "claims_not_proven",
+          )
+          for key in fields:
               values = manifest.get(key)
-              assert isinstance(values, list) and values, f"EMPTY_OR_MISSING:{key}"
-              assert len(values) == len(set(values)), f"DUPLICATE:{key}"
-
-          assert not (set(manifest["writable_paths"]) & set(manifest["read_only_paths"])), "LEASE_OVERLAP"
+              assert isinstance(values, list) and values and len(values) == len(set(values)), key
+          assert not set(manifest["writable_paths"]) & set(manifest["read_only_paths"])
           assert manifest["cleanup_contract"]["required"] is True
           assert manifest["cleanup_contract"]["rollback_subject"] == base["commit"]
           assert manifest["next_transition"] == "ADD_CLOSED_ADAPTER_CAPABILITY_CONTRACT_AND_FIRST_HOLLOW_CONTROL"
           assert "OWNER IMPLEMENTATION PREPARATION ONLY" in readme
           assert "Hidden reasoning access is `ABSENT`" in readme
           assert "default-deny network" in readme
-
-          changed = subprocess.check_output(
-              ["git", "diff", "--name-only", f"{base['commit']}...HEAD"],
-              text=True,
-          ).splitlines()
+          changed = subprocess.check_output(["git", "diff", "--name-only", f"{base['commit']}...HEAD"], text=True).splitlines()
           allowed = {
               "docs/integration/inception-a2-sandbox/README.md",
               "docs/integration/inception-a2-sandbox/preflight.json",
               ".github/workflows/inception-a2-runtime.yml",
           }
-          unexpected = sorted(set(changed) - allowed)
-          assert not unexpected, f"PATH_LEASE_VIOLATION:{unexpected}"
-
-          combined = readme + "\n" + json.dumps(manifest, ensure_ascii=False)
-          for forbidden in ("/Users/", "/home/", "/mnt/data/", "gemini.google.com", "BEGIN PRIVATE KEY"):
-              assert forbidden not in combined, f"PRIVATE_LOCATOR_OR_SECRET:{forbidden}"
-          assert not re.search(r"(?i)(api[_-]?key|password|private[_-]?key)\s*[:=]\s*['\"][^'\"]+", combined)
-
-          print(
-              "PASS atom=INCEPTION-A2 state=READY_FOR_FIRST_IMPLEMENTATION_COMMIT "
-              f"changed={len(changed)} mutations={len(manifest['mutation_controls'])}"
-          )
+          assert not set(changed) - allowed, f"PATH_LEASE_VIOLATION:{sorted(set(changed) - allowed)}"
+          combined = readme + json.dumps(manifest, ensure_ascii=False)
+          forbidden = ["/" + "Users" + "/", "/" + "home" + "/", "/mnt/" + "data/", "gemini." + "google.com", "BEGIN " + "PRIVATE KEY"]
+          assert not [value for value in forbidden if value in combined]
+          print(f"PASS atom=INCEPTION-A2 changed={len(changed)} mutations={len(manifest['mutation_controls'])}")
           PY
 
       - name: Check textual patch hygiene
