@@ -1,0 +1,129 @@
+{
+  "schema_version": "inception-owner-preflight/v1",
+  "atom_id": "INCEPTION-A2",
+  "stage": "OWNER_IMPLEMENTATION_PREPARATION",
+  "state": "READY_FOR_FIRST_IMPLEMENTATION_COMMIT",
+  "repository": "ed3c/agent-shield-monorepo",
+  "branch": "agent/inception-a2-runtime-sandbox-steering",
+  "base_subject": {
+    "commit": "30e12cc917503b56b002aa7351428811f20fea8e",
+    "tree": "6f465f936515d81ed51c5b80595de530593f25fc"
+  },
+  "runtime_contract_subject": {
+    "repository": "ed3c/runtime-env",
+    "issue": 67,
+    "base_commit": "c0790b9a8c81d7eb45ed45ac3d761c7fad5baa9b",
+    "base_tree": "df39f33f7a5278d255a022789b9f94c9b4a073b9",
+    "state": "PREPARATION_ONLY"
+  },
+  "controller_subject": {
+    "repository": "ed3c/enterprise_agent_system",
+    "pull_request": 29,
+    "commit": "6e0a916fd06dd8635d77c9a8c4d1b475185ea13e",
+    "tree": "c3851a6953d456d0342a9776eed28561c1af0ca1",
+    "packet_digest": "sha256:18e6a7c89d6f6de322b68fd1c2928fcc6c4cd42508236bb1ca03957435106aec",
+    "bundle_digest": "sha256:dc4473b3195a738e55eb49c43661b6e1f4ea7f95c66749454776f2003b18ebc3"
+  },
+  "owner_issue": "https://github.com/ed3c/agent-shield-monorepo/issues/153",
+  "upstream_issue": "https://github.com/ed3c/enterprise_agent_system/issues/7",
+  "interface": "inception/runtime-sandbox-steering",
+  "state_machine": [
+    "RUNTIME_CONTRACT_BOUND",
+    "WORKLOAD_POLICY_AND_LEASE_VALIDATED",
+    "SANDBOX_MATERIALIZED",
+    "CAPABILITIES_OBSERVED",
+    "BUDGET_AND_SAFE_SYNC_POINT_OBSERVED",
+    "ACTION_PROPOSED",
+    "POLICY_AND_TRANSACTION_BOUNDARY_CHECKED",
+    "CHECKPOINT_OR_TOOL_REQUEST_OR_CANCEL_OR_NO_ACTION_OR_HUMAN_ESCALATE",
+    "ARTIFACTS_COLLECTED",
+    "CLEANUP_AND_RESIDUE_VERIFIED",
+    "RECEIPT_COMMITTED"
+  ],
+  "existing_mechanisms": [
+    "services/runtime-fabric/**",
+    "packages/contracts/**",
+    "docs/state-machines/**",
+    "scripts/verify.ts",
+    "scripts/selftest.ts"
+  ],
+  "writable_paths": [
+    "docs/integration/inception-a2-sandbox/**",
+    "services/runtime-fabric/src/providers/inception-sandbox/**",
+    "services/runtime-fabric/src/steering/inception/**",
+    "services/runtime-fabric/tests/inception/**",
+    "data/receipts/inception-a2/**",
+    ".github/workflows/inception-a2-runtime.yml"
+  ],
+  "read_only_paths": [
+    "packages/contracts/src/convergence/**",
+    "services/runtime-fabric/src/convergence/**",
+    ".arena/modules/runtime-fabric/module.json",
+    "data/status/integration.json",
+    "data/releases/**",
+    "docs/implementation/STACKED_IMPLEMENTATION_PLAN.md"
+  ],
+  "resource_leases": [
+    "provider-id:inception-sandbox-fixture",
+    "workspace-namespace:inception-a2",
+    "capability-observation:inception-a2-local"
+  ],
+  "capability_fields": [
+    "streaming_visibility",
+    "safe_transaction_boundary",
+    "cancellation",
+    "resume",
+    "assistant_prefill",
+    "tokenizer_identity",
+    "context_limit",
+    "tool_call_transactions",
+    "hidden_reasoning_access"
+  ],
+  "required_evidence_lanes": [
+    "DETERMINISTIC_CONTRACT",
+    "LOCAL_SANDBOX",
+    "PROVIDER_OBSERVATION_SEPARATE",
+    "CLEANUP_READBACK"
+  ],
+  "positive_controls": [
+    "exact runtime workload policy and lease are checked before materialization",
+    "unsupported capability remains UNKNOWN or UNSUPPORTED",
+    "steering occurs only at a declared visible safe synchronization point",
+    "timeout or cancellation leaves no descendant or mutable-resource residue"
+  ],
+  "mutation_controls": [
+    "mutable image tag or branch used as runtime identity",
+    "bridge networking represented as zero egress",
+    "privileged mode Docker socket host PID IPC or credential mount",
+    "generic shell or untrusted repository URL interpolation",
+    "secret value in request artifact log or receipt",
+    "unsupported prefill cancellation resume or hidden reasoning represented as supported",
+    "active tool transaction interrupted",
+    "stale lease advances state",
+    "local fixture PASS represented as provider or production PASS",
+    "cleanup omits path process port index container mount or artifact residue"
+  ],
+  "cleanup_contract": {
+    "required": true,
+    "inventory": ["path", "process", "port", "index", "container", "mount", "artifact"],
+    "rollback_subject": "30e12cc917503b56b002aa7351428811f20fea8e"
+  },
+  "forbidden_actions": [
+    "create a second runtime fabric",
+    "access or persist private reasoning",
+    "enroll a provider",
+    "modify public registry aggregate status or release bytes",
+    "write canonical task Gate Human or release state",
+    "close issues",
+    "merge",
+    "release",
+    "rollback"
+  ],
+  "claims_not_proven": [
+    "No sandbox or steering implementation has been added.",
+    "No local sandbox or provider observation has executed.",
+    "No isolation, cleanup or secret-boundary canary exists for this subject.",
+    "No provider enrollment, Human admission, merge, release or rollback has occurred."
+  ],
+  "next_transition": "ADD_CLOSED_ADAPTER_CAPABILITY_CONTRACT_AND_FIRST_HOLLOW_CONTROL"
+}
