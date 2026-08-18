@@ -24,8 +24,8 @@
     "packet_digest": "sha256:18e6a7c89d6f6de322b68fd1c2928fcc6c4cd42508236bb1ca03957435106aec",
     "bundle_digest": "sha256:dc4473b3195a738e55eb49c43661b6e1f4ea7f95c66749454776f2003b18ebc3"
   },
-  "owner_issue": "https://github.com/ed3c/agent-shield-monorepo/issues/153",
-  "upstream_issue": "https://github.com/ed3c/enterprise_agent_system/issues/7",
+  "owner_issue": "ed3c/agent-shield-monorepo#153",
+  "upstream_issue": "ed3c/enterprise_agent_system#7",
   "interface": "inception/runtime-sandbox-steering",
   "state_machine": [
     "RUNTIME_CONTRACT_BOUND",
@@ -105,7 +105,15 @@
   ],
   "cleanup_contract": {
     "required": true,
-    "inventory": ["path", "process", "port", "index", "container", "mount", "artifact"],
+    "inventory": [
+      "path",
+      "process",
+      "port",
+      "index",
+      "container",
+      "mount",
+      "artifact"
+    ],
     "rollback_subject": "30e12cc917503b56b002aa7351428811f20fea8e"
   },
   "forbidden_actions": [
