@@ -1,4 +1,6 @@
-const input = await Bun.file("probe-input.json").json() as {
+import { readFileSync, writeFileSync } from "node:fs";
+
+const input = JSON.parse(readFileSync("probe-input.json", "utf8")) as {
   schema: string;
   leaseId: string;
   workspaceName: string;
@@ -18,5 +20,6 @@ const output = {
   result: "PASS",
 };
 
-await Bun.write("probe-output.json", JSON.stringify(output));
-process.stdout.write(JSON.stringify(output));
+const encoded = JSON.stringify(output);
+writeFileSync("probe-output.json", encoded, "utf8");
+console.log(encoded);
