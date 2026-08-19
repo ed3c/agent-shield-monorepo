@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export const ROUTE_REQUEST_SCHEMA = "agent-shield/dual-agent-route/request/v1" as const;
 export const ROUTE_RECEIPT_SCHEMA = "agent-shield/dual-agent-route/receipt/v1" as const;
 
@@ -159,14 +161,12 @@ export function canonicalJson(value: unknown): string {
       .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`);
     return `{${entries.join(",")}}`;
   }
-  return JSON.stringify(value);
+  const encoded = JSON.stringify(value);
+  return encoded === undefined ? "null" : encoded;
 }
 
 export function digest(value: unknown): string {
-  const bytes = new TextEncoder().encode(canonicalJson(value));
-  const hasher = new Bun.CryptoHasher("sha256");
-  hasher.update(bytes);
-  return hasher.digest("hex");
+  return createHash("sha256").update(canonicalJson(value), "utf8").digest("hex");
 }
 
 export function validateDescriptor(route: RouteDescriptor, expected: RouteKind): void {
