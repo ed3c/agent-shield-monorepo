@@ -2,7 +2,6 @@ import {
   RuntimeCandidateError,
   compileRuntimeCandidate,
   fixedCandidate,
-  type RuntimeCandidateInput,
 } from "./candidate.ts";
 
 function clone<T>(value: T): T {
@@ -52,9 +51,9 @@ expect("EXACT_RUN_OR_PR_DRIFT", () => compileRuntimeCandidate(run));
 const widened = clone(input); widened.subjects[0].evidenceCeiling = "LIVE_API_BROWSER_PASS";
 expect("EVIDENCE_CEILING_WIDENING", () => compileRuntimeCandidate(widened));
 
-const admitted = clone(input) as RuntimeCandidateInput & { requestedOutcome: string };
+const admitted = clone(input) as any;
 admitted.requestedOutcome = "ADMITTED";
-expect("DRAFT_AS_ADMITTED", () => compileRuntimeCandidate(admitted as RuntimeCandidateInput));
+expect("DRAFT_AS_ADMITTED", () => compileRuntimeCandidate(admitted));
 
 const liveRoute = clone(input) as any; liveRoute.liveClaims.api = "PASS";
 expect("DETERMINISTIC_AS_LIVE", () => compileRuntimeCandidate(liveRoute));
