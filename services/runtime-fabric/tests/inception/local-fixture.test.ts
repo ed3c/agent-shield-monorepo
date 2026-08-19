@@ -5,9 +5,9 @@ import {
   runReversibleLocalFixture,
   validateLocalFixtureReceipt,
 } from "../../src/providers/inception-sandbox/local-fixture.ts";
+import type { LocalFixtureReceipt } from "../../src/providers/inception-sandbox/local-fixture.ts";
 import type {
   InceptionRuntimeContract,
-  LocalFixtureReceipt,
 } from "../../src/providers/inception-sandbox/types.ts";
 
 const NOW = "2026-08-19T12:00:00Z";
