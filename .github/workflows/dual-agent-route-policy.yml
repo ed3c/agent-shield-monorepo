@@ -1,0 +1,36 @@
+name: Dual-Agent route policy
+
+on:
+  pull_request:
+    paths:
+      - "services/runtime-fabric/src/integrations/dual-agent-route/policy/**"
+      - ".github/workflows/dual-agent-route-policy.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/runtime-fabric/src/integrations/dual-agent-route/policy/**"
+      - ".github/workflows/dual-agent-route-policy.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  route-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Re-run route contract controls
+        run: bun services/runtime-fabric/src/integrations/dual-agent-route/selftest.ts
+      - name: Compile route policy selftest
+        run: bun build services/runtime-fabric/src/integrations/dual-agent-route/policy/selftest.ts --target=bun --outdir=/tmp/dual-agent-policy
+      - name: Run route policy controls
+        run: bun services/runtime-fabric/src/integrations/dual-agent-route/policy/selftest.ts
+      - name: Typecheck repository
+        run: bunx tsc --noEmit
