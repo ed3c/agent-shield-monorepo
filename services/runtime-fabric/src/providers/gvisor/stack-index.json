@@ -1,0 +1,97 @@
+{
+  "schema": "agent-shield/gvisor/stack-index/v1",
+  "parent_issue": 147,
+  "docs_issue": 172,
+  "docs_pr": 178,
+  "docs_subject_state": "DRAFT_CANDIDATE_EXTERNAL_READBACK",
+  "shared_runtime_convergence_owner": 44,
+  "live_network_owner": 95,
+  "local_sandbox_reference": {
+    "issue": 153,
+    "pr": 154,
+    "relationship": "INDEPENDENT_LOCAL_SANDBOX_EVIDENCE"
+  },
+  "upstream": {
+    "repository": "google/gvisor",
+    "commit": "09329f4f5677c3b2492a40ea816a6899d03bcbd1",
+    "tree": "f5714e427eb5e9d93e2b7e4e5a994dec5a90bcfb",
+    "license_blob": "f7a006d10464cfe9724b5d687c0013bf982cc66a",
+    "license_id": "Apache-2.0",
+    "third_party_notice_review_required": true
+  },
+  "nodes": [
+    {
+      "atom": "DA-GV-C",
+      "issue": 168,
+      "pr": 174,
+      "head": "8cc1bea3c307b3fd89de001173a90fea45e7d77a",
+      "tree": "8d6fbbc6ac8e27188033779e2dc20d6aff363618",
+      "targeted_run": 32282011851,
+      "modular_run": 32282011435,
+      "lockfile_run": 32282011488,
+      "state": "DETERMINISTIC_PASS"
+    },
+    {
+      "atom": "DA-GV-A",
+      "issue": 169,
+      "pr": 175,
+      "head": "4402520edead7e5cb1fcbf1e3d8ae74977c243b7",
+      "tree": "7ec3a90f12aebe55176018adc3d767a2b1bf26dc",
+      "targeted_run": 32282213765,
+      "state": "DETERMINISTIC_PASS"
+    },
+    {
+      "atom": "DA-GV-P",
+      "issue": 170,
+      "pr": 176,
+      "head": "2e7c2415b7b2f234a02a1239bdc0f2418b8cc1d6",
+      "tree": "7e60143c3f529f5f5953c595051aaa320e7d7c9d",
+      "targeted_run": 32282337370,
+      "state": "DETERMINISTIC_PASS"
+    },
+    {
+      "atom": "DA-GV-E",
+      "issue": 171,
+      "pr": 177,
+      "head": "83f8cf90f84cee8f7d360fce8800c902bd5e9786",
+      "tree": "029f6d174e5ed2a7a76150c5bb9e16ad2bd6c1bf",
+      "targeted_run": 32282711208,
+      "state": "DETERMINISTIC_PASS"
+    }
+  ],
+  "complete_denominator": [
+    "source_candidate_unresolved",
+    "deterministic_admission",
+    "runsc_plan_only",
+    "timeout_distinct",
+    "connection_unknown",
+    "policy_deny_all",
+    "policy_allowlist",
+    "filesystem_baseline",
+    "network_baseline",
+    "resource_baseline",
+    "cleanup_independent",
+    "live_states_not_exercised",
+    "shared_owner_separation",
+    "upstream_license_binding"
+  ],
+  "live_frontier": {
+    "issue": 173,
+    "state": "HUMAN_TRUSTED_AUTHORITY_REQUIRED",
+    "runsc_binary": "NOT_EXERCISED",
+    "oci_execution": "NOT_EXERCISED",
+    "syscall_isolation": "NOT_EXERCISED",
+    "network_isolation": "NOT_EXERCISED",
+    "cleanup": "NOT_EXERCISED",
+    "provider_registration": "NOT_PERFORMED",
+    "human_admit": "NOT_PERFORMED",
+    "release": "NOT_PERFORMED"
+  },
+  "authority": {
+    "provider_private_shared_write": "FORBIDDEN",
+    "shared_registry_status_release_owner": 44,
+    "live_network_receipt_owner": 95,
+    "gvisor_live_receipt_owner": 173
+  },
+  "evidence_ceiling": "COMPLETE_DETERMINISTIC_GVISOR_MATRIX_ONLY"
+}
