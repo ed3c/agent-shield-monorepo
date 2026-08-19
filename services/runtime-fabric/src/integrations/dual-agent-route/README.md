@@ -159,7 +159,7 @@ PR #162 DA-INT-C
 ├─ PR #164 DA-INT-BR
 ├─ PR #165 DA-INT-POL
 └─ PR #166 DA-INT-E
-     └─ PR #160 docs child after convergence
+     └─ PR #167 DA-INT-D
 ```
 
 PR #166 has PR #162 as its actual Git base and materializes #163/#164/#165 implementation/test bytes by exact Git blob SHA. Process input does not imply Git ancestry.
