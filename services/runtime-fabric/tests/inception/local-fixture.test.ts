@@ -97,9 +97,7 @@ if (receipt.environmentNames.join(",") !== "TASK_ID,WORKSPACE_LEASE_ID") {
 }
 
 {
-  const promoted = structuredClone(receipt) as unknown as LocalFixtureReceipt & {
-    evidence: LocalFixtureReceipt["evidence"] & { providerObservation: string };
-  };
+  const promoted = structuredClone(receipt) as any;
   promoted.evidence.providerObservation = "PASS";
   mustRefuse(
     "provider promotion",
