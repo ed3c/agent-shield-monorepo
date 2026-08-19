@@ -1,0 +1,77 @@
+{
+  "schema": "agent-shield/dual-agent-route/matrix-preflight/v1",
+  "common_parent": {
+    "pr": 162,
+    "commit": "1250b096b53b8d114425a3618e91137090f0778a",
+    "tree": "6b9537b00450a43d0e9bcf1b1ae6c4a2e441c67c"
+  },
+  "siblings": [
+    {
+      "atom": "DA-INT-API",
+      "pr": 163,
+      "commit": "ae7d891a12df49a76c8d86be84655cecc147c395",
+      "tree": "71a93c3e8e04e0f2117238bb34cd23085aecd032",
+      "targeted_run": 32278074448,
+      "files": {
+        "services/runtime-fabric/src/integrations/dual-agent-route/api/adapter.ts": "766a9330a466ad85ecde4a8bae264ce41b95ce51",
+        "services/runtime-fabric/src/integrations/dual-agent-route/api/selftest.ts": "6274aa0f3ec0174e5156f2b1b7a2830d1ad9985b"
+      }
+    },
+    {
+      "atom": "DA-INT-BR",
+      "pr": 164,
+      "commit": "637316981191e629a9e569710a6b9dbe6d9bd471",
+      "tree": "486078cf2d569df407c8d9b638ab81542bfdea57",
+      "targeted_run": 32278561508,
+      "files": {
+        "services/runtime-fabric/src/integrations/dual-agent-route/browser/adapter.ts": "02d57053d25c96b08f4fa426a5ea32f94bd7efeb",
+        "services/runtime-fabric/src/integrations/dual-agent-route/browser/selftest.ts": "d1c318e0cfebe4544b99de2e18976074cff183f1"
+      },
+      "retained_failed_head": "bb70e422e335c90467b2b1324c8107ccf9831fc5",
+      "retained_failed_run": 32278264809
+    },
+    {
+      "atom": "DA-INT-POL",
+      "pr": 165,
+      "commit": "8abd109b12c5cc69fab7fb207e9f974974a46a8d",
+      "tree": "7bfdc5bb330973f7dd9485d3fe290a48955120a8",
+      "targeted_run": 32278411221,
+      "files": {
+        "services/runtime-fabric/src/integrations/dual-agent-route/policy/gate.ts": "0add162c3fa46704e3aa960c5dfaaff87ad7e5ac",
+        "services/runtime-fabric/src/integrations/dual-agent-route/policy/selftest.ts": "28de783184bfd4cf3cfa2bf4aabd76095e66c944"
+      }
+    }
+  ],
+  "effect_authority": {
+    "repository": "ed3c/bettor-arena",
+    "pr": 216,
+    "commit": "f9b64994979042fc3726c524944a61da4f9cb8b5",
+    "tree": "e0f0ff4bf0b55627b420ace027043c3b7fee5d1d",
+    "writer": "dual-agent-effect-ledger"
+  },
+  "required_cases": [
+    "api_first_read",
+    "api_write_readback",
+    "api_timeout_unknown",
+    "fallback_api_absent",
+    "fallback_api_refused",
+    "fallback_api_not_admitted",
+    "fallback_api_unsupported_action",
+    "browser_write_readback",
+    "browser_timeout_unknown",
+    "policy_authority_separation",
+    "route_evidence_separation",
+    "effect_authority_preserved",
+    "cleanup_separation"
+  ],
+  "external_states": {
+    "live_api": "NOT_EXERCISED",
+    "live_browser": "NOT_EXERCISED",
+    "credential_resolution": "NOT_EXERCISED",
+    "provider_effect": "NOT_EXERCISED",
+    "target_readback": "NOT_EXERCISED",
+    "user_outcome": "NOT_EXERCISED",
+    "release": "NOT_EXERCISED"
+  },
+  "evidence_ceiling": "COMPLETE_DETERMINISTIC_ROUTE_MATRIX_ONLY"
+}
