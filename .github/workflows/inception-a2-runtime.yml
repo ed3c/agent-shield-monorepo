@@ -63,10 +63,10 @@ jobs:
           required = {
               "services/runtime-fabric/src/providers/inception-sandbox/types.ts",
               "services/runtime-fabric/src/providers/inception-sandbox/validate.ts",
-              "services/runtime-fabric/src/providers/inception-sandbox/local-fixture.ts",
-              "services/runtime-fabric/src/providers/inception-sandbox/local-fixture-probe.ts",
               "services/runtime-fabric/tests/inception/selftest.ts",
-              "services/runtime-fabric/tests/inception/local-fixture.test.ts",
+              "services/runtime-fabric/tests/inception/local-fixture.js",
+              "services/runtime-fabric/tests/inception/local-fixture-probe.js",
+              "services/runtime-fabric/tests/inception/local-fixture.test.js",
           }
           assert required.issubset(set(manifest["implementation_subjects"])), "IMPLEMENTATION_SUBJECT_MISSING"
           assert "PUBLIC_LOCAL_PROCESS_FIXTURE" in manifest["required_evidence_lanes"]
@@ -94,7 +94,7 @@ jobs:
         run: bun services/runtime-fabric/tests/inception/selftest.ts
 
       - name: Execute reversible local fixture and terminal residue controls
-        run: bun services/runtime-fabric/tests/inception/local-fixture.test.ts
+        run: bun services/runtime-fabric/tests/inception/local-fixture.test.js
 
       - name: Run repository deterministic controls
         run: |
