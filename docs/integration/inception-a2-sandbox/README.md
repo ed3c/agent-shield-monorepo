@@ -5,7 +5,7 @@ Upstream profile issue: `ed3c/enterprise_agent_system#7`
 Owner issue: `ed3c/agent-shield-monorepo#153`
 Runtime-contract owner: `ed3c/runtime-env#67`
 
-This leaf consumes an exact `runtime-env` contract, validates sandbox/steering admission, and now executes one reversible child-process fixture inside an ephemeral workspace. It reuses the existing runtime-fabric owner. It does not create a second runtime fabric, expose private reasoning, enroll a provider, prove network isolation, or advance canonical task/Gate/Human/release state.
+This leaf consumes an exact `runtime-env` contract, validates sandbox/steering admission, and executes one reversible child-process fixture inside an ephemeral workspace. It reuses the existing runtime-fabric owner. It does not create a second runtime fabric, expose private reasoning, enroll a provider, prove network isolation, or advance canonical task/Gate/Human/release state.
 
 ## Exact lineage
 
@@ -23,14 +23,23 @@ packet digest      sha256:18e6a7c89d6f6de322b68fd1c2928fcc6c4cd42508236bb1ca0395
 
 ## Implementation subjects
 
+Product contract/validator surface:
+
 ```text
 services/runtime-fabric/src/providers/inception-sandbox/types.ts
 services/runtime-fabric/src/providers/inception-sandbox/validate.ts
-services/runtime-fabric/src/providers/inception-sandbox/local-fixture.ts
-services/runtime-fabric/src/providers/inception-sandbox/local-fixture-probe.ts
 services/runtime-fabric/tests/inception/selftest.ts
-services/runtime-fabric/tests/inception/local-fixture.test.ts
 ```
+
+Public local-execution fixture surface:
+
+```text
+services/runtime-fabric/tests/inception/local-fixture.js
+services/runtime-fabric/tests/inception/local-fixture-probe.js
+services/runtime-fabric/tests/inception/local-fixture.test.js
+```
+
+The first local-fixture attempt placed Node/Bun process APIs in product TypeScript files. Repository `tsc --noEmit` correctly turned RED because that repository intentionally has no Node/Bun ambient type dependency. The repair did not widen the product toolchain: process-execution code was moved into a test-only JavaScript harness while the product TypeScript contract remains unchanged and type-checked.
 
 ## State Machine
 
@@ -48,7 +57,7 @@ RUNTIME_CONTRACT_BOUND
 → RECEIPT_COMMITTED
 ```
 
-The public fixture exercises a narrow `SANDBOX_MATERIALIZED → ARTIFACTS_COLLECTED → CLEANUP_AND_RESIDUE_VERIFIED → RECEIPT_COMMITTED` path using a direct non-shell `bun` argv, exact lease identity, bounded output, an ephemeral workspace and terminal residue readback.
+The public fixture exercises a narrow `SANDBOX_MATERIALIZED → ARTIFACTS_COLLECTED → CLEANUP_AND_RESIDUE_VERIFIED → RECEIPT_COMMITTED` path. It uses an absolute runtime executable, a fixed test probe, exact lease identity, bounded output, a minimal environment-name surface, an ephemeral workspace and terminal residue readback. It does not use a generic shell.
 
 ## Local fixture evidence law
 
@@ -60,7 +69,7 @@ providerObservation NOT_EXERCISED
 networkIsolation    NOT_EXERCISED
 ```
 
-A local child process cannot self-promote provider capability, default-deny egress, hardened container isolation, production parity or Human admission. Tests plant both provider-promotion and dirty-cleanup mutations and require refusal.
+A local child process cannot self-promote provider capability, default-deny egress, hardened container isolation, production parity or Human admission. Tests plant provider-promotion, network-widening and dirty-cleanup mutations and require refusal.
 
 ## Cleanup denominator
 
@@ -74,7 +83,7 @@ mount
 artifact
 ```
 
-All entries must be zero before the local receipt is accepted. The fixture deletes its temporary workspace before constructing the terminal receipt.
+All entries must be zero before the local receipt is accepted. The fixture removes its temporary workspace before constructing the terminal receipt.
 
 ## Writer lease
 
