@@ -105,10 +105,8 @@ validateRuntimeContract(contract(), NOW);
 }
 
 {
-  const value = clone() as InceptionRuntimeContract & {
-    policy: InceptionRuntimeContract["policy"] & { privileged: boolean };
-  };
-  value.policy.privileged = true;
+  const value = clone();
+  (value.policy as unknown as { privileged: boolean }).privileged = true;
   mustRefuse("privileged", () => validateRuntimeContract(value, NOW), /privileged/);
 }
 
@@ -125,12 +123,10 @@ validateRuntimeContract(contract(), NOW);
 }
 
 {
-  const value = clone() as InceptionRuntimeContract & {
-    capabilities: InceptionRuntimeContract["capabilities"] & {
-      hiddenReasoningAccess: string;
-    };
-  };
-  value.capabilities.hiddenReasoningAccess = "SUPPORTED";
+  const value = clone();
+  (
+    value.capabilities as unknown as { hiddenReasoningAccess: string }
+  ).hiddenReasoningAccess = "SUPPORTED";
   mustRefuse("hidden reasoning", () => validateRuntimeContract(value, NOW), /hidden reasoning/);
 }
 
