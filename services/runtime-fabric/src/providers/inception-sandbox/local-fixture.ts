@@ -1,15 +1,15 @@
 import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import {
-  access,
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 import type {
   CleanupReadback,
@@ -48,15 +48,6 @@ function assert(condition: boolean, message: string): asserts condition {
   if (!condition) throw new InceptionSandboxContractError(message);
 }
 
-async function exists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export function validateLocalFixtureReceipt(receipt: LocalFixtureReceipt): void {
   assert(
     receipt.schemaVersion === "agent-shield/inception-local-fixture-receipt/v1",
@@ -90,53 +81,53 @@ export async function runReversibleLocalFixture(
     "local fixture requires the strict NONE network policy",
   );
 
-  const root = await mkdtemp(join(tmpdir(), "inception-a2-"));
+  const root = mkdtempSync(join(tmpdir(), "inception-a2-"));
   const workspace = join(root, contract.workspaceLease.workspaceName);
-  const probeScript = join(
-    dirname(fileURLToPath(import.meta.url)),
-    "local-fixture-probe.ts",
-  );
+  const probeScript = new URL("./local-fixture-probe.ts", import.meta.url).pathname;
 
-  let stdout = new Uint8Array();
+  let stdout = "";
   let artifact = new Uint8Array();
   let childExit: number | null = null;
 
   try {
-    await mkdir(workspace, { recursive: false });
+    mkdirSync(workspace, { recursive: false });
     const input = {
       schema: "agent-shield/inception-local-fixture-input/v1",
       leaseId: contract.workspaceLease.leaseId,
       workspaceName: contract.workspaceLease.workspaceName,
     };
-    await writeFile(
+    writeFileSync(
       join(workspace, "probe-input.json"),
       JSON.stringify(input),
       { encoding: "utf8", flag: "wx" },
     );
 
-    const child = Bun.spawn({
-      cmd: [process.execPath, probeScript],
+    const child = spawnSync("bun", [probeScript], {
       cwd: workspace,
       env: {
         LANG: "C.UTF-8",
         LC_ALL: "C.UTF-8",
         TMPDIR: root,
       },
-      stdout: "pipe",
-      stderr: "pipe",
+      encoding: "utf8",
+      timeout: contract.workload.timeoutSeconds * 1000,
+      maxBuffer: contract.workload.resources.outputBytes,
+      shell: false,
     });
 
-    stdout = new Uint8Array(await new Response(child.stdout).arrayBuffer());
-    const stderr = new Uint8Array(await new Response(child.stderr).arrayBuffer());
-    childExit = await child.exited;
+    childExit = child.status;
+    stdout = typeof child.stdout === "string" ? child.stdout : "";
+    const stderr = typeof child.stderr === "string" ? child.stderr : "";
 
-    assert(childExit === 0, `local fixture child exited ${childExit}`);
+    assert(child.error === undefined, `local fixture spawn failed: ${String(child.error)}`);
+    assert(child.signal === null, `local fixture child terminated by ${String(child.signal)}`);
+    assert(childExit === 0, `local fixture child exited ${String(childExit)}: ${stderr}`);
     assert(
-      stdout.byteLength + stderr.byteLength <= contract.workload.resources.outputBytes,
+      stdout.length + stderr.length <= contract.workload.resources.outputBytes,
       "local fixture output exceeded the contract bound",
     );
 
-    artifact = new Uint8Array(await readFile(join(workspace, "probe-output.json")));
+    artifact = new Uint8Array(readFileSync(join(workspace, "probe-output.json")));
     const parsed = JSON.parse(new TextDecoder().decode(artifact)) as {
       schema?: string;
       leaseId?: string;
@@ -154,17 +145,17 @@ export async function runReversibleLocalFixture(
     );
     assert(parsed.result === "PASS", "local fixture result is not PASS");
   } finally {
-    await rm(root, { recursive: true, force: true });
+    rmSync(root, { recursive: true, force: true });
   }
 
   const cleanup: CleanupReadback = {
-    pathResidue: (await exists(root)) ? 1 : 0,
+    pathResidue: existsSync(root) ? 1 : 0,
     processResidue: childExit === null ? 1 : 0,
     portResidue: 0,
     indexResidue: 0,
     containerResidue: 0,
     mountResidue: 0,
-    artifactResidue: (await exists(join(workspace, "probe-output.json"))) ? 1 : 0,
+    artifactResidue: existsSync(join(workspace, "probe-output.json")) ? 1 : 0,
   };
 
   const receipt: LocalFixtureReceipt = {
