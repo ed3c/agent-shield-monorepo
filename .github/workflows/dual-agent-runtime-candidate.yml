@@ -1,0 +1,45 @@
+name: Dual-Agent runtime candidate convergence
+
+on:
+  pull_request:
+    paths:
+      - "services/runtime-fabric/src/convergence/dual-agent-candidate/**"
+      - ".github/workflows/dual-agent-runtime-candidate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/runtime-fabric/src/convergence/dual-agent-candidate/**"
+      - ".github/workflows/dual-agent-runtime-candidate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Re-run canonical Phase-3 convergence verifier
+        run: bun test services/runtime-fabric/src/convergence/convergence.test.ts
+      - name: Compile candidate verifier
+        run: bun build services/runtime-fabric/src/convergence/dual-agent-candidate/selftest.ts --target=bun --outdir=/tmp/dual-agent-runtime-candidate
+      - name: Run exact-subject and non-promotion controls
+        run: bun services/runtime-fabric/src/convergence/dual-agent-candidate/selftest.ts
+      - name: Verify forbidden shared paths are not changed
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          git diff --name-only "$BASE" "$HEAD" > /tmp/changed.txt
+          if grep -E '^(data/status/integration\.json|data/releases/|\.arena/modules/runtime-fabric/|services/runtime-fabric/src/index\.ts$)' /tmp/changed.txt; then
+            echo "forbidden shared convergence path changed"
+            exit 1
+          fi
+      - name: Typecheck repository
+        run: bunx tsc --noEmit
