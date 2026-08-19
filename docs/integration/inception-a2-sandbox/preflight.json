@@ -1,8 +1,8 @@
 {
   "schema_version": "inception-owner-preflight/v1",
   "atom_id": "INCEPTION-A2",
-  "stage": "OWNER_IMPLEMENTATION_PREPARATION",
-  "state": "READY_FOR_FIRST_IMPLEMENTATION_COMMIT",
+  "stage": "OWNER_IMPLEMENTATION",
+  "state": "FIRST_IMPLEMENTATION_CANDIDATE",
   "repository": "ed3c/agent-shield-monorepo",
   "branch": "agent/inception-a2-runtime-sandbox-steering",
   "base_subject": {
@@ -12,9 +12,12 @@
   "runtime_contract_subject": {
     "repository": "ed3c/runtime-env",
     "issue": 67,
-    "base_commit": "c0790b9a8c81d7eb45ed45ac3d761c7fad5baa9b",
-    "base_tree": "df39f33f7a5278d255a022789b9f94c9b4a073b9",
-    "state": "PREPARATION_ONLY"
+    "pull_request": 68,
+    "commit": "cdfe74ac993cb0b4795fa80df237e8bb542409d2",
+    "tree": "0b2db695cdd812f81924b82689d96e3557b80158",
+    "contract_path": "contracts/inception-runtime-capability.schema.json",
+    "state": "FIRST_IMPLEMENTATION_CANDIDATE",
+    "deterministic_runs": [32248796959, 32248796967]
   },
   "controller_subject": {
     "repository": "ed3c/enterprise_agent_system",
@@ -46,6 +49,11 @@
     "docs/state-machines/**",
     "scripts/verify.ts",
     "scripts/selftest.ts"
+  ],
+  "implementation_subjects": [
+    "services/runtime-fabric/src/providers/inception-sandbox/types.ts",
+    "services/runtime-fabric/src/providers/inception-sandbox/validate.ts",
+    "services/runtime-fabric/tests/inception/selftest.ts"
   ],
   "writable_paths": [
     "docs/integration/inception-a2-sandbox/**",
@@ -87,33 +95,26 @@
   ],
   "positive_controls": [
     "exact runtime workload policy and lease are checked before materialization",
+    "runtime-env contract commit and tree are pinned before adapter validation",
     "unsupported capability remains UNKNOWN or UNSUPPORTED",
     "steering occurs only at a declared visible safe synchronization point",
-    "timeout or cancellation leaves no descendant or mutable-resource residue"
+    "cleanup readback requires zero residue across the declared denominator"
   ],
   "mutation_controls": [
     "mutable image tag or branch used as runtime identity",
     "bridge networking represented as zero egress",
     "privileged mode Docker socket host PID IPC or credential mount",
     "generic shell or untrusted repository URL interpolation",
-    "secret value in request artifact log or receipt",
+    "secret value in environment surface",
     "unsupported prefill cancellation resume or hidden reasoning represented as supported",
     "active tool transaction interrupted",
-    "stale lease advances state",
+    "stale or foreign lease advances state",
     "local fixture PASS represented as provider or production PASS",
     "cleanup omits path process port index container mount or artifact residue"
   ],
   "cleanup_contract": {
     "required": true,
-    "inventory": [
-      "path",
-      "process",
-      "port",
-      "index",
-      "container",
-      "mount",
-      "artifact"
-    ],
+    "inventory": ["path", "process", "port", "index", "container", "mount", "artifact"],
     "rollback_subject": "30e12cc917503b56b002aa7351428811f20fea8e"
   },
   "forbidden_actions": [
@@ -128,10 +129,11 @@
     "rollback"
   ],
   "claims_not_proven": [
-    "No sandbox or steering implementation has been added.",
-    "No local sandbox or provider observation has executed.",
-    "No isolation, cleanup or secret-boundary canary exists for this subject.",
+    "The TypeScript adapter validator is deterministic contract evidence only.",
+    "No sandbox process or provider has been materialized.",
+    "No provider capability observation has executed.",
+    "No isolation canary beyond pure local-fixture validation has executed.",
     "No provider enrollment, Human admission, merge, release or rollback has occurred."
   ],
-  "next_transition": "ADD_CLOSED_ADAPTER_CAPABILITY_CONTRACT_AND_FIRST_HOLLOW_CONTROL"
+  "next_transition": "ADD_REVERSIBLE_LOCAL_SANDBOX_FIXTURE_AND_TERMINAL_RESIDUE_RECEIPT"
 }
