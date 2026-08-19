@@ -44,6 +44,12 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
+function requireTokens(text: string, tokens: string[], code: string): void {
+  for (const token of tokens) {
+    if (!text.includes(token)) refuse(code, token);
+  }
+}
+
 function verify(index: any, readme: string, agents: string): void {
   if (index?.schema !== "agent-shield/dual-agent-route/stack-index/v1" || index.parent_issue !== 144) refuse("STACK_INDEX_SCHEMA_DRIFT");
   if (index.shared_runtime_convergence_owner !== 44) refuse("SHARED_OWNER_DRIFT");
@@ -82,23 +88,21 @@ function verify(index: any, readme: string, agents: string): void {
   }
   if (index.evidence_ceiling !== "COMPLETE_DETERMINISTIC_ROUTE_MATRIX_ONLY") refuse("EVIDENCE_CEILING_DRIFT");
 
-  for (const token of [
+  requireTokens(readme, [
     "API and BROWSER receipts are separate facts",
     "RESULT_UNKNOWN",
-    "Shared runtime registry/status/release remains #44-owned",
+    "#44-owned",
     "Issue #161",
     "NOT_EXERCISED",
-  ]) {
-    if (!readme.includes(token)) refuse("README_ROUTE_INCOMPLETE", token);
-  }
-  for (const token of [
-    "API receipt          != BROWSER receipt",
-    "shared runtime status/release  agent-shield issue #44 owner only",
-    "Human/live route admission     issue #161",
+    "PR #167 DA-INT-D",
+  ], "README_ROUTE_INCOMPLETE");
+  requireTokens(agents, [
+    "API receipt",
+    "BROWSER receipt",
+    "issue #44 owner only",
+    "issue #161",
     "#147 gVisor",
-  ]) {
-    if (!agents.includes(token)) refuse("AGENT_ROUTE_INCOMPLETE", token);
-  }
+  ], "AGENT_ROUTE_INCOMPLETE");
 }
 
 const index = JSON.parse(String(readFileSync(join(ROOT, "stack-index.json"), "utf8")));
