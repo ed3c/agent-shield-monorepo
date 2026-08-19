@@ -53,10 +53,10 @@
   "implementation_subjects": [
     "services/runtime-fabric/src/providers/inception-sandbox/types.ts",
     "services/runtime-fabric/src/providers/inception-sandbox/validate.ts",
-    "services/runtime-fabric/src/providers/inception-sandbox/local-fixture.ts",
-    "services/runtime-fabric/src/providers/inception-sandbox/local-fixture-probe.ts",
     "services/runtime-fabric/tests/inception/selftest.ts",
-    "services/runtime-fabric/tests/inception/local-fixture.test.ts"
+    "services/runtime-fabric/tests/inception/local-fixture.js",
+    "services/runtime-fabric/tests/inception/local-fixture-probe.js",
+    "services/runtime-fabric/tests/inception/local-fixture.test.js"
   ],
   "writable_paths": [
     "docs/integration/inception-a2-sandbox/**",
@@ -100,7 +100,8 @@
   "positive_controls": [
     "exact runtime workload policy and lease are checked before materialization",
     "runtime-env contract commit and tree are pinned before adapter validation",
-    "one reversible child process executes in an ephemeral workspace with fixed argv",
+    "one reversible child process executes in an ephemeral workspace with an absolute runtime executable",
+    "local fixture harness remains outside the product TypeScript compile surface",
     "local execution receipt preserves environment variable names without secret values",
     "local PASS cannot promote provider or network-isolation evidence",
     "cleanup readback requires zero residue across the declared denominator"
