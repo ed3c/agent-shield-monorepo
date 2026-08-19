@@ -129,6 +129,8 @@ export function buildBrowserAttempt(
   },
 ): BrowserAttemptPacket {
   validateRequest(request);
+  const apiSupportsAction = request.api.admissionState === "ADMITTED" && request.api.actionIds.includes(request.actionId);
+  if (apiSupportsAction) refuse("FALLBACK_DESPITE_ADMITTED_API");
   if (decision.selected !== "BROWSER" || decision.reason === "API_FIRST") refuse("BROWSER_ROUTE_NOT_ADMITTED");
   if (request.browser.admissionState !== "ADMITTED" || !request.browser.actionIds.includes(request.actionId)) {
     refuse("BROWSER_ROUTE_NOT_ADMITTED");
