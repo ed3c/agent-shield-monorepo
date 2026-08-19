@@ -1,8 +1,8 @@
 {
   "schema_version": "inception-owner-preflight/v1",
   "atom_id": "INCEPTION-A2",
-  "stage": "OWNER_IMPLEMENTATION",
-  "state": "FIRST_IMPLEMENTATION_CANDIDATE",
+  "stage": "OWNER_PUBLIC_VERIFICATION",
+  "state": "LOCAL_FIXTURE_CANDIDATE",
   "repository": "ed3c/agent-shield-monorepo",
   "branch": "agent/inception-a2-runtime-sandbox-steering",
   "base_subject": {
@@ -53,7 +53,10 @@
   "implementation_subjects": [
     "services/runtime-fabric/src/providers/inception-sandbox/types.ts",
     "services/runtime-fabric/src/providers/inception-sandbox/validate.ts",
-    "services/runtime-fabric/tests/inception/selftest.ts"
+    "services/runtime-fabric/src/providers/inception-sandbox/local-fixture.ts",
+    "services/runtime-fabric/src/providers/inception-sandbox/local-fixture-probe.ts",
+    "services/runtime-fabric/tests/inception/selftest.ts",
+    "services/runtime-fabric/tests/inception/local-fixture.test.ts"
   ],
   "writable_paths": [
     "docs/integration/inception-a2-sandbox/**",
@@ -89,15 +92,17 @@
   ],
   "required_evidence_lanes": [
     "DETERMINISTIC_CONTRACT",
-    "LOCAL_SANDBOX",
+    "PUBLIC_LOCAL_PROCESS_FIXTURE",
     "PROVIDER_OBSERVATION_SEPARATE",
+    "NETWORK_ISOLATION_SEPARATE",
     "CLEANUP_READBACK"
   ],
   "positive_controls": [
     "exact runtime workload policy and lease are checked before materialization",
     "runtime-env contract commit and tree are pinned before adapter validation",
-    "unsupported capability remains UNKNOWN or UNSUPPORTED",
-    "steering occurs only at a declared visible safe synchronization point",
+    "one reversible child process executes in an ephemeral workspace with fixed argv",
+    "local execution receipt preserves environment variable names without secret values",
+    "local PASS cannot promote provider or network-isolation evidence",
     "cleanup readback requires zero residue across the declared denominator"
   ],
   "mutation_controls": [
@@ -110,6 +115,7 @@
     "active tool transaction interrupted",
     "stale or foreign lease advances state",
     "local fixture PASS represented as provider or production PASS",
+    "local fixture PASS represented as network-isolation PASS",
     "cleanup omits path process port index container mount or artifact residue"
   ],
   "cleanup_contract": {
@@ -121,6 +127,7 @@
     "create a second runtime fabric",
     "access or persist private reasoning",
     "enroll a provider",
+    "claim network isolation from a process-only fixture",
     "modify public registry aggregate status or release bytes",
     "write canonical task Gate Human or release state",
     "close issues",
@@ -129,11 +136,11 @@
     "rollback"
   ],
   "claims_not_proven": [
-    "The TypeScript adapter validator is deterministic contract evidence only.",
-    "No sandbox process or provider has been materialized.",
+    "The reversible child process is public local-process evidence, not provider or production evidence.",
+    "Default-deny network isolation has not been independently exercised by this fixture.",
     "No provider capability observation has executed.",
-    "No isolation canary beyond pure local-fixture validation has executed.",
+    "No hardened container namespace or gVisor isolation canary has executed.",
     "No provider enrollment, Human admission, merge, release or rollback has occurred."
   ],
-  "next_transition": "ADD_REVERSIBLE_LOCAL_SANDBOX_FIXTURE_AND_TERMINAL_RESIDUE_RECEIPT"
+  "next_transition": "RUN_NETWORK_ISOLATION_AND_PROVIDER_CAPABILITY_CANARIES"
 }
