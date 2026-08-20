@@ -1,0 +1,50 @@
+{
+  "schema": "agent-shield/gvisor/convergence-preflight/v1",
+  "common_parent": {
+    "pr": 174,
+    "commit": "8cc1bea3c307b3fd89de001173a90fea45e7d77a",
+    "tree": "8d6fbbc6ac8e27188033779e2dc20d6aff363618"
+  },
+  "adapter": {
+    "pr": 175,
+    "commit": "4402520edead7e5cb1fcbf1e3d8ae74977c243b7",
+    "tree": "7ec3a90f12aebe55176018adc3d767a2b1bf26dc",
+    "files": {
+      "services/runtime-fabric/src/providers/gvisor/adapter.ts": "01c96f6804e786af9a677fa89eb22b6c3dd17c8d",
+      "services/runtime-fabric/src/providers/gvisor/adapter-selftest.ts": "dd3c1b3dacd81601af177d1130d04d6815054a06"
+    }
+  },
+  "policy": {
+    "pr": 176,
+    "commit": "2e7c2415b7b2f234a02a1239bdc0f2418b8cc1d6",
+    "tree": "7e60143c3f529f5f5953c595051aaa320e7d7c9d",
+    "files": {
+      "services/runtime-fabric/src/providers/gvisor/policy.ts": "d297155b71b958a68c722d2e3f4251222674d442",
+      "services/runtime-fabric/src/providers/gvisor/policy-selftest.ts": "f707a4be8c4951fd8c2f4b7d5e20b33e702a2a6a"
+    }
+  },
+  "official_upstream": {
+    "repository": "google/gvisor",
+    "commit": "09329f4f5677c3b2492a40ea816a6899d03bcbd1",
+    "tree": "f5714e427eb5e9d93e2b7e4e5a994dec5a90bcfb",
+    "license_blob": "f7a006d10464cfe9724b5d687c0013bf982cc66a",
+    "license_id": "Apache-2.0"
+  },
+  "complete_denominator": [
+    "source_candidate_unresolved",
+    "deterministic_admission",
+    "runsc_plan_only",
+    "timeout_distinct",
+    "connection_unknown",
+    "policy_deny_all",
+    "policy_allowlist",
+    "filesystem_baseline",
+    "network_baseline",
+    "resource_baseline",
+    "cleanup_independent",
+    "live_states_not_exercised",
+    "shared_owner_separation",
+    "upstream_license_binding"
+  ],
+  "evidence_ceiling": "COMPLETE_DETERMINISTIC_GVISOR_MATRIX_ONLY"
+}
