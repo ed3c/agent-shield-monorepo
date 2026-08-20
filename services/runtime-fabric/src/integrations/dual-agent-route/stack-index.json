@@ -1,0 +1,120 @@
+{
+  "schema": "agent-shield/dual-agent-route/stack-index/v1",
+  "parent_issue": 144,
+  "shared_runtime_convergence_owner": 44,
+  "docs_issue": 160,
+  "docs_branch": "docs/160-dual-agent-route-convergence",
+  "docs_subject_state": "CANDIDATE_SUBJECT_PENDING",
+  "authority": {
+    "route_contract": "DA-INT-C",
+    "route_selection": "DA-INT-POL",
+    "api_observation": "DA-INT-API",
+    "browser_observation": "DA-INT-BR",
+    "provider_canonical_write": "FORBIDDEN",
+    "effect": {
+      "repository": "ed3c/bettor-arena",
+      "pr": 216,
+      "commit": "f9b64994979042fc3726c524944a61da4f9cb8b5",
+      "tree": "e0f0ff4bf0b55627b420ace027043c3b7fee5d1d",
+      "writer": "dual-agent-effect-ledger",
+      "relationship": "IMMUTABLE_PROCESS_DEPENDENCY_NOT_GIT_PARENT"
+    }
+  },
+  "nodes": [
+    {
+      "atom": "DA-INT-C",
+      "issue": 155,
+      "pr": 162,
+      "head": "1250b096b53b8d114425a3618e91137090f0778a",
+      "tree": "6b9537b00450a43d0e9bcf1b1ae6c4a2e441c67c",
+      "base": "30e12cc917503b56b002aa7351428811f20fea8e",
+      "targeted_run": 32277843350,
+      "modular_run": 32277843483,
+      "lockfile_run": 32277843426,
+      "state": "DETERMINISTIC_PASS",
+      "retained_failure": {
+        "head": "df7d2b699f6eb13e09cca1b5cba2850972e95ff0",
+        "run": 32277516417,
+        "reason": "repo typecheck rejected Bun.CryptoHasher without repository Bun types"
+      }
+    },
+    {
+      "atom": "DA-INT-API",
+      "issue": 156,
+      "pr": 163,
+      "head": "ae7d891a12df49a76c8d86be84655cecc147c395",
+      "tree": "71a93c3e8e04e0f2117238bb34cd23085aecd032",
+      "base": "1250b096b53b8d114425a3618e91137090f0778a",
+      "targeted_run": 32278074448,
+      "state": "DETERMINISTIC_PASS"
+    },
+    {
+      "atom": "DA-INT-BR",
+      "issue": 157,
+      "pr": 164,
+      "head": "637316981191e629a9e569710a6b9dbe6d9bd471",
+      "tree": "486078cf2d569df407c8d9b638ab81542bfdea57",
+      "base": "1250b096b53b8d114425a3618e91137090f0778a",
+      "targeted_run": 32278561508,
+      "state": "DETERMINISTIC_PASS",
+      "retained_failure": {
+        "head": "bb70e422e335c90467b2b1324c8107ccf9831fc5",
+        "run": 32278264809,
+        "reason": "forged browser decision exposed missing API-first refusal precedence"
+      }
+    },
+    {
+      "atom": "DA-INT-POL",
+      "issue": 158,
+      "pr": 165,
+      "head": "8abd109b12c5cc69fab7fb207e9f974974a46a8d",
+      "tree": "7bfdc5bb330973f7dd9485d3fe290a48955120a8",
+      "base": "1250b096b53b8d114425a3618e91137090f0778a",
+      "targeted_run": 32278411221,
+      "state": "DETERMINISTIC_PASS"
+    },
+    {
+      "atom": "DA-INT-E",
+      "issue": 159,
+      "pr": 166,
+      "head": "a88951c53e03e0fb5a54ed59d531e8cc3de87930",
+      "tree": "a346d91987e0aa71333b0d2fd96822b2ccb9d92b",
+      "base": "1250b096b53b8d114425a3618e91137090f0778a",
+      "targeted_run": 32279002352,
+      "state": "COMPLETE_DETERMINISTIC_ROUTE_MATRIX_PASS",
+      "materialized_inputs": [163, 164, 165]
+    }
+  ],
+  "complete_denominator": [
+    "api_first_read",
+    "api_write_readback",
+    "api_timeout_unknown",
+    "fallback_api_absent",
+    "fallback_api_refused",
+    "fallback_api_not_admitted",
+    "fallback_api_unsupported_action",
+    "browser_write_readback",
+    "browser_timeout_unknown",
+    "policy_authority_separation",
+    "route_evidence_separation",
+    "effect_authority_preserved",
+    "cleanup_separation"
+  ],
+  "live_frontier": {
+    "issue": 161,
+    "state": "HUMAN_TRUSTED_AUTHORITY_REQUIRED",
+    "live_api": "NOT_EXERCISED",
+    "live_browser": "NOT_EXERCISED",
+    "credential_resolution": "NOT_EXERCISED",
+    "provider_effect": "NOT_EXERCISED",
+    "target_readback": "NOT_EXERCISED",
+    "user_outcome": "NOT_EXERCISED",
+    "release": "NOT_PERFORMED"
+  },
+  "separate_provider_frontiers": {
+    "gvisor_issue": 147,
+    "relationship": "SEPARATE_PROVIDER_ISOLATION_SIBLING",
+    "physical_isolation_state": "NOT_EXERCISED"
+  },
+  "evidence_ceiling": "COMPLETE_DETERMINISTIC_ROUTE_MATRIX_ONLY"
+}
