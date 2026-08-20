@@ -1,0 +1,42 @@
+name: Dual-Agent gVisor complete matrix
+
+on:
+  pull_request:
+    paths:
+      - "services/runtime-fabric/src/providers/gvisor/**"
+      - ".github/workflows/dual-agent-gvisor-matrix.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/runtime-fabric/src/providers/gvisor/**"
+      - ".github/workflows/dual-agent-gvisor-matrix.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  gvisor-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Validate convergence preflight JSON
+        run: python3 -m json.tool services/runtime-fabric/src/providers/gvisor/matrix-preflight.json >/dev/null
+      - name: Re-run gVisor provider contract controls
+        run: bun services/runtime-fabric/src/providers/gvisor/selftest.ts
+      - name: Re-run materialized runsc adapter controls
+        run: bun services/runtime-fabric/src/providers/gvisor/adapter-selftest.ts
+      - name: Re-run materialized isolation policy controls
+        run: bun services/runtime-fabric/src/providers/gvisor/policy-selftest.ts
+      - name: Compile complete gVisor candidate
+        run: bun build services/runtime-fabric/src/providers/gvisor/matrix.ts --target=bun --outdir=/tmp/gvisor-matrix
+      - name: Run complete gVisor denominator and convergence controls
+        run: bun services/runtime-fabric/src/providers/gvisor/matrix.ts
+      - name: Typecheck repository
+        run: bunx tsc --noEmit
